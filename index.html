@@ -667,7 +667,29 @@
             }
 
             .guide-row {
+                flex-direction: row;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 8px;
+                gap: 16px;
+            }
+
+            .guide-row.vertical {
                 flex-direction: column;
+                overflow: visible;
+                scroll-snap-type: none;
+            }
+
+            .guide-item {
+                flex: 0 0 82%;
+                scroll-snap-align: center;
+            }
+
+            .guide-item img {
+                width: 100%;
+                max-height: 340px;
+                object-fit: contain;
             }
 
             .guide-item img:hover {
@@ -699,7 +721,11 @@
             }
 
             .scroll-markers {
-                display: none;
+                display: block;
+                width: 18px;
+                background: rgba(240, 240, 240, 0.9);
+                border-right: none;
+                border-left: 1px solid #e0e0e0;
             }
 
             .chat-area {
@@ -707,13 +733,22 @@
             }
 
             .chat-header {
+                position: relative;
                 padding: 12px 14px;
+                padding-left: 52px;
             }
 
             .sidebar-toggle {
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
+                position: absolute;
+                left: -12px;
+                top: 50%;
+                transform: translateY(-50%);
+                border-radius: 0 10px 10px 0;
+                padding: 10px 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             }
 
             .chat-messages {
