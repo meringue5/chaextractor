@@ -521,14 +521,16 @@
         }
 
         .message-bubble {
-            flex: 1;
-            max-width: calc(700px - var(--marker-width));
+            flex: 0 1 auto;
+            width: fit-content;
+            max-width: min(calc(700px - var(--marker-width)), 90%);
             padding: 8px 12px;
             border-radius: 8px;
             background: white;
             box-shadow: 0 1px 1px rgba(0,0,0,0.1);
             word-wrap: break-word;
             box-sizing: border-box;
+            align-self: flex-start;
         }
 
         .message .time {
@@ -795,10 +797,10 @@
             }
 
             .message-bubble {
-                width: 100%;
-                max-width: 100%;
+                width: fit-content;
+                max-width: 90%;
                 margin-right: 0;
-                align-self: stretch;
+                align-self: flex-start;
             }
 
             .message-bubble .user-name.mobile-only {
