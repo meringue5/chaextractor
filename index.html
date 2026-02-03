@@ -479,6 +479,7 @@
             font-weight: 700;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            transition: left 0.25s ease, box-shadow 0.25s ease, border-radius 0.25s ease;
         }
 
         .sidebar-toggle:active {
@@ -519,6 +520,7 @@
             background: white;
             box-shadow: 0 1px 1px rgba(0,0,0,0.1);
             word-wrap: break-word;
+            box-sizing: border-box;
         }
 
         .message .time {
@@ -753,12 +755,18 @@
                 align-items: center;
                 justify-content: center;
                 position: absolute;
-                left: -12px;
+                left: 0;
                 top: 50%;
                 transform: translateY(-50%);
                 border-radius: 0 10px 10px 0;
                 padding: 10px 12px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            }
+
+            .app.sidebar-open .sidebar-toggle {
+                left: calc(min(86vw, 320px) - 1px);
+                border-radius: 10px 0 0 10px;
+                box-shadow: 0 6px 14px rgba(0,0,0,0.25);
             }
 
             .chat-messages {
@@ -769,6 +777,7 @@
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 6px;
+                width: 100%;
             }
 
             .message .user-name.desktop-only {
@@ -776,8 +785,8 @@
             }
 
             .message-bubble {
-                width: 100%;
-                max-width: 100%;
+                width: calc(100% - 16px);
+                max-width: calc(100% - 16px);
             }
 
             .message-bubble .user-name.mobile-only {
@@ -1552,12 +1561,14 @@
         function openSidebar() {
             sidebar.classList.add('open');
             sidebarOverlay.classList.add('active');
+            app.classList.add('sidebar-open');
             updateSidebarToggle();
         }
 
         function closeSidebar() {
             sidebar.classList.remove('open');
             sidebarOverlay.classList.remove('active');
+            app.classList.remove('sidebar-open');
             updateSidebarToggle();
         }
 
