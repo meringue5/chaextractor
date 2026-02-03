@@ -260,6 +260,10 @@
             background: #3a7bc8;
         }
 
+        :root {
+            --marker-width: 24px;
+        }
+
         /* 메인 앱 */
         .app {
             display: none;
@@ -421,7 +425,7 @@
 
         /* 스크롤 마커 트랙 */
         .scroll-markers {
-            width: 24px;
+            width: var(--marker-width);
             background: #f0f0f0;
             border-right: 1px solid #e0e0e0;
             position: relative;
@@ -466,13 +470,15 @@
 
         .sidebar-toggle {
             display: none;
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.35);
-            color: white;
+            background: #ffffff;
+            border: 1px solid #c8d6d4;
+            color: #075e54;
             border-radius: 8px;
             padding: 6px 10px;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: 700;
             cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
         }
 
         .sidebar-toggle:active {
@@ -498,7 +504,7 @@
             font-size: 13px;
             font-weight: 600;
             color: #075e54;
-            text-align: right;
+            text-align: left;
             padding-top: 8px;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -507,7 +513,7 @@
 
         .message-bubble {
             flex: 1;
-            max-width: 700px;
+            max-width: calc(700px - var(--marker-width));
             padding: 8px 12px;
             border-radius: 8px;
             background: white;
@@ -662,6 +668,10 @@
         }
 
         @media (max-width: 900px) {
+            :root {
+                --marker-width: 18px;
+            }
+
             .setup-box {
                 padding: 24px;
             }
@@ -722,7 +732,7 @@
 
             .scroll-markers {
                 display: block;
-                width: 18px;
+                width: var(--marker-width);
                 background: rgba(240, 240, 240, 0.9);
                 border-right: none;
                 border-left: 1px solid #e0e0e0;
@@ -902,7 +912,7 @@
                     <h3 id="chatTitle">날짜를 선택하세요</h3>
                     <div class="info" id="chatInfo"></div>
                 </div>
-                <button class="sidebar-toggle" id="sidebarToggle" aria-label="날짜 패널 열기">☰</button>
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="날짜 패널 열기">&gt;</button>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <div class="empty-state">
@@ -1542,16 +1552,28 @@
         function openSidebar() {
             sidebar.classList.add('open');
             sidebarOverlay.classList.add('active');
+            updateSidebarToggle();
         }
 
         function closeSidebar() {
             sidebar.classList.remove('open');
             sidebarOverlay.classList.remove('active');
+            updateSidebarToggle();
         }
 
         function closeSidebarIfMobile() {
             if (isMobileView()) {
                 closeSidebar();
+            }
+        }
+
+        function updateSidebarToggle() {
+            if (sidebar.classList.contains('open')) {
+                sidebarToggle.textContent = '<';
+                sidebarToggle.setAttribute('aria-label', '날짜 패널 접기');
+            } else {
+                sidebarToggle.textContent = '>';
+                sidebarToggle.setAttribute('aria-label', '날짜 패널 열기');
             }
         }
 
@@ -1570,6 +1592,8 @@
                 closeSidebar();
             }
         });
+
+        updateSidebarToggle();
 
         window.showImage = showImage;
     </script>
