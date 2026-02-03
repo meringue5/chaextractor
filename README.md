@@ -27,7 +27,7 @@
 
 ```
 chae/
-├── viewer.html         # 대화 뷰어 (메인, ZIP 통합)
+├── index.html          # 대화 뷰어 (메인, ZIP 통합)
 ├── AGENTS.md           # 프로젝트 명세 및 진행상황
 └── README.md           # 이 파일
 ```
@@ -39,7 +39,7 @@ chae/
 
 ## 배포
 
-`viewer.html`은 GitHub Pages, Netlify, Vercel 등 정적 호스팅에 배포 가능합니다.
+`index.html`은 GitHub Pages, Netlify, Vercel 등 정적 호스팅에 배포 가능합니다.
 - 서버 업로드 없음: 모든 처리가 브라우저에서 수행
 - 개인정보 보호: 대화 내용이 외부로 전송되지 않음
 
@@ -47,7 +47,7 @@ chae/
 
 - [x] 1단계: 대화 내용 확인 및 패턴 검증
 - [x] 2단계: 대화 포맷 재구성 (CSV)
-- [x] 2-1단계: 간이 시각화 도구 (viewer.html)
+- [x] 2-1단계: 간이 시각화 도구 (index.html)
 - [ ] 3단계: 요약 추출
 - [ ] 4단계: 시각화 도구
 
