@@ -480,6 +480,7 @@
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
             transition: left 0.25s ease, box-shadow 0.25s ease, border-radius 0.25s ease;
+            z-index: 950;
         }
 
         .sidebar-toggle:active {
@@ -711,6 +712,7 @@
 
             .app {
                 position: relative;
+                overflow-x: hidden;
             }
 
             .sidebar {
@@ -741,7 +743,7 @@
             }
 
             .chat-area {
-                width: 100%;
+                width: calc(100% - var(--marker-width));
             }
 
             .chat-header {
@@ -765,7 +767,7 @@
 
             .app.sidebar-open .sidebar-toggle {
                 left: calc(min(86vw, 320px) - 1px);
-                border-radius: 10px 0 0 10px;
+                border-radius: 0 10px 10px 0;
                 box-shadow: 0 6px 14px rgba(0,0,0,0.25);
             }
 
