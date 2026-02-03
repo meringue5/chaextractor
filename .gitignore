@@ -5,6 +5,6 @@
 !.gitignore
 !README.md
 !AGENTS.md
-!viewer.html
+!index.html
 !parse_kakao_chat.py
 !pyproject.toml
