@@ -766,13 +766,13 @@
                 transform: translateY(-50%);
                 border-radius: 0 10px 10px 0;
                 padding: 10px 12px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                box-shadow: none;
             }
 
             .app.sidebar-open .sidebar-toggle {
                 left: calc(min(86vw, 320px) - 1px);
                 border-radius: 0 10px 10px 0;
-                box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+                box-shadow: none;
             }
 
             .chat-messages {
@@ -1277,6 +1277,11 @@
             setupScreen.style.display = 'none';
             app.classList.add('active');
             initApp();
+            requestAnimationFrame(() => {
+                window.scrollTo(0, 0);
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+            });
         });
 
         // ========== 앱 초기화 ==========
