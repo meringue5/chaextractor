@@ -421,6 +421,7 @@
             display: flex;
             flex-direction: column;
             background: #e5ddd5;
+            position: relative;
         }
 
         /* 스크롤 마커 트랙 */
@@ -428,14 +429,19 @@
             width: var(--marker-width);
             background: #f0f0f0;
             border-right: 1px solid #e0e0e0;
-            position: relative;
-            flex-shrink: 0;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            box-sizing: border-box;
         }
 
         .scroll-marker {
             position: absolute;
-            left: 4px;
-            width: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 8px);
             height: 4px;
             background: #ffd700;
             border-radius: 2px;
@@ -451,6 +457,7 @@
 
         .chat-header {
             padding: 16px 20px;
+            padding-left: calc(20px + var(--marker-width));
             background: #075e54;
             color: white;
             display: flex;
@@ -490,7 +497,7 @@
         .chat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 16px 60px;
+            padding: 16px 60px 16px calc(16px + var(--marker-width));
         }
 
         .message {
@@ -738,18 +745,15 @@
                 display: block;
                 width: var(--marker-width);
                 background: rgba(240, 240, 240, 0.9);
-                border-right: none;
-                border-left: 1px solid #e0e0e0;
-            }
-
-            .chat-area {
-                width: calc(100% - var(--marker-width));
+                border-right: 1px solid #e0e0e0;
+                border-left: none;
+                z-index: 100;
             }
 
             .chat-header {
                 position: relative;
                 padding: 12px 14px;
-                padding-left: 52px;
+                padding-left: calc(52px + var(--marker-width));
             }
 
             .sidebar-toggle {
@@ -772,7 +776,7 @@
             }
 
             .chat-messages {
-                padding: 12px 14px;
+                padding: 12px 14px 12px calc(14px + var(--marker-width));
             }
 
             .message {
@@ -915,9 +919,8 @@
 
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <div class="scroll-markers" id="scrollMarkers"></div>
-
         <div class="chat-area">
+            <div class="scroll-markers" id="scrollMarkers"></div>
             <div class="chat-header">
                 <div>
                     <h3 id="chatTitle">날짜를 선택하세요</h3>
