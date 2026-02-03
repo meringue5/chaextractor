@@ -262,6 +262,9 @@
 
         :root {
             --marker-width: 24px;
+            --sidebar-transition-duration: 0.25s;
+            --name-column-width: 120px;
+            --message-gap: 12px;
         }
 
         /* 메인 앱 */
@@ -486,7 +489,9 @@
             font-weight: 700;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-            transition: left 0.25s ease, box-shadow 0.25s ease, border-radius 0.25s ease;
+            transition: left var(--sidebar-transition-duration) ease,
+                box-shadow var(--sidebar-transition-duration) ease,
+                border-radius var(--sidebar-transition-duration) ease;
             z-index: 950;
         }
 
@@ -503,13 +508,14 @@
         .message {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
+            gap: var(--message-gap);
             margin-bottom: 8px;
+            width: 100%;
         }
 
         .message .user-name {
             flex-shrink: 0;
-            width: 120px;
+            width: var(--name-column-width);
             font-size: 13px;
             font-weight: 600;
             color: #075e54;
@@ -522,13 +528,15 @@
 
         .message-bubble {
             flex: 0 1 auto;
-            width: fit-content;
-            max-width: min(calc(700px - var(--marker-width)), 90%);
+            width: min(95%, calc(100% - var(--name-column-width) - var(--message-gap)));
+            max-width: min(95%, calc(100% - var(--name-column-width) - var(--message-gap)));
             padding: 8px 12px;
             border-radius: 8px;
             background: white;
             box-shadow: 0 1px 1px rgba(0,0,0,0.1);
             word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
             box-sizing: border-box;
             align-self: flex-start;
         }
@@ -731,7 +739,7 @@
                 bottom: 0;
                 width: min(86vw, 320px);
                 transform: translateX(-100%);
-                transition: transform 0.25s ease;
+                transition: transform var(--sidebar-transition-duration) ease;
                 z-index: 900;
             }
 
@@ -797,8 +805,8 @@
             }
 
             .message-bubble {
-                width: fit-content;
-                max-width: 90%;
+                width: 95%;
+                max-width: 95%;
                 margin-right: 0;
                 align-self: flex-start;
             }
