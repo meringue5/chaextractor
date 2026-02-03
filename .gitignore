@@ -1,0 +1,8 @@
+# Ignore everything by default
+*
+
+# Keep this file and the three required files
+!.gitignore
+!README.md
+!AGENTS.md
+!viewer.html
