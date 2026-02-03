@@ -491,7 +491,7 @@
         }
 
         .sidebar-toggle:active {
-            transform: scale(0.98);
+            transform: none;
         }
 
         .chat-messages {
@@ -769,6 +769,10 @@
                 box-shadow: none;
             }
 
+            .sidebar-toggle:active {
+                transform: translateY(-50%);
+            }
+
             .app.sidebar-open .sidebar-toggle {
                 left: calc(min(86vw, 320px) - 1px);
                 border-radius: 0 10px 10px 0;
@@ -791,9 +795,10 @@
             }
 
             .message-bubble {
-                width: calc(100% - 28px);
-                max-width: calc(100% - 28px);
-                margin-right: 12px;
+                width: 100%;
+                max-width: 100%;
+                margin-right: 0;
+                align-self: stretch;
             }
 
             .message-bubble .user-name.mobile-only {
