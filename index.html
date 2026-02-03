@@ -449,6 +449,10 @@
             padding: 16px 20px;
             background: #075e54;
             color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
         }
 
         .chat-header h3 {
@@ -458,6 +462,21 @@
         .chat-header .info {
             font-size: 13px;
             opacity: 0.8;
+        }
+
+        .sidebar-toggle {
+            display: none;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            color: white;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .sidebar-toggle:active {
+            transform: scale(0.98);
         }
 
         .chat-messages {
@@ -510,6 +529,10 @@
 
         .message .content a {
             color: #039be5;
+        }
+
+        .mobile-only {
+            display: none;
         }
 
         /* 채상욱 리더 메시지 */
@@ -629,6 +652,119 @@
             font-size: 48px;
             margin-bottom: 16px;
         }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 800;
+        }
+
+        @media (max-width: 900px) {
+            .setup-box {
+                padding: 24px;
+            }
+
+            .guide-row {
+                flex-direction: column;
+            }
+
+            .guide-item img:hover {
+                transform: none;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            }
+
+            .app {
+                position: relative;
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: min(86vw, 320px);
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+                z-index: 900;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .scroll-markers {
+                display: none;
+            }
+
+            .chat-area {
+                width: 100%;
+            }
+
+            .chat-header {
+                padding: 12px 14px;
+            }
+
+            .sidebar-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .chat-messages {
+                padding: 12px 14px;
+            }
+
+            .message {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+
+            .message .user-name.desktop-only {
+                display: none;
+            }
+
+            .message-bubble {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .message-bubble .user-name.mobile-only {
+                display: block;
+                font-size: 12px;
+                font-weight: 600;
+                color: #075e54;
+                margin-bottom: 4px;
+            }
+
+            .message.leader .message-bubble .user-name.mobile-only {
+                color: #8b6914;
+            }
+
+            .attachment img {
+                max-width: 100%;
+                height: auto;
+            }
+
+            .setup-step {
+                padding: 12px;
+            }
+
+            .file-btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .start-btn {
+                font-size: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -721,12 +857,17 @@
             <div class="date-list" id="dateList"></div>
         </div>
 
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <div class="scroll-markers" id="scrollMarkers"></div>
 
         <div class="chat-area">
             <div class="chat-header">
-                <h3 id="chatTitle">날짜를 선택하세요</h3>
-                <div class="info" id="chatInfo"></div>
+                <div>
+                    <h3 id="chatTitle">날짜를 선택하세요</h3>
+                    <div class="info" id="chatInfo"></div>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="날짜 패널 열기">☰</button>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <div class="empty-state">
@@ -776,6 +917,9 @@
         const progressContainer = document.getElementById('progressContainer');
         const progressFill = document.getElementById('progressFill');
         const progressText = document.getElementById('progressText');
+        const sidebar = document.querySelector('.sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
 
         // ========== ZIP 파일 선택 ==========
         zipBtn.addEventListener('click', () => zipInput.click());
@@ -1220,6 +1364,7 @@
             renderCalendar();
             renderDateList(document.getElementById('searchInput').value);
             renderChat(date);
+            closeSidebarIfMobile();
         }
 
         // ========== 리더 판별 ==========
@@ -1300,8 +1445,9 @@
                     : escapeHtml(msg.user);
 
                 el.innerHTML = `
-                    <div class="user-name">${userName}</div>
+                    <div class="user-name desktop-only">${userName}</div>
                     <div class="message-bubble">
+                        <div class="user-name mobile-only">${userName}</div>
                         <div class="content">${contentHtml}</div>
                         ${attachmentHtml}
                         <div class="time">${msg.time}</div>
@@ -1353,6 +1499,42 @@
             if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
             return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
         }
+
+        function isMobileView() {
+            return window.matchMedia('(max-width: 900px)').matches;
+        }
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            sidebarOverlay.classList.add('active');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+        }
+
+        function closeSidebarIfMobile() {
+            if (isMobileView()) {
+                closeSidebar();
+            }
+        }
+
+        sidebarToggle.addEventListener('click', () => {
+            if (sidebar.classList.contains('open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        window.addEventListener('resize', () => {
+            if (!isMobileView()) {
+                closeSidebar();
+            }
+        });
 
         window.showImage = showImage;
     </script>
