@@ -46,10 +46,97 @@
 ## 4단계: 시각화 도구
 * html 어플리케이션으로 캘린더 또는 슬라이드를 통해 타임라인을 이동하며 날짜별 요약을 조회하고, 총 정리를 조회하고 검색/조회하는 기능을 만든다. 
 
+# index.html 구조
+
+## HTML 섹션 (약 1,700줄)
+
+| 섹션 | 라인 | ID/클래스 | 설명 |
+|------|------|----------|------|
+| setup-screen | ~970 | `#setupScreen` | 첫 화면 (가이드 + ZIP 선택) |
+| ├ guide-section | ~970-1010 | `.guide-section` | 사용 가이드 (스크린샷 6장, base64) |
+| ├ setup-step | ~1030 | `#step1` | ZIP 파일 선택 영역 |
+| ├ tips-section | ~1045 | `#setupTipsSection` | 머니버스 꿀팁 (토글) |
+| └ start-btn | ~1055 | `#startBtn` | 대화 보기 시작 버튼 |
+| app | ~1060 | `#app` | 메인 앱 (대화 뷰어) |
+| ├ sidebar | ~1060-1100 | `.sidebar` | 좌측 사이드바 |
+| │ ├ sidebar-header | | `.sidebar-header` | 제목 + 통계 |
+| │ ├ search-box | | `#searchInput` | 메시지 검색 |
+| │ ├ calendar | | `.calendar` | 월별 캘린더 |
+| │ ├ date-list | | `#dateList` | 날짜 목록 |
+| │ └ tips-section | | `#sidebarTipsSection` | 꿀팁 (토글) |
+| ├ sidebar-overlay | | `#sidebarOverlay` | 모바일 오버레이 |
+| └ chat-area | ~1110 | `.chat-area` | 우측 대화 영역 |
+|   ├ scroll-markers | | `#scrollMarkers` | 리더 발언 마커 |
+|   ├ chat-header | | `.chat-header` | 날짜 제목 + 토글버튼 |
+|   └ chat-messages | | `#chatMessages` | 메시지 목록 |
+
+## CSS 구조 (~950줄)
+
+| 영역 | 라인 | 주요 클래스 |
+|------|------|------------|
+| 기본 스타일 | ~1-280 | `body`, `.setup-screen`, `.setup-box` |
+| 가이드 스타일 | ~100-180 | `.guide-section`, `.guide-row`, `.guide-item` |
+| 버튼 스타일 | ~190-260 | `.file-btn`, `.start-btn` |
+| 앱 레이아웃 | ~270-400 | `.app`, `.sidebar`, `.chat-area` |
+| 캘린더 | ~300-380 | `.calendar`, `.calendar-grid`, `.day-btn` |
+| 메시지 | ~400-550 | `.message`, `.message-bubble`, `.user-name` |
+| 리더 하이라이트 | ~520-550 | `.message.leader` (황금색 배경) |
+| 첨부파일 | ~550-620 | `.attachment`, `.lightbox` |
+| 꿀팁 섹션 | ~690-790 | `.tips-section`, `.tips-toggle-btn`, `.tip-link-btn` |
+| 모바일 반응형 | ~800-960 | `@media (max-width: 900px)` |
+
+## JavaScript 구조 (~750줄)
+
+| 영역 | 라인 | 주요 함수/변수 |
+|------|------|---------------|
+| DOM 요소 | ~1150-1180 | `setupScreen`, `app`, `sidebar`, etc. |
+| 꿀팁 토글 | ~1180 | `.tips-toggle-btn` 이벤트 |
+| ZIP 처리 | ~1190-1350 | `processZipFile()`, JSZip 사용 |
+| 대화 파싱 | ~1350-1500 | `parseKakaoChat()`, 정규식 매칭 |
+| 첨부파일 매핑 | ~1500-1550 | `findClosestAttachment()`, ±30분 허용 |
+| 캘린더 렌더링 | ~1550-1650 | `renderCalendar()`, `renderDateList()` |
+| 메시지 렌더링 | ~1650-1750 | `showMessages()`, 리더 하이라이트 |
+| 검색 기능 | ~1750-1800 | `searchInput` 이벤트 |
+| 라이트박스 | ~1800-1850 | 이미지 확대 보기 |
+| 사이드바 토글 | ~1850-1900 | 모바일 사이드바 열기/닫기 |
+
+## 주요 CSS 변수
+
+```css
+:root {
+    --marker-width: 24px;           /* 스크롤 마커 너비 (모바일: 18px) */
+    --sidebar-transition-duration: 0.25s;
+    --name-column-width: 120px;     /* 사용자 이름 열 너비 */
+    --message-gap: 12px;
+}
+```
+
+## 색상 팔레트
+
+| 용도 | 색상 | 코드 |
+|------|------|------|
+| Primary (버튼) | 파란색 | `#4a90d9` |
+| Primary Hover | 진한 파란색 | `#3a7bc8` |
+| 리더 배경 | 황금색 | `#fff8e1` |
+| 리더 테두리 | 금색 | `#ffd54f` |
+| 리더 텍스트 | 갈색 | `#8b6914` |
+| 사이드바 배경 | 흰색 | `#ffffff` |
+| 메시지 배경 | 밝은 회색 | `#f5f5f5` |
+
 # 작업 지침
-* 파이썬 3.12 사용
-* 개발 과정에서 추가되는 의존성은 pyproject.toml에 기술, uv.lock 생성
+* 주요 개발: 단일 HTML 파일 (index.html) - 브라우저 기반, 서버 불필요
+* 파이썬 3.12 사용 (parse_kakao_chat.py 등 보조 스크립트용)
 * 구조 변경시 사용법, 구조 설명 등을 README.md에 업데이트
+
+# 머니버스 꿀팁
+## 개발자: 춤추는 토끼 171879 
+머니버스 하지 마라 15계명 https://moneybus-labs.github.io/hidden-gems/
+머니버스 톡 추천 도서 https://github.com/moneybus-labs/books/blob/main/머니버스톡.md
+채부심 북스 추천 도서 https://github.com/moneybus-labs/books/blob/main/채부심북스.md
+
+## 개발자: 우드워커
+액티브 ETF 구성 변화 시각화 앱 https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view
+
 
 # 진행상황
 
@@ -77,7 +164,7 @@
   * attachment_path 컬럼 추가 (data 폴더 내 실제 파일 경로)
   * 타임스탬프 기반 파일 매핑 (±30분 허용)
 
-## 2-1단계: 완료 (2026-02-03, ZIP 통합 + 가이드 추가)
+## 2-1단계: 완료 (2026-02-03 ~ 02-04, ZIP 통합 + 가이드 + 모바일)
 * index.html 생성 (단일 HTML 파일, 서버 불필요, ~1.8MB)
 * **ZIP 통합**: 카카오톡 내보내기 ZIP 파일을 직접 선택하면 파싱과 뷰어가 한 번에 동작
   * Python 스크립트 실행 불필요
@@ -89,6 +176,12 @@
   * 카카오톡 내보내기 방법 (4단계)
   * 뷰어 사용 방법 (2단계)
   * 마우스 오버 시 이미지 확대
+* **모바일 반응형 지원** (PR #1~#12)
+  * 반응형 레이아웃 (max-width: 900px 미디어쿼리)
+  * 사이드바 토글 버튼 (터치 친화적)
+  * 채팅 버블 너비 최적화
+  * 가이드 스크린샷 캐러셀 (모바일용)
+  * 스크롤 마커 레이아웃 조정
 * 기능:
   * ZIP 파일 선택 (카카오톡 내보내기 파일)
   * 월별 캘린더 네비게이션

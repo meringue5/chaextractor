@@ -22,6 +22,10 @@
 - **사진/PDF 보기**: 첨부파일 확대 및 다운로드
 - **리더 하이라이트**: 채상욱 리더 발언을 황금색으로 강조
 - **스크롤 마커**: 리더 발언 위치로 빠르게 이동
+- **모바일 반응형**: 스마트폰에서도 편리하게 사용 가능
+  - 사이드바 토글 버튼
+  - 터치 친화적 UI
+  - 가이드 스크린샷 캐러셀
 
 ## 프로젝트 구조
 
@@ -34,8 +38,9 @@ chae/
 
 ## 요구사항
 
-- 최신 웹 브라우저 (Chrome, Firefox, Edge, Safari 등)
-- Python 3.12 이상 (parse_kakao_chat.py 사용 시에만 필요)
+- 최신 웹 브라우저 (Chrome, Firefox, Edge, Safari)
+- 모바일 브라우저 지원 (iOS Safari, Android Chrome)
+- Python 3.12 이상 (parse_kakao_chat.py 사용 시에만 필요, 선택사항)
 
 ## 배포
 
@@ -72,3 +77,12 @@ python parse_kakao_chat.py [입력파일] [출력파일]
 | has_attachment | 첨부파일 유무 |
 | attachment_path | 실제 파일 경로 |
 | has_link | URL 포함 여부 |
+
+# 머니버스 꿀팁
+## 개발자: 춤추는 토끼 171879 
+머니버스 하지 마라 15계명 https://moneybus-labs.github.io/hidden-gems/
+머니버스 톡 추천 도서 https://github.com/moneybus-labs/books/blob/main/머니버스톡.md
+채부심 북스 추천 도서 https://github.com/moneybus-labs/books/blob/main/채부심북스.md
+
+## 개발자: 우드워커
+액티브 ETF 구성 변화 시각화 앱 https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view
