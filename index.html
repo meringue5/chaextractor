@@ -6,6 +6,10 @@
     <title>채상욱의 머니버스 대화 뷰어</title>
     <!-- JSZip CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- 웹폰트 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-pro-webfont@latest/neodgm_pro/style.css" rel="stylesheet">
     <style>
         * {
             box-sizing: border-box;
@@ -14,9 +18,9 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
-            background: #f5f5f5;
-            color: #333;
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            color: var(--text-primary);
             line-height: 1.5;
         }
 
@@ -31,7 +35,7 @@
         }
 
         .setup-box {
-            background: white;
+            background: var(--bg-secondary);
             border-radius: 16px;
             padding: 40px;
             max-width: 900px;
@@ -43,12 +47,12 @@
         .guide-section {
             margin-bottom: 32px;
             padding-bottom: 24px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .guide-section h2 {
             font-size: 16px;
-            color: #333;
+            color: var(--text-primary);
             margin-bottom: 16px;
             display: flex;
             align-items: center;
@@ -100,7 +104,7 @@
         .guide-item .caption {
             margin-top: 8px;
             font-size: 12px;
-            color: #666;
+            color: var(--text-secondary);
             line-height: 1.4;
         }
 
@@ -124,27 +128,29 @@
         .setup-box h1 {
             font-size: 24px;
             margin-bottom: 8px;
-            color: #333;
+            color: var(--text-primary);
         }
 
         .setup-box .subtitle {
-            color: #666;
+            color: var(--text-secondary);
             margin-bottom: 32px;
         }
 
         .setup-step {
             margin-bottom: 24px;
             padding: 16px;
-            background: #f8f9fa;
+            background: var(--bg-tertiary);
             border-radius: 8px;
         }
 
         .setup-step.completed {
-            background: #e8f5e9;
+            background: var(--bg-tertiary);
+            border-left: 3px solid #43a047;
         }
 
         .setup-step.processing {
-            background: #fff3e0;
+            background: var(--bg-tertiary);
+            border-left: 3px solid #ff9800;
         }
 
         .setup-step.error {
@@ -165,7 +171,7 @@
 
         .setup-step .hint {
             font-size: 13px;
-            color: #666;
+            color: var(--text-secondary);
             margin-bottom: 12px;
         }
 
@@ -220,7 +226,7 @@
 
         .progress-bar {
             height: 8px;
-            background: #e0e0e0;
+            background: var(--border-color);
             border-radius: 4px;
             overflow: hidden;
         }
@@ -234,7 +240,7 @@
 
         .progress-text {
             font-size: 12px;
-            color: #666;
+            color: var(--text-secondary);
             margin-top: 4px;
         }
 
@@ -265,7 +271,48 @@
             --sidebar-transition-duration: 0.25s;
             --name-column-width: 120px;
             --message-gap: 12px;
+
+            /* 테마 색상 변수 */
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f8f9fa;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-muted: #999;
+            --border-color: #e0e0e0;
+            --border-light: #ccc;
+            --button-primary: #4a90d9;
+            --button-hover: #3a7bc8;
+            --leader-bg: #fff8e1;
+            --leader-border: #ffd54f;
+            --leader-text: #8b6914;
+            --chat-bg: #e5ddd5;
+            --scroll-marker-bg: #f0f0f0;
+
+            /* 폰트 변수 */
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
         }
+
+        /* 다크 테마 */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3d3d3d;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --text-muted: #808080;
+            --border-color: #404040;
+            --border-light: #505050;
+            --leader-bg: #3d3520;
+            --leader-border: #8b7355;
+            --leader-text: #ffd54f;
+            --chat-bg: #0d0d0d;
+            --scroll-marker-bg: #1a1a1a;
+        }
+
+        /* 폰트 클래스 */
+        [data-font="noto"] { --font-family: "Noto Serif KR", serif; }
+        [data-font="neodgm"] { --font-family: "NeoDunggeunmo Pro", sans-serif; }
 
         /* 메인 앱 */
         .app {
@@ -280,8 +327,8 @@
         /* 사이드바 */
         .sidebar {
             width: 320px;
-            background: white;
-            border-right: 1px solid #e0e0e0;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
@@ -289,7 +336,13 @@
 
         .sidebar-header {
             padding: 16px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .sidebar-header h2 {
@@ -299,13 +352,13 @@
 
         .sidebar-header .stats {
             font-size: 13px;
-            color: #666;
+            color: var(--text-secondary);
         }
 
         /* 캘린더 */
         .calendar {
             padding: 16px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .calendar-nav {
@@ -341,7 +394,7 @@
 
         .calendar-grid .weekday {
             font-size: 12px;
-            color: #666;
+            color: var(--text-secondary);
             padding: 4px;
         }
 
@@ -383,7 +436,7 @@
         }
 
         .calendar-grid .day.selected::after {
-            background: white;
+            background: var(--bg-secondary);
         }
 
         /* 날짜 목록 */
@@ -394,7 +447,7 @@
 
         .date-item {
             padding: 12px 16px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid transparent;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
@@ -402,11 +455,12 @@
         }
 
         .date-item:hover {
-            background: #f8f9fa;
+            background: var(--bg-tertiary);
         }
 
         .date-item.selected {
-            background: #e3f2fd;
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--button-primary);
         }
 
         .date-item .date {
@@ -415,7 +469,7 @@
 
         .date-item .count {
             font-size: 13px;
-            color: #666;
+            color: var(--text-secondary);
         }
 
         /* 대화 영역 */
@@ -423,15 +477,15 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: #e5ddd5;
+            background: var(--chat-bg);
             position: relative;
         }
 
         /* 스크롤 마커 트랙 */
         .scroll-markers {
             width: var(--marker-width);
-            background: #f0f0f0;
-            border-right: 1px solid #e0e0e0;
+            background: var(--scroll-marker-bg);
+            border-right: 1px solid var(--border-color);
             position: absolute;
             top: 0;
             bottom: 0;
@@ -480,9 +534,9 @@
 
         .sidebar-toggle {
             display: none;
-            background: #ffffff;
-            border: 1px solid #c8d6d4;
-            color: #075e54;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
             border-radius: 8px;
             padding: 6px 10px;
             font-size: 18px;
@@ -532,7 +586,7 @@
             max-width: min(95%, calc(100% - var(--name-column-width) - var(--message-gap)));
             padding: 8px 12px;
             border-radius: 8px;
-            background: white;
+            background: var(--bg-secondary);
             box-shadow: 0 1px 1px rgba(0,0,0,0.1);
             word-wrap: break-word;
             overflow-wrap: break-word;
@@ -543,7 +597,7 @@
 
         .message .time {
             font-size: 11px;
-            color: #999;
+            color: var(--text-muted);
             margin-top: 4px;
             text-align: right;
         }
@@ -563,16 +617,18 @@
 
         /* 채상욱 리더 메시지 */
         .message.leader .user-name {
-            color: #b8860b;
+            color: #5c4a00;
         }
 
         .message.leader .message-bubble {
             background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
             border: 1px solid #daa520;
+            color: #3d3200;
+            text-shadow: 1px 1px 0 rgba(255,215,0,0.3);
         }
 
         .message.leader .time {
-            color: #8b6914;
+            color: #5c4a00;
         }
 
         /* 첨부파일 */
@@ -594,23 +650,23 @@
             padding: 8px 12px;
             background: #f0f0f0;
             border-radius: 4px;
-            color: #333;
+            color: var(--text-primary);
             text-decoration: none;
         }
 
         .attachment .file-link:hover {
-            background: #e0e0e0;
+            background: var(--border-color);
         }
 
         .attachment .emoticon {
             font-size: 13px;
-            color: #666;
+            color: var(--text-secondary);
             font-style: italic;
         }
 
         .attachment .no-file {
             font-size: 13px;
-            color: #999;
+            color: var(--text-muted);
         }
 
         /* 이미지 모달 */
@@ -648,7 +704,7 @@
         /* 검색 */
         .search-box {
             padding: 12px 16px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .search-box input {
@@ -671,7 +727,7 @@
             align-items: center;
             justify-content: center;
             height: 100%;
-            color: #666;
+            color: var(--text-secondary);
         }
 
         .empty-state .icon {
@@ -691,7 +747,7 @@
         .tips-section {
             margin-top: 24px;
             padding-top: 24px;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid var(--border-color);
         }
 
         .tips-toggle-btn {
@@ -700,18 +756,20 @@
             justify-content: space-between;
             width: 100%;
             padding: 12px 16px;
-            background: #f8f9fa;
-            border: 1px solid #e0e0e0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             cursor: pointer;
             font-size: 15px;
             font-weight: 500;
-            color: #333;
-            transition: background 0.2s;
+            color: var(--text-primary);
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
 
         .tips-toggle-btn:hover {
-            background: #e9ecef;
+            background: var(--bg-tertiary);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
         }
 
         .tips-toggle-btn .arrow {
@@ -735,18 +793,18 @@
         .tips-group {
             margin-top: 16px;
             padding: 12px;
-            background: #fff;
-            border: 1px solid #e9ecef;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
         }
 
         .tips-group-header {
             font-size: 13px;
             font-weight: 600;
-            color: #075e54;
+            color: var(--text-primary);
             margin-bottom: 10px;
             padding-bottom: 8px;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .tips-links {
@@ -777,7 +835,7 @@
         .sidebar .tips-section {
             margin-top: 0;
             padding: 12px 16px;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid var(--border-color);
         }
 
         .sidebar .tips-toggle-btn {
@@ -793,6 +851,114 @@
         .sidebar .tip-link-btn {
             padding: 6px 10px;
             font-size: 12px;
+        }
+
+        /* 설정 버튼 */
+        .settings-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .settings-btn:hover {
+            background: var(--border-color);
+        }
+
+        /* 설정 모달 */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .settings-modal.open {
+            display: flex;
+        }
+
+        .settings-content {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 12px;
+            padding: 20px;
+            width: 300px;
+            max-width: 90vw;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .settings-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px 8px;
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .settings-group {
+            margin-top: 16px;
+        }
+
+        .settings-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .settings-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .theme-btn, .font-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .theme-btn:hover, .font-btn:hover {
+            border-color: var(--button-primary);
+        }
+
+        .theme-btn.active, .font-btn.active {
+            border-color: var(--button-primary);
+            background: var(--button-primary);
+            color: white;
         }
 
         @media (max-width: 900px) {
@@ -862,8 +1028,8 @@
             .scroll-markers {
                 display: block;
                 width: var(--marker-width);
-                background: rgba(240, 240, 240, 0.9);
-                border-right: 1px solid #e0e0e0;
+                background: var(--scroll-marker-bg);
+                border-right: 1px solid var(--border-color);
                 border-left: none;
                 z-index: 100;
             }
@@ -1031,7 +1197,7 @@
             <div class="tips-section" id="setupTipsSection">
                 <button type="button" class="tips-toggle-btn" id="setupTipsToggle">
                     <span>💡 머니버스 꿀팁</span>
-                    <span class="arrow">▼</span>
+                    <span class="arrow">▲</span>
                 </button>
                 <div class="tips-content" id="setupTipsContent">
                     <div class="tips-group">
@@ -1057,7 +1223,10 @@
     <div class="app" id="app">
         <div class="sidebar">
             <div class="sidebar-header">
-                <h2>대화 뷰어</h2>
+                <div class="sidebar-header-top">
+                    <h2>대화 뷰어</h2>
+                    <button type="button" class="settings-btn" id="settingsBtn" title="설정">⚙️</button>
+                </div>
                 <div class="stats" id="stats"></div>
             </div>
 
@@ -1076,11 +1245,11 @@
 
             <div class="date-list" id="dateList"></div>
 
-            <!-- 머니버스 꿀팁 섹션 (사이드바) -->
+            <!-- 사이드바 하단 꿀팁 -->
             <div class="tips-section" id="sidebarTipsSection">
                 <button type="button" class="tips-toggle-btn" id="sidebarTipsToggle">
                     <span>💡 꿀팁</span>
-                    <span class="arrow">▼</span>
+                    <span class="arrow">▲</span>
                 </button>
                 <div class="tips-content" id="sidebarTipsContent">
                     <div class="tips-group">
@@ -1102,6 +1271,32 @@
         </div>
 
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- 설정 모달 -->
+        <div class="settings-modal" id="settingsModal">
+            <div class="settings-content">
+                <div class="settings-header">
+                    <h3>설정</h3>
+                    <button class="close-btn" id="closeSettings">✕</button>
+                </div>
+                <div class="settings-group">
+                    <label>테마</label>
+                    <div class="settings-options">
+                        <button data-theme="light" class="theme-btn">☀️ 라이트</button>
+                        <button data-theme="dark" class="theme-btn">🌙 다크</button>
+                        <button data-theme="system" class="theme-btn">💻 시스템</button>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <label>폰트</label>
+                    <div class="settings-options">
+                        <button data-font="default" class="font-btn">기본</button>
+                        <button data-font="noto" class="font-btn">본명조</button>
+                        <button data-font="neodgm" class="font-btn">Neo둥근모Pro</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="chat-area">
             <div class="scroll-markers" id="scrollMarkers"></div>
@@ -1171,6 +1366,94 @@
                 btn.nextElementSibling.classList.toggle('open');
             });
         });
+
+        // ========== 설정 (테마/폰트) ==========
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettings = document.getElementById('closeSettings');
+
+        function applyTheme(theme) {
+            if (theme === 'system') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            localStorage.setItem('theme', theme);
+        }
+
+        function applyFont(font) {
+            if (font === 'default') {
+                document.documentElement.removeAttribute('data-font');
+            } else {
+                document.documentElement.setAttribute('data-font', font);
+            }
+            localStorage.setItem('font', font);
+        }
+
+        function updateSettingsUI() {
+            const currentTheme = localStorage.getItem('theme') || 'system';
+            const currentFont = localStorage.getItem('font') || 'default';
+
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.theme === currentTheme);
+            });
+            document.querySelectorAll('.font-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.font === currentFont);
+            });
+        }
+
+        function initSettings() {
+            const savedTheme = localStorage.getItem('theme') || 'system';
+            const savedFont = localStorage.getItem('font') || 'default';
+            applyTheme(savedTheme);
+            applyFont(savedFont);
+            updateSettingsUI();
+        }
+
+        // 설정 버튼 클릭
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.add('open');
+            updateSettingsUI();
+        });
+
+        // 설정 닫기
+        closeSettings.addEventListener('click', () => {
+            settingsModal.classList.remove('open');
+        });
+
+        // 모달 배경 클릭시 닫기
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.remove('open');
+            }
+        });
+
+        // 테마 버튼 클릭
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                applyTheme(btn.dataset.theme);
+                updateSettingsUI();
+            });
+        });
+
+        // 폰트 버튼 클릭
+        document.querySelectorAll('.font-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                applyFont(btn.dataset.font);
+                updateSettingsUI();
+            });
+        });
+
+        // 시스템 테마 변경 감지
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (localStorage.getItem('theme') === 'system') {
+                applyTheme('system');
+            }
+        });
+
+        // 페이지 로드시 설정 초기화
+        initSettings();
 
         // ========== ZIP 파일 선택 ==========
         zipBtn.addEventListener('click', () => zipInput.click());

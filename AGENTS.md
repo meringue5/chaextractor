@@ -108,20 +108,58 @@
     --sidebar-transition-duration: 0.25s;
     --name-column-width: 120px;     /* 사용자 이름 열 너비 */
     --message-gap: 12px;
+
+    /* 테마 색상 변수 */
+    --bg-primary: #f5f5f5;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f8f9fa;
+    --text-primary: #333;
+    --text-secondary: #666;
+    --text-muted: #999;
+    --border-color: #e0e0e0;
+    --chat-bg: #e5ddd5;
+    --scroll-marker-bg: #f0f0f0;
+
+    /* 폰트 변수 */
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
 }
+
+/* 다크 테마 */
+[data-theme="dark"] {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #3d3d3d;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --chat-bg: #0d0d0d;
+    --scroll-marker-bg: #1a1a1a;
+}
+
+/* 폰트 선택 */
+[data-font="noto"] { --font-family: "Noto Serif KR", serif; }
+[data-font="neodgm"] { --font-family: "NeoDunggeunmo Pro", sans-serif; }
 ```
 
 ## 색상 팔레트
 
+### 라이트 테마
 | 용도 | 색상 | 코드 |
 |------|------|------|
 | Primary (버튼) | 파란색 | `#4a90d9` |
 | Primary Hover | 진한 파란색 | `#3a7bc8` |
-| 리더 배경 | 황금색 | `#fff8e1` |
-| 리더 테두리 | 금색 | `#ffd54f` |
-| 리더 텍스트 | 갈색 | `#8b6914` |
-| 사이드바 배경 | 흰색 | `#ffffff` |
-| 메시지 배경 | 밝은 회색 | `#f5f5f5` |
+| 리더 배경 | 황금 그라데이션 | `linear-gradient(135deg, #ffd700, #ffb347)` |
+| 리더 테두리 | 금색 | `#daa520` |
+| 리더 텍스트 | 어두운 금색 | `#3d3200` |
+| 대화창 배경 | 베이지 | `#e5ddd5` |
+| 메시지 버블 | 흰색 | `#ffffff` |
+
+### 다크 테마
+| 용도 | 색상 | 코드 |
+|------|------|------|
+| 배경 (primary) | 매우 어두운 회색 | `#1a1a1a` |
+| 버블 배경 | 어두운 회색 | `#2d2d2d` |
+| 대화창 배경 | 거의 검정 | `#0d0d0d` |
+| 텍스트 | 밝은 회색 | `#e0e0e0` |
 
 # 작업 지침
 * 주요 개발: 단일 HTML 파일 (index.html) - 브라우저 기반, 서버 불필요
