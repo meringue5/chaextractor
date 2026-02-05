@@ -234,3 +234,74 @@
   * 스크롤 마커로 리더 발언 위치 표시 및 빠른 이동
 * 배포: GitHub Pages 등 정적 호스팅 가능 (서버 불필요, 클라이언트 사이드 처리)
 * 사용법: index.html 더블클릭 → ZIP 파일 선택 → 자동 파싱 후 대화 보기
+
+# 테스트 절차
+
+## 브라우저 성능 테스트
+1. 브라우저에서 `index.html` 열기
+2. 개발자 도구 열기 (F12)
+3. Console 탭 선택
+4. ZIP 파일 업로드
+5. 콘솔에서 처리 시간 확인:
+   ```
+   ⏱️ ZIP 처리 시작
+   ⏱️ 첨부파일 165개 로드: 7942ms
+   ⏱️ 총 처리 시간: 12567ms
+   ```
+
+## Node.js 성능 비교 테스트
+순차 처리와 병렬 처리의 성능을 비교하는 테스트:
+
+```bash
+# 1. 의존성 설치
+npm init -y
+npm install jszip
+
+# 2. 테스트 스크립트 작성 (perf-test.js)
+# 3. 실행
+node perf-test.js
+
+# 4. 정리
+rm -rf node_modules package.json package-lock.json perf-test.js
+```
+
+### 테스트 스크립트 (perf-test.js)
+```javascript
+const JSZip = require('jszip');
+const fs = require('fs');
+
+async function testSequential(zip, entries) {
+    const start = performance.now();
+    for (const entry of entries) {
+        await zip.files[entry].async('nodebuffer');
+    }
+    return performance.now() - start;
+}
+
+async function testParallel(zip, entries) {
+    const start = performance.now();
+    await Promise.all(entries.map(e => zip.files[e].async('nodebuffer')));
+    return performance.now() - start;
+}
+```
+
+# 테스트 이력
+
+## 2026-02-05: 첨부파일 로드 성능 테스트
+* **테스트 환경**: Node.js (Windows)
+* **테스트 파일**: `Kakaotalk_Chat_[채상욱의 머니버스] 회원전용 커뮤니티_20260127_215546.zip`
+  * 파일 크기: 221MB
+  * 총 파일 수: 166개
+  * 첨부파일: 165개 (이미지, PDF)
+* **테스트 결과**:
+  | 방식 | 처리 시간 | 비고 |
+  |------|----------|------|
+  | 순차 처리 | 7,942ms | **채택** |
+  | 병렬 처리 | 10,075ms | 27% 느림 |
+* **결론**:
+  * 병렬 처리(Promise.all)가 오히려 27% 느림
+  * ZIP 내부 데이터 읽기는 CPU 바운드 작업
+  * 순차 처리 유지 + 프로그레스 바 점진적 표시
+* **적용 사항**:
+  * 첨부파일 로드: 순차 처리 유지
+  * 리더 비중 계산: 파싱 시점에 사전 계산 (leaderCountByDate)
