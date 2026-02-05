@@ -290,6 +290,7 @@
             font-weight: 500;
             cursor: pointer;
             transition: background 0.2s;
+            font-family: inherit;
         }
 
         .start-btn:disabled {
@@ -475,9 +476,15 @@
         }
 
         /* 날짜 목록 */
-        .date-list {
+        .sidebar-scroll-area {
             flex: 1;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .date-list {
+            flex: 1;
         }
 
         .date-item {
@@ -1306,10 +1313,11 @@
                 <div class="calendar-grid" id="calendarGrid"></div>
             </div>
 
-            <div class="date-list" id="dateList"></div>
+            <div class="sidebar-scroll-area">
+                <div class="date-list" id="dateList"></div>
 
-            <!-- 사이드바 하단 꿀팁 -->
-            <div class="tips-section" id="sidebarTipsSection">
+                <!-- 사이드바 하단 꿀팁 -->
+                <div class="tips-section" id="sidebarTipsSection">
                 <button type="button" class="tips-toggle-btn" id="sidebarTipsToggle">
                     <span>💡 꿀팁</span>
                     <span class="arrow">▲</span>
@@ -1330,6 +1338,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
 
@@ -2152,10 +2161,11 @@
             msgs.forEach((msg, index) => {
                 const el = document.createElement('div');
                 el.className = 'message';
+                el.dataset.index = index;
 
                 if (isLeader(msg.user)) {
                     el.classList.add('leader');
-                    leaderPositions.push(index / msgs.length);
+                    leaderPositions.push({ index, ratio: index / msgs.length });
                 }
 
                 let contentHtml = escapeHtml(msg.content);
@@ -2227,14 +2237,16 @@
 
             const container = document.getElementById('chatMessages');
 
-            positions.forEach(pos => {
+            positions.forEach(item => {
                 const marker = document.createElement('div');
                 marker.className = 'scroll-marker';
-                marker.style.top = `${pos * 100}%`;
+                marker.style.top = `${item.ratio * 100}%`;
 
                 marker.addEventListener('click', () => {
-                    const scrollHeight = container.scrollHeight - container.clientHeight;
-                    container.scrollTop = scrollHeight * pos;
+                    const targetEl = container.querySelector(`[data-index="${item.index}"]`);
+                    if (targetEl) {
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 });
 
                 markersContainer.appendChild(marker);
