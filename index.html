@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>채상욱의 머니버스 대화 뷰어</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
     <!-- JSZip CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- 웹폰트 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-pro-webfont@latest/neodgm_pro/style.css" rel="stylesheet">
     <style>
+        @font-face {
+            font-family: 'RIDIBatang';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -311,7 +317,7 @@
         }
 
         /* 폰트 클래스 */
-        [data-font="noto"] { --font-family: "Noto Serif KR", serif; }
+        [data-font="ridi"] { --font-family: "RIDIBatang", serif; }
         [data-font="neodgm"] { --font-family: "NeoDunggeunmo Pro", sans-serif; }
 
         /* 메인 앱 */
@@ -470,6 +476,12 @@
         .date-item .count {
             font-size: 13px;
             color: var(--text-secondary);
+        }
+
+        .date-item .leader-ratio {
+            font-size: 12px;
+            color: #b8860b;
+            margin-right: 6px;
         }
 
         /* 대화 영역 */
@@ -853,8 +865,8 @@
             font-size: 12px;
         }
 
-        /* 설정 버튼 */
-        .settings-btn {
+        /* 헤더 버튼 공통 */
+        .header-btn {
             width: 32px;
             height: 32px;
             border: 1px solid var(--border-color);
@@ -868,8 +880,19 @@
             transition: background 0.2s;
         }
 
-        .settings-btn:hover {
+        .header-btn:hover {
             background: var(--border-color);
+        }
+
+        .header-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 리더 필터 버튼 활성화 */
+        #leaderFilterBtn.active {
+            background: #ffd54f;
+            border-color: #ffb300;
         }
 
         /* 설정 모달 */
@@ -1134,7 +1157,8 @@
     <div class="setup-screen" id="setupScreen">
         <div class="setup-box">
             <h1>채상욱의 머니버스 대화 뷰어</h1>
-            <p class="subtitle">카카오톡 대화 내보내기 ZIP 파일을 선택하세요</p>
+            <p class="subtitle">머니버스 오픈 카톡방에서 '카카오톡 대화 내보내기'를 실행하여 받은 ZIP 파일을 읽기 좋게 정리해드립니다.<br />서버로 대화내용이 전송되지 않으며 자기가 참여한 시점부터의 대화 내용만 볼 수 있습니다.</p>
+            <p class="subtitle">문의: 무스타파</p>
             <!-- 사용 가이드 -->
             <div class="guide-section">
                 <h2>📱 Step 1: 카카오톡에서 대화 내보내기</h2>
@@ -1225,7 +1249,10 @@
             <div class="sidebar-header">
                 <div class="sidebar-header-top">
                     <h2>대화 뷰어</h2>
-                    <button type="button" class="settings-btn" id="settingsBtn" title="설정">⚙️</button>
+                    <div class="header-btns">
+                        <button type="button" class="header-btn" id="leaderFilterBtn" title="채상욱 리더 대화만 보기">👑</button>
+                        <button type="button" class="header-btn" id="settingsBtn" title="설정">⚙️</button>
+                    </div>
                 </div>
                 <div class="stats" id="stats"></div>
             </div>
@@ -1291,7 +1318,7 @@
                     <label>폰트</label>
                     <div class="settings-options">
                         <button data-font="default" class="font-btn">기본</button>
-                        <button data-font="noto" class="font-btn">본명조</button>
+                        <button data-font="ridi" class="font-btn">RIDI바탕</button>
                         <button data-font="neodgm" class="font-btn">Neo둥근모Pro</button>
                     </div>
                 </div>
@@ -1330,6 +1357,7 @@
         let dates = [];
         let currentMonth = new Date();
         let selectedDate = null;
+        let leaderFilterActive = false;
 
         // ========== 정규식 패턴 (AGENTS.md 기반) ==========
         const PATTERNS = {
@@ -1409,6 +1437,25 @@
             applyTheme(savedTheme);
             applyFont(savedFont);
             updateSettingsUI();
+        }
+
+        // 리더 필터 버튼 클릭
+        const leaderFilterBtn = document.getElementById('leaderFilterBtn');
+        leaderFilterBtn.addEventListener('click', () => {
+            leaderFilterActive = !leaderFilterActive;
+            leaderFilterBtn.classList.toggle('active', leaderFilterActive);
+            applyLeaderFilter();
+        });
+
+        function applyLeaderFilter() {
+            const messages = document.querySelectorAll('#chatMessages .message');
+            messages.forEach(msg => {
+                if (leaderFilterActive) {
+                    msg.style.display = msg.classList.contains('leader') ? '' : 'none';
+                } else {
+                    msg.style.display = '';
+                }
+            });
         }
 
         // 설정 버튼 클릭
@@ -1881,9 +1928,15 @@
                 const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
                 const displayDate = `${dateObj.getMonth() + 1}/${dateObj.getDate()} (${dayNames[dateObj.getDay()]})`;
 
+                const leaderCount = msgs.filter(m => isLeader(m.user)).length;
+                const leaderRatio = Math.round((leaderCount / msgs.length) * 100);
+
                 el.innerHTML = `
                     <span class="date">${displayDate}</span>
-                    <span class="count">${msgs.length}개</span>
+                    <span>
+                        <span class="leader-ratio">${leaderRatio}%</span>
+                        <span class="count">${msgs.length}개</span>
+                    </span>
                 `;
 
                 el.addEventListener('click', () => selectDate(date));
@@ -1998,6 +2051,11 @@
 
             container.scrollTop = 0;
             renderScrollMarkers(leaderPositions);
+
+            // 리더 필터가 활성화되어 있으면 적용
+            if (leaderFilterActive) {
+                applyLeaderFilter();
+            }
         }
 
         // ========== 스크롤 마커 렌더링 ==========

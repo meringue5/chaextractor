@@ -136,7 +136,7 @@
 }
 
 /* 폰트 선택 */
-[data-font="noto"] { --font-family: "Noto Serif KR", serif; }
+[data-font="ridi"] { --font-family: "RIDIBatang", serif; }
 [data-font="neodgm"] { --font-family: "NeoDunggeunmo Pro", sans-serif; }
 ```
 
