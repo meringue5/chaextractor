@@ -1022,12 +1022,13 @@
             }
 
             .guide-item {
-                flex: 0 0 82%;
+                flex: 0 0 auto;
                 scroll-snap-align: center;
             }
 
             .guide-item img {
-                width: 100%;
+                width: auto;
+                max-width: 80vw;
                 max-height: 340px;
                 object-fit: contain;
             }
@@ -1216,9 +1217,9 @@
                 <label><span class="icon">📦</span> 카카오톡 대화 내보내기 선택</label>
                 <!-- <p class="hint">iOS: ZIP 파일 / Android: 폴더를 선택하세요</p> -->
                 <div class="file-btn-group">
-                    <label class="file-btn" id="zipBtn">📁 ZIP 파일 from iOS</label>
+                    <label class="file-btn" id="zipBtn">📁 ZIP 파일 (iOS)</label>
                     <input type="file" id="zipInput" accept=".zip">
-                    <label class="file-btn" id="folderBtn">📂 폴더 from Andorid </label>
+                    <label class="file-btn" id="folderBtn">📂 폴더 (Andorid)</label>
                     <input type="file" id="folderInput" webkitdirectory>
                 </div>
                 <div class="file-name" id="zipName"></div>
