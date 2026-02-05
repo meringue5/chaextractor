@@ -1,11 +1,6 @@
 # Ignore everything by default
-*
+.claude/*
+tmp/*
 
 # Keep this file and the three required files
 !.gitignore
-!README.md
-!AGENTS.md
-!index.html
-!parse_kakao_chat.py
-!pyproject.toml
-!og-image.png
