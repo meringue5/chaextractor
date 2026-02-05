@@ -380,11 +380,15 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 8px;
         }
 
         .sidebar-header h2 {
             font-size: 18px;
-            margin-bottom: 4px;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .sidebar-header .stats {
@@ -874,7 +878,8 @@
 
         .header-btns {
             display: flex;
-            gap: 8px;
+            gap: 6px;
+            flex-shrink: 0;
         }
 
         /* 리더 필터 버튼 활성화 */
@@ -1267,56 +1272,6 @@
 
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <!-- 꿀팁 모달 -->
-        <div class="modal-overlay" id="tipsModal">
-            <div class="modal-box">
-                <div class="modal-header">
-                    <h3>💡 머니버스 꿀팁</h3>
-                    <button class="modal-close-btn" data-modal="tipsModal">✕</button>
-                </div>
-                <div class="tips-group">
-                    <div class="tips-group-header">🐰 춤추는 토끼 171879</div>
-                    <div class="tips-links">
-                        <a href="https://moneybus-labs.github.io/hidden-gems/" target="_blank" rel="noopener" class="tip-link-btn">머니버스 하지 마라 15계명</a>
-                        <a href="https://github.com/moneybus-labs/books/blob/main/머니버스톡.md" target="_blank" rel="noopener" class="tip-link-btn">머니버스 톡 추천 도서</a>
-                        <a href="https://github.com/moneybus-labs/books/blob/main/채부심북스.md" target="_blank" rel="noopener" class="tip-link-btn">채부심 북스 추천 도서</a>
-                    </div>
-                </div>
-                <div class="tips-group">
-                    <div class="tips-group-header">🪵 우드워커</div>
-                    <div class="tips-links">
-                        <a href="https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view" target="_blank" rel="noopener" class="tip-link-btn">액티브 ETF 구성 변화 앱</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 설정 모달 -->
-        <div class="modal-overlay" id="settingsModal">
-            <div class="modal-box">
-                <div class="modal-header">
-                    <h3>설정</h3>
-                    <button class="modal-close-btn" data-modal="settingsModal">✕</button>
-                </div>
-                <div class="settings-group">
-                    <label>테마</label>
-                    <div class="settings-options">
-                        <button data-theme="light" class="theme-btn">☀️ 라이트</button>
-                        <button data-theme="dark" class="theme-btn">🌙 다크</button>
-                        <button data-theme="system" class="theme-btn">💻 시스템</button>
-                    </div>
-                </div>
-                <div class="settings-group">
-                    <label>폰트</label>
-                    <div class="settings-options">
-                        <button data-font="default" class="font-btn">기본</button>
-                        <button data-font="ridi" class="font-btn">RIDI바탕</button>
-                        <button data-font="neodgm" class="font-btn">Neo둥근모Pro</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="chat-area">
             <div class="scroll-markers" id="scrollMarkers"></div>
             <div class="chat-header">
@@ -1330,6 +1285,56 @@
                 <div class="empty-state">
                     <div class="icon">💬</div>
                     <p>왼쪽에서 날짜를 선택하면<br>대화 내용이 표시됩니다</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 꿀팁 모달 -->
+    <div class="modal-overlay" id="tipsModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>💡 머니버스 꿀팁</h3>
+                <button class="modal-close-btn" data-modal="tipsModal">✕</button>
+            </div>
+            <div class="tips-group">
+                <div class="tips-group-header">🐰 춤추는 토끼 171879</div>
+                <div class="tips-links">
+                    <a href="https://moneybus-labs.github.io/hidden-gems/" target="_blank" rel="noopener" class="tip-link-btn">머니버스 하지 마라 15계명</a>
+                    <a href="https://github.com/moneybus-labs/books/blob/main/머니버스톡.md" target="_blank" rel="noopener" class="tip-link-btn">머니버스 톡 추천 도서</a>
+                    <a href="https://github.com/moneybus-labs/books/blob/main/채부심북스.md" target="_blank" rel="noopener" class="tip-link-btn">채부심 북스 추천 도서</a>
+                </div>
+            </div>
+            <div class="tips-group">
+                <div class="tips-group-header">🪵 우드워커</div>
+                <div class="tips-links">
+                    <a href="https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view" target="_blank" rel="noopener" class="tip-link-btn">액티브 ETF 구성 변화 앱</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 설정 모달 -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>설정</h3>
+                <button class="modal-close-btn" data-modal="settingsModal">✕</button>
+            </div>
+            <div class="settings-group">
+                <label>테마</label>
+                <div class="settings-options">
+                    <button data-theme="light" class="theme-btn">☀️ 라이트</button>
+                    <button data-theme="dark" class="theme-btn">🌙 다크</button>
+                    <button data-theme="system" class="theme-btn">💻 시스템</button>
+                </div>
+            </div>
+            <div class="settings-group">
+                <label>폰트</label>
+                <div class="settings-options">
+                    <button data-font="default" class="font-btn">기본</button>
+                    <button data-font="ridi" class="font-btn">RIDI바탕</button>
+                    <button data-font="neodgm" class="font-btn">Neo둥근모Pro</button>
                 </div>
             </div>
         </div>
