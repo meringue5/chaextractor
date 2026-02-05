@@ -716,6 +716,21 @@
             color: var(--text-muted);
         }
 
+        .attachment .loading-placeholder {
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 20px;
+            text-align: center;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
         /* 이미지 모달 */
         .modal {
             display: none;
@@ -1351,7 +1366,9 @@
         // ========== 상태 관리 ==========
         let messages = [];
         let messagesByDate = {};
-        let attachmentFiles = {};  // filename -> Blob URL
+        let attachmentFiles = {};  // filename -> Blob URL (캐시)
+        let attachmentEntries = {}; // filename -> ZIP entry path (지연 로딩용)
+        let zipInstance = null;     // ZIP 객체 참조 (지연 로딩용)
         let dates = [];
         let leaderCountByDate = {};  // 날짜별 리더 메시지 수 (사전 계산)
         let currentMonth = new Date();
@@ -1585,6 +1602,7 @@
             updateProgress(5, 'ZIP 파일 읽는 중...');
 
             const zip = await JSZip.loadAsync(file);
+            zipInstance = zip;  // 지연 로딩용으로 저장
             const entries = Object.keys(zip.files);
 
             updateProgress(10, `${entries.length}개 파일 발견`);
@@ -1607,41 +1625,26 @@
                 }
             }
 
-            updateProgress(15, '대화 파일 파싱 중...');
+            updateProgress(20, '대화 파일 파싱 중...');
 
             // 대화 파일 읽기
             const chatContent = await zip.files[chatFile].async('string');
 
-            // 첨부파일 로드 (이미지, PDF)
-            updateProgress(30, '첨부파일 로드 중...');
+            // 첨부파일 엔트리 매핑 (지연 로딩 - blob 생성 안 함)
+            updateProgress(40, '첨부파일 목록 확인 중...');
 
-            const attachmentEntries = entries.filter(name => {
+            const attachEntryList = entries.filter(name => {
                 if (zip.files[name].dir) return false;
                 const filename = name.split('/').pop();
-                const isMatch = PATTERNS.ATTACHMENT_FILENAME.test(filename);
-                return isMatch;
+                return PATTERNS.ATTACHMENT_FILENAME.test(filename);
             });
 
-            // 순차 로드 (병렬보다 빠름)
-            const attachStart = performance.now();
-            let loadedCount = 0;
-            for (const entry of attachmentEntries) {
-                try {
-                    const filename = entry.split('/').pop();
-                    const blob = await zip.files[entry].async('blob');
-                    const blobUrl = URL.createObjectURL(blob);
-                    attachmentFiles[filename] = blobUrl;
-                    loadedCount++;
-                } catch (err) {
-                    // 오류 무시
-                }
-
-                if (loadedCount % 10 === 0) {
-                    const pct = 30 + (loadedCount / attachmentEntries.length) * 30;
-                    updateProgress(pct, `첨부파일 로드 중... (${loadedCount}/${attachmentEntries.length})`);
-                }
+            // 파일명 -> ZIP 엔트리 경로 매핑
+            for (const entry of attachEntryList) {
+                const filename = entry.split('/').pop();
+                attachmentEntries[filename] = entry;
             }
-            console.log(`⏱️ 첨부파일 ${attachmentEntries.length}개 로드: ${(performance.now() - attachStart).toFixed(0)}ms`);
+            console.log(`⏱️ 첨부파일 ${attachEntryList.length}개 발견 (지연 로딩 준비)`);
 
             updateProgress(60, '대화 내용 파싱 중...');
 
@@ -1842,10 +1845,59 @@
             return { type: 'text', attachType: '', attachRef: '' };
         }
 
+        // ========== 첨부파일 지연 로딩 ==========
+        async function loadAttachment(filename) {
+            // 이미 로드된 경우 캐시에서 반환
+            if (attachmentFiles[filename]) {
+                return attachmentFiles[filename];
+            }
+
+            // ZIP에서 지연 로딩
+            const entryPath = attachmentEntries[filename];
+            if (entryPath && zipInstance) {
+                try {
+                    const blob = await zipInstance.files[entryPath].async('blob');
+                    const blobUrl = URL.createObjectURL(blob);
+                    attachmentFiles[filename] = blobUrl;  // 캐시
+                    return blobUrl;
+                } catch (err) {
+                    console.error(`첨부파일 로드 실패: ${filename}`, err);
+                }
+            }
+
+            return null;
+        }
+
+        // 첨부파일 로드 후 DOM 업데이트
+        async function loadAndRenderAttachment(elementId, filename, type, ref) {
+            const url = await loadAttachment(filename);
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            if (url) {
+                if (type === 'photo') {
+                    el.innerHTML = `<img src="${url}" onclick="showImage('${url}')" alt="사진">`;
+                } else {
+                    el.innerHTML = `<a class="file-link" href="${url}" target="_blank">📎 ${ref || filename}</a>`;
+                }
+            } else {
+                if (type === 'photo') {
+                    el.innerHTML = `<span class="no-file">📷 사진 (로드 실패)</span>`;
+                } else {
+                    el.innerHTML = `<span class="no-file">📎 ${ref || '파일'} (로드 실패)</span>`;
+                }
+            }
+        }
+
         // ========== 첨부파일 매핑 ==========
         // 타임스탬프 기반 매칭 (±30분 허용)
         function mapAttachments() {
-            const attachmentList = Object.keys(attachmentFiles).map(filename => {
+            // ZIP인 경우 attachmentEntries 사용, 폴더인 경우 attachmentFiles 사용
+            const filenameSource = Object.keys(attachmentEntries).length > 0
+                ? attachmentEntries
+                : attachmentFiles;
+
+            const attachmentList = Object.keys(filenameSource).map(filename => {
                 const match = PATTERNS.ATTACHMENT_FILENAME.exec(filename);
                 if (!match) {
                     return null;
@@ -2140,15 +2192,26 @@
                 );
 
                 let attachmentHtml = '';
+                const attachId = `attach-${index}`;
 
                 if (msg.message_type === 'photo') {
                     if (msg.attachment_path && attachmentFiles[msg.attachment_path]) {
+                        // 이미 로드됨 (캐시)
                         const url = attachmentFiles[msg.attachment_path];
                         attachmentHtml = `
                             <div class="attachment">
                                 <img src="${url}" onclick="showImage('${url}')" alt="사진">
                             </div>
                         `;
+                    } else if (msg.attachment_path && attachmentEntries[msg.attachment_path]) {
+                        // 지연 로딩 필요
+                        attachmentHtml = `
+                            <div class="attachment" id="${attachId}">
+                                <div class="loading-placeholder">📷 로딩 중...</div>
+                            </div>
+                        `;
+                        // 비동기 로드
+                        setTimeout(() => loadAndRenderAttachment(attachId, msg.attachment_path, 'photo'), 0);
                     } else {
                         attachmentHtml = `<div class="attachment"><span class="no-file">📷 사진 (파일 없음)</span></div>`;
                     }
@@ -2162,6 +2225,13 @@
                                 </a>
                             </div>
                         `;
+                    } else if (msg.attachment_path && attachmentEntries[msg.attachment_path]) {
+                        attachmentHtml = `
+                            <div class="attachment" id="${attachId}">
+                                <div class="loading-placeholder">📎 로딩 중...</div>
+                            </div>
+                        `;
+                        setTimeout(() => loadAndRenderAttachment(attachId, msg.attachment_path, 'file', msg.attachment_ref), 0);
                     } else {
                         attachmentHtml = `<div class="attachment"><span class="no-file">📎 ${msg.attachment_ref || '파일'} (파일 없음)</span></div>`;
                     }
