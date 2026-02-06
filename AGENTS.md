@@ -235,6 +235,36 @@
 * 배포: GitHub Pages 등 정적 호스팅 가능 (서버 불필요, 클라이언트 사이드 처리)
 * 사용법: index.html 더블클릭 → ZIP 파일 선택 → 자동 파싱 후 대화 보기
 
+## 2-1-1단계: UI/UX 개선 (2026-02-06)
+* **테마 기반 폰트 자동 전환** ([index.html:1501-1531](d:\workspace\chae\index.html#L1501-L1531))
+  * Light 테마 → RIDI바탕 자동 적용
+  * Dark 테마 → Neo둥근모Pro 자동 적용
+  * System 테마 → 시스템 밝기 따라 자동 전환
+  * 수동 폰트 선택 시 자동 전환 비활성화 (localStorage: `fontAutoSwitch`)
+  * 시스템 테마 변경 감지 및 자동 반영
+* **모바일 사이드바 개선** ([index.html:1123-1144](d:\workspace\chae\index.html#L1123-L1144), [2682-2703](d:\workspace\chae\index.html#L2682-L2703))
+  * 토글 버튼 위치 고정 (`position: fixed`, 스크롤 시 화면 상단에 고정)
+  * 사이드바 열림 시 배경 스크롤 차단 (`overflow: hidden`)
+  * 사이드바 닫힘 시 스크롤 복원
+  * 모바일 전용 동작 (900px 이하에서만 적용)
+* **모달 z-index 최적화** ([index.html:757](d:\workspace\chae\index.html#L757), [927](d:\workspace\chae\index.html#L927))
+  * 모든 모달을 최상위 레이어로 배치 (`z-index: 9999`)
+  * 모달이 토글 버튼 및 기타 요소보다 위에 표시
+* **날짜 정렬 개선** ([index.html:2061](d:\workspace\chae\index.html#L2061), [1710](d:\workspace\chae\index.html#L1710), [1838](d:\workspace\chae\index.html#L1838))
+  * 날짜 목록을 최신 날짜부터 표시 (내림차순)
+  * 캐시 로드 시에도 내림차순 유지 (`.reverse()` 적용)
+  * 사용자 경험 개선: 최신 대화를 먼저 확인 가능
+* **브라우저 호환성 개선**
+  * **MS Edge 특화 최적화** ([index.html:2357-2364](d:\workspace\chae\index.html#L2357-L2364))
+    - 캘린더 날짜 파싱 개선 (ISO 8601 → 수동 컴포넌트 파싱)
+    - 날짜 목록 자동 스크롤 동기화 (`scrollToDateInList()`)
+  * **Firefox 성능 최적화** ([index.html:2543](d:\workspace\chae\index.html#L2543))
+    - 스크롤 동작을 `smooth` → `auto`로 변경
+    - 즉각적인 스크롤 반응 (성능 개선)
+* **Sidebar Overlay 안정성** ([index.html:815-821](d:\workspace\chae\index.html#L815-L821))
+  * `pointer-events` 속성으로 비활성 시 클릭 차단
+  * 검은 패널 잔상 방지
+
 # 테스트 절차
 
 ## 브라우저 성능 테스트
