@@ -1261,11 +1261,11 @@
 
             <div class="setup-step" id="step1">
                 <label><span class="icon">📦</span> 내보내기 한 카카오톡 대화 선택</label>
-                <p class="hint">iOS: ZIP 파일 / Android: 폴더를 선택하세요</p>
+                <p class="hint">iOS: ZIP 파일 선택 / Android: 폴더 선택 (대화 폴더 자체를 선택하세요)</p>
                 <div class="file-btn-group">
-                    <label class="file-btn" id="zipBtn">📁 ZIP파일 🍏</label>
+                    <label class="file-btn" id="zipBtn">📁 ZIP파일 선택 🍏</label>
                     <input type="file" id="zipInput" accept=".zip">
-                    <label class="file-btn" id="folderBtn">📂 폴더 🤖</label>
+                    <label class="file-btn" id="folderBtn">📂 폴더 선택 🤖</label>
                     <input type="file" id="folderInput" webkitdirectory>
                 </div>
                 <div class="file-name" id="zipName"></div>
@@ -1707,7 +1707,7 @@
                 messages = cachedData.messages;
                 messagesByDate = cachedData.messagesByDate;
                 leaderCountByDate = cachedData.leaderCountByDate;
-                dates = cachedData.dates;
+                dates = cachedData.dates.slice().reverse(); // 최신 날짜부터 표시 (내림차순)
                 attachmentEntries = cachedData.attachmentEntries || {};
 
                 // ZIP 인스턴스는 다시 로드 필요
@@ -1835,7 +1835,7 @@
                 messages = cachedData.messages;
                 messagesByDate = cachedData.messagesByDate;
                 leaderCountByDate = cachedData.leaderCountByDate;
-                dates = cachedData.dates;
+                dates = cachedData.dates.slice().reverse(); // 최신 날짜부터 표시 (내림차순)
 
                 // 첨부파일은 다시 로드 필요 (Blob URL은 캐시 불가)
                 updateProgress(50, '첨부파일 로드 중...');
@@ -2058,7 +2058,7 @@
                 }
             }
 
-            dates = Object.keys(messagesByDate).sort();
+            dates = Object.keys(messagesByDate).sort().reverse(); // 최신 날짜부터 표시 (내림차순)
         }
 
         // ========== 메시지 내용 분류 ==========
@@ -2354,11 +2354,14 @@
                     }
                 }
 
-                // 달력을 해당 날짜의 월로 이동
-                const closestDateObj = new Date(closestDate + 'T00:00:00');
-                currentMonth = new Date(closestDateObj.getFullYear(), closestDateObj.getMonth(), 1);
+                // 달력을 해당 날짜의 월로 이동 (브라우저 호환성을 위해 수동 파싱)
+                const [year, month, day] = closestDate.split('-').map(Number);
+                currentMonth = new Date(year, month - 1, 1);
                 renderCalendar();
                 renderDateList();
+
+                // 날짜 목록도 해당 날짜로 스크롤 (선택은 하지 않음)
+                scrollToDateInList(closestDate);
             } else {
                 renderCalendar();
                 renderDateList();
@@ -2536,9 +2539,9 @@
                 if (targetIndex !== -1 && dateItems[targetIndex]) {
                     const targetElement = dateItems[targetIndex];
 
-                    // scrollIntoView로 부드럽게 스크롤
+                    // scrollIntoView로 스크롤 (instant로 성능 개선)
                     targetElement.scrollIntoView({
-                        behavior: 'smooth',
+                        behavior: 'auto',
                         block: 'start',
                         inline: 'nearest'
                     });
