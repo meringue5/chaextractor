@@ -818,6 +818,7 @@
             inset: 0;
             background: rgba(0, 0, 0, 0.35);
             z-index: 800;
+            pointer-events: none;
         }
 
         /* 꿀팁 열기 버튼 */
@@ -1103,6 +1104,7 @@
 
             .sidebar-overlay.active {
                 display: block;
+                pointer-events: auto;
             }
 
             .scroll-markers {
@@ -1124,13 +1126,14 @@
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                position: absolute;
+                position: fixed;
                 left: 0;
                 top: 50%;
                 transform: translateY(-50%);
                 border-radius: 0 10px 10px 0;
                 padding: 10px 12px;
                 box-shadow: none;
+                z-index: 1001;
             }
 
             .sidebar-toggle:active {
@@ -1496,22 +1499,35 @@
         const settingsBtn = document.getElementById('settingsBtn');
 
         function applyTheme(theme) {
+            // 시스템 테마 해석
+            let actualTheme = theme;
             if (theme === 'system') {
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-            } else {
-                document.documentElement.setAttribute('data-theme', theme);
+                actualTheme = prefersDark ? 'dark' : 'light';
             }
+
+            document.documentElement.setAttribute('data-theme', actualTheme);
             localStorage.setItem('theme', theme);
+
+            // 폰트 자동 전환이 활성화된 경우에만
+            const fontAutoSwitch = localStorage.getItem('fontAutoSwitch');
+            if (fontAutoSwitch === null || fontAutoSwitch === 'true') {
+                const autoFont = actualTheme === 'dark' ? 'neodgm' : 'ridi';
+                applyFont(autoFont, true);
+            }
         }
 
-        function applyFont(font) {
+        function applyFont(font, isAutoSwitch = false) {
             if (font === 'default') {
                 document.documentElement.removeAttribute('data-font');
             } else {
                 document.documentElement.setAttribute('data-font', font);
             }
-            localStorage.setItem('font', font);
+
+            // 자동 전환이 아닌 경우에만 localStorage 저장
+            if (!isAutoSwitch) {
+                localStorage.setItem('font', font);
+            }
         }
 
         function updateSettingsUI() {
@@ -1529,6 +1545,7 @@
         function initSettings() {
             const savedTheme = localStorage.getItem('theme') || 'system';
             let savedFont = localStorage.getItem('font') || 'neodgm';
+            const fontAutoSwitch = localStorage.getItem('fontAutoSwitch');
 
             // 'default' 값을 'neodgm'으로 마이그레이션
             if (savedFont === 'default') {
@@ -1536,8 +1553,14 @@
                 localStorage.setItem('font', 'neodgm');
             }
 
+            // 테마 먼저 적용 (내부에서 폰트 자동 전환 처리)
             applyTheme(savedTheme);
-            applyFont(savedFont);
+
+            // 자동 전환이 비활성화된 경우에만 저장된 폰트 적용
+            if (fontAutoSwitch === 'false') {
+                applyFont(savedFont, false);
+            }
+
             updateSettingsUI();
         }
 
@@ -1577,7 +1600,10 @@
         // 폰트 버튼 클릭
         document.querySelectorAll('.font-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                applyFont(btn.dataset.font);
+                // 사용자가 수동으로 폰트 변경 → 자동 전환 비활성화
+                localStorage.setItem('fontAutoSwitch', 'false');
+
+                applyFont(btn.dataset.font, false);
                 updateSettingsUI();
             });
         });
@@ -2684,6 +2710,11 @@
             sidebarOverlay.classList.add('active');
             app.classList.add('sidebar-open');
             updateSidebarToggle();
+
+            // 모바일에서만 백그라운드 스크롤 차단
+            if (window.innerWidth <= 900) {
+                document.body.style.overflow = 'hidden';
+            }
         }
 
         function closeSidebar() {
@@ -2691,6 +2722,9 @@
             sidebarOverlay.classList.remove('active');
             app.classList.remove('sidebar-open');
             updateSidebarToggle();
+
+            // 스크롤 복원
+            document.body.style.overflow = '';
         }
 
         function closeSidebarIfMobile() {
