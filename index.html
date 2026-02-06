@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-font="neodgm">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,9 +17,20 @@
     <meta name="twitter:description" content="카카오톡 오픈채팅방 대화를 날짜별로 탐색하고 검색하는 뷰어">
     <meta name="twitter:image" content="https://meringue5.github.io/chaextractor/og-image.png">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
-    <!-- 웹폰트 -->
-    <link href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-pro-webfont@latest/neodgm_pro/style.css" rel="stylesheet">
+    <!-- 웹폰트 (인라인화) -->
     <style>
+        /* Neo둥근모Pro - 인라인화 (HTTP 요청 감소) */
+        @font-face {
+            font-family: 'NeoDunggeunmo Pro';
+            font-weight: normal;
+            font-style: normal;
+            font-display: block;
+            src: url('https://cdn.jsdelivr.net/gh/neodgm/neodgm-pro-webfont@latest/neodgm_pro/neodgm_pro.woff2') format('woff2'),
+                 url('https://cdn.jsdelivr.net/gh/neodgm/neodgm-pro-webfont@latest/neodgm_pro/neodgm_pro.woff') format('woff'),
+                 url('https://cdn.jsdelivr.net/gh/neodgm/neodgm-pro-webfont@latest/neodgm_pro/neodgm_pro.ttf') format('truetype');
+        }
+
+        /* RIDIBatang */
         @font-face {
             font-family: 'RIDIBatang';
             src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff') format('woff');
@@ -1491,7 +1502,7 @@
 
         function updateSettingsUI() {
             const currentTheme = localStorage.getItem('theme') || 'system';
-            const currentFont = localStorage.getItem('font') || 'default';
+            const currentFont = localStorage.getItem('font') || 'neodgm';
 
             document.querySelectorAll('.theme-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.theme === currentTheme);
@@ -1503,7 +1514,14 @@
 
         function initSettings() {
             const savedTheme = localStorage.getItem('theme') || 'system';
-            const savedFont = localStorage.getItem('font') || 'default';
+            let savedFont = localStorage.getItem('font') || 'neodgm';
+
+            // 'default' 값을 'neodgm'으로 마이그레이션
+            if (savedFont === 'default') {
+                savedFont = 'neodgm';
+                localStorage.setItem('font', 'neodgm');
+            }
+
             applyTheme(savedTheme);
             applyFont(savedFont);
             updateSettingsUI();
