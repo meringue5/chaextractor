@@ -754,7 +754,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.9);
-            z-index: 1000;
+            z-index: 9999;
             align-items: center;
             justify-content: center;
         }
@@ -924,7 +924,7 @@
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.5);
-            z-index: 1000;
+            z-index: 9999;
             justify-content: center;
             align-items: center;
         }
@@ -1592,7 +1592,16 @@
         // 테마 버튼 클릭
         document.querySelectorAll('.theme-btn').forEach(btn => {
             btn.addEventListener('click', () => {
+                // 테마 변경 시 폰트 자동 전환 재활성화
+                localStorage.removeItem('fontAutoSwitch');
+
+                // applyTheme 호출 (내부에서 폰트 자동 전환)
                 applyTheme(btn.dataset.theme);
+
+                // 자동 전환된 폰트를 localStorage에 저장
+                const currentFont = document.documentElement.getAttribute('data-font') || 'default';
+                localStorage.setItem('font', currentFont);
+
                 updateSettingsUI();
             });
         });
@@ -2332,7 +2341,7 @@
                 `${messages.length.toLocaleString()}개 메시지 · ${users.size}명 · ${dates.length}일`;
 
             if (dates.length > 0) {
-                // 오늘 날짜와 가장 가까운 날짜 찾기
+                // 오늘 날짜와 가장 가까운 날짜로 달력 이동 (선택은 하지 않음)
                 const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
                 let closestDate = dates[0];
                 let minDiff = Math.abs(new Date(today) - new Date(dates[0]));
@@ -2345,8 +2354,11 @@
                     }
                 }
 
-                // 가장 가까운 날짜 선택 (달력과 목록 자동 업데이트)
-                selectDate(closestDate);
+                // 달력을 해당 날짜의 월로 이동
+                const closestDateObj = new Date(closestDate + 'T00:00:00');
+                currentMonth = new Date(closestDateObj.getFullYear(), closestDateObj.getMonth(), 1);
+                renderCalendar();
+                renderDateList();
             } else {
                 renderCalendar();
                 renderDateList();
