@@ -206,6 +206,37 @@
             margin-bottom: 12px;
         }
 
+        /* Android 사용 팁 스타일 */
+        .guide-step {
+            background: #f8f9fa;
+            border-left: 4px solid #4a90d9;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+
+        .guide-step h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        .guide-step code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .guide-step .note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-top: 12px;
+            color: #856404;
+        }
+
         .setup-step input[type="file"] {
             display: none;
         }
@@ -1244,6 +1275,18 @@
                     </div>
                 </div>
                 <ul class="hint"><li>iOS: 파일>나의 iPhone>카카오톡</li><li>Android: 파일>내장메모리>Documents>KakaoTalk>Chats</li></ul>
+
+                <div class="guide-step">
+                    <h3>💡 Android 사용 팁</h3>
+                    <ol>
+                        <li>"폴더" 버튼 클릭 → 파일 앱이 열림</li>
+                        <li><code>내장메모리 &gt; Documents &gt; KakaoTalk &gt; Chats &gt; [대화폴더]</code>로 이동</li>
+                        <li>우측 상단 ⋮ 메뉴 → <strong>"전체선택"</strong> 클릭</li>
+                        <li>확인 버튼 클릭하여 업로드</li>
+                    </ol>
+                    <p class="note">⚠️ 폴더 자체가 아닌 <strong>폴더 안의 파일들</strong>을 선택해야 합니다</p>
+                </div>
+
                 <h2>💻 Step 2: 백업 선택</h2>
                 <div class="guide-row">
                     <div class="guide-item">
@@ -1261,12 +1304,15 @@
 
             <div class="setup-step" id="step1">
                 <label><span class="icon">📦</span> 내보내기 한 카카오톡 대화 선택</label>
-                <p class="hint">iOS: ZIP 파일 선택 / Android: 폴더 선택 (대화 폴더 자체를 선택하세요)</p>
+                <p class="hint">
+                    <strong>iOS:</strong> ZIP 파일 선택<br>
+                    <strong>Android:</strong> KakaoTalk &gt; Chats &gt; 대화폴더 진입 → <strong>폴더 안의 모든 파일 선택</strong> (우측 상단 메뉴 → 전체선택)
+                </p>
                 <div class="file-btn-group">
                     <label class="file-btn" id="zipBtn">📁 ZIP 파일 🍏</label>
                     <input type="file" id="zipInput" accept=".zip">
                     <label class="file-btn" id="folderBtn">📂 폴더 🤖</label>
-                    <input type="file" id="folderInput" webkitdirectory>
+                    <input type="file" id="folderInput" webkitdirectory multiple accept="*/*">
                 </div>
                 <div class="file-name" id="zipName"></div>
 
@@ -1660,6 +1706,13 @@
         // ========== 폴더 선택 ==========
         folderBtn.addEventListener('click', () => folderInput.click());
         folderInput.addEventListener('change', async (e) => {
+            // 파일이 하나도 선택되지 않았을 때
+            if (e.target.files.length === 0) {
+                zipName.textContent = '⚠️ 파일을 선택하지 않았습니다. 폴더 안의 모든 파일을 선택해주세요.';
+                zipName.classList.add('error');
+                return;
+            }
+
             if (e.target.files.length > 0) {
                 const files = Array.from(e.target.files);
                 zipName.textContent = `${files.length}개 파일 선택됨`;
