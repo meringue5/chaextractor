@@ -6,9 +6,13 @@
 * 대화 내용: 'Talk_YYYY.M.D HH_mm-n.txt' 파일에 다 들어가 있다
   * 예: `Talk_2026.1.27 21_37-1.txt`
   * 월/일은 한 자리일 때 0 패딩 없음, 날짜와 시간 사이 공백
-* 사진 및 첨부파일: YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)
-  * 이미지: `20250725_200815_1.jpeg` (번호 있음)
-  * PDF: `20250922_180822.pdf` (번호 없음)
+* 사진 및 첨부파일 (플랫폼별 패턴 다름)
+  * **iOS 패턴**: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
+    - 이미지: `20250725_200815_1.jpeg` (번호 있음)
+    - PDF: `20250922_180822.pdf` (번호 없음)
+  * **Android 패턴**: `KakaoTalk_Photo_YYYY-MM-DD-HH-MM-SS[ NNN].(jpeg|jpg|png)`
+    - 이미지: `KakaoTalk_Photo_2026-02-07-18-57-46.jpeg`
+    - 번호 있음: `KakaoTalk_Photo_2026-02-07-18-30-13 001.jpeg`
 * 참고: 카카오톡 내보내기는 이미지와 PDF만 저장함
   * 대화에서 공유된 .html, .wav, .mp4, .zip, .xlsx 등은 내보내기에서 제외됨
   * 대화 내 "파일: {원본파일명}" 메시지의 파일명과 data 폴더의 실제 파일명은 다름
@@ -17,15 +21,25 @@
 ## 시스템 메시지 예시
 * 첫행부터 5행까지는 제목 행 (1행: 파일명, 2행: 저장 날짜, 3-5행: 빈 줄)
 * 각 날짜별로 "YYYY년 M월 D일 d요일" 형식의 한 줄로 내용이 시작돼.
-* "YYYY. M. D. HH:mm: {사용자 이름}님이 들어왔습니다."
-* "YYYY. M. D. HH:mm: {사용자 이름}님이 나갔습니다."
+* **iOS 패턴**:
+  - "YYYY. M. D. HH:mm: {사용자 이름}님이 들어왔습니다."
+  - "YYYY. M. D. HH:mm: {사용자 이름}님이 나갔습니다."
+* **Android 패턴**:
+  - "YYYY년 M월 D일 오전/오후 H:mm: {사용자 이름}님이 들어왔습니다."
+  - "YYYY년 M월 D일 오전/오후 H:mm: {사용자 이름}님이 나갔습니다."
 * "메시지가 삭제되었습니다."
 
-## 일반 대화
-* "YYYY. M. D. HH:mm, {사용자 이름} : {발언 내용, 긴 발언은 줄바꿈을 포함함}"
-* "YYYY. M. D. HH:mm, {사용자 이름} : 파일: {파일명}"
-* "YYYY. M. D. HH:mm, {사용자 이름} : 사진"
-* "YYYY. M. D. HH:mm, {사용자 이름} : 이모티콘"
+## 일반 대화 (플랫폼별 패턴 다름)
+* **iOS 패턴**: `YYYY. M. D. HH:mm, {사용자 이름} : {발언 내용}`
+  - 예: "2026. 1. 27. 21:37, 채상욱 리더 : 안녕하세요"
+  - 파일: "YYYY. M. D. HH:mm, {사용자 이름} : 파일: {파일명}"
+  - 사진: "YYYY. M. D. HH:mm, {사용자 이름} : 사진"
+  - 이모티콘: "YYYY. M. D. HH:mm, {사용자 이름} : 이모티콘"
+* **Android 패턴**: `YYYY년 M월 D일 오전/오후 H:mm, {사용자 이름} : {발언 내용}`
+  - 예: "2016년 2월 5일 오전 1:33, 회원님 : 공부하기"
+  - 파일: "YYYY년 M월 D일 오전/오후 H:mm, {사용자 이름} : 파일: {파일명}"
+  - 사진: "YYYY년 M월 D일 오전/오후 H:mm, {사용자 이름} : 사진"
+  - 이모티콘: "YYYY년 M월 D일 오전/오후 H:mm, {사용자 이름} : 이모티콘"
 
 # 할 일
 ## 1단계: 대화 내용 확인
@@ -335,3 +349,32 @@ async function testParallel(zip, entries) {
 * **적용 사항**:
   * 첨부파일 로드: 순차 처리 유지
   * 리더 비중 계산: 파싱 시점에 사전 계산 (leaderCountByDate)
+
+## 2-1-2단계: Android 플랫폼 지원 (2026-02-07)
+* **Android 폴더 업로드 개선**
+  * `multiple` 속성 추가: 여러 파일 동시 선택 가능
+  * `accept="*/*"` 속성 추가: 모든 파일 타입 허용
+  * 안내 문구 개선: Android 사용자를 위한 전체선택 가이드
+  * 배포: commit f514d88 (2026-02-07)
+* **Android 첨부파일 패턴 지원**
+  * iOS 패턴: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
+  * Android 패턴: `KakaoTalk_Photo_YYYY-MM-DD-HH-MM-SS[ NNN].(jpeg|jpg|png)`
+  * `parseAttachmentFilename()` 함수: 두 패턴 자동 감지 및 파싱
+  * `isAttachmentFile()` 함수: 두 패턴 필터링
+* **Android 대화 메시지 패턴 지원**
+  * iOS 패턴: `YYYY. M. D. HH:mm, 사용자 : 내용`
+  * Android 패턴: `YYYY년 M월 D일 오전/오후 H:mm, 사용자 : 내용`
+  * `MESSAGE_IOS` / `MESSAGE_ANDROID` 정규식 분리
+  * 오전/오후 → 24시간 형식 자동 변환
+  * `ENTER_LEAVE_ANDROID` 패턴: 입장/퇴장 시스템 메시지
+* **UI 버그 수정**
+  * guide-step 다크 테마 지원 (CSS 변수 사용)
+  * 리스트 불릿 위치 수정 (`padding-left` 추가)
+  * 다크 테마에서 텍스트 가독성 개선
+* **참고 자료**
+  * GitHub 프로젝트: https://github.com/uoneway/kakaotalk_msg_preprocessor
+  * Android 샘플: tests/datasets/KakaoTalk_export_file_exmple_android_kr.txt
+* **테스트 대기**
+  * 실제 Android 데이터로 최종 검증 예정
+  * Samsung Remote Test Lab 또는 지인 데이터 활용
+

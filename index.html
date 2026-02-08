@@ -208,20 +208,27 @@
 
         /* Android 사용 팁 스타일 */
         .guide-step {
-            background: #f8f9fa;
+            background: var(--bg-tertiary);
             border-left: 4px solid #4a90d9;
             padding: 16px;
+            padding-left: 24px;
             margin: 16px 0;
             border-radius: 4px;
         }
 
         .guide-step h3 {
             margin-top: 0;
-            color: #2c3e50;
+            color: var(--text-primary);
+        }
+
+        .guide-step ol {
+            padding-left: 20px;
+            margin: 8px 0;
         }
 
         .guide-step code {
-            background: #e9ecef;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             padding: 2px 6px;
             border-radius: 3px;
             font-family: 'Courier New', monospace;
@@ -229,12 +236,12 @@
         }
 
         .guide-step .note {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
             padding: 8px 12px;
             border-radius: 4px;
             margin-top: 12px;
-            color: #856404;
         }
 
         .setup-step input[type="file"] {
@@ -1454,12 +1461,62 @@
         // ========== 정규식 패턴 (AGENTS.md 기반) ==========
         const PATTERNS = {
             DATE_HEADER: /^(\d{4})년 (\d{1,2})월 (\d{1,2})일 [월화수목금토일]요일$/,
-            MESSAGE: /^(\d{4})\. (\d{1,2})\. (\d{1,2})\. (\d{2}):(\d{2}), (.+?) : (.*)$/,
+            // iOS 메시지 패턴: 2026. 1. 27. 21:37, 사용자 : 내용
+            MESSAGE_IOS: /^(\d{4})\. (\d{1,2})\. (\d{1,2})\. (\d{2}):(\d{2}), (.+?) : (.*)$/,
+            // Android 메시지 패턴: 2016년 2월 5일 오전 1:33, 사용자 : 내용
+            MESSAGE_ANDROID: /^(\d{4})년 (\d{1,2})월 (\d{1,2})일 (오전|오후) (\d{1,2}):(\d{2}), (.+?) : (.*)$/,
             // ENTER/LEAVE 통합 (성능 최적화)
             ENTER_LEAVE: /^\d{4}\. \d{1,2}\. \d{1,2}\. \d{2}:\d{2}: .+?님이 (?:들어왔습니다|나갔습니다)\.$/,
+            ENTER_LEAVE_ANDROID: /^\d{4}년 \d{1,2}월 \d{1,2}일 (오전|오후) \d{1,2}:\d{2}: .+?님이 (?:들어왔습니다|나갔습니다)\.$/,
             URL: /https?:\/\/[^\s]+/g,
-            ATTACHMENT_FILENAME: /^(\d{8})_(\d{6})(?:_\d+)?\.(jpeg|jpg|png|webp|pdf)$/i
+            // iOS 첨부파일 패턴: 20250725_200815_1.jpeg
+            ATTACHMENT_FILENAME_IOS: /^(\d{8})_(\d{6})(?:_\d+)?\.(jpeg|jpg|png|webp|pdf)$/i,
+            // Android 첨부파일 패턴: KakaoTalk_Photo_2026-02-07-18-57-46.jpeg
+            ATTACHMENT_FILENAME_ANDROID: /^KakaoTalk_Photo_(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})(?: \d{3})?\.(jpeg|jpg|png)$/i
         };
+
+        // 첨부파일 여부 확인 (iOS/Android 패턴 모두 지원)
+        function isAttachmentFile(filename) {
+            return PATTERNS.ATTACHMENT_FILENAME_IOS.test(filename) ||
+                   PATTERNS.ATTACHMENT_FILENAME_ANDROID.test(filename);
+        }
+
+        // 첨부파일 파일명 파싱 (iOS/Android 패턴 모두 지원)
+        function parseAttachmentFilename(filename) {
+            // iOS 패턴 시도
+            let match = PATTERNS.ATTACHMENT_FILENAME_IOS.exec(filename);
+            if (match) {
+                const [, dateStr, timeStr, ext] = match;
+                const dt = new Date(
+                    parseInt(dateStr.slice(0, 4)),
+                    parseInt(dateStr.slice(4, 6)) - 1,
+                    parseInt(dateStr.slice(6, 8)),
+                    parseInt(timeStr.slice(0, 2)),
+                    parseInt(timeStr.slice(2, 4)),
+                    parseInt(timeStr.slice(4, 6))
+                );
+                const type = ['jpeg', 'jpg', 'png', 'webp'].includes(ext.toLowerCase()) ? 'image' : 'pdf';
+                return { filename, datetime: dt, type, used: false };
+            }
+
+            // Android 패턴 시도
+            match = PATTERNS.ATTACHMENT_FILENAME_ANDROID.exec(filename);
+            if (match) {
+                const [, year, month, day, hour, min, sec, ext] = match;
+                const dt = new Date(
+                    parseInt(year),
+                    parseInt(month) - 1,
+                    parseInt(day),
+                    parseInt(hour),
+                    parseInt(min),
+                    parseInt(sec)
+                );
+                const type = 'image'; // Android 패턴은 항상 이미지
+                return { filename, datetime: dt, type, used: false };
+            }
+
+            return null;
+        }
 
         // 삭제 메시지는 문자열 비교로 최적화
         const DELETED_MESSAGE = '메시지가 삭제되었습니다.';
@@ -1786,28 +1843,33 @@
 
             updateProgress(10, `${entries.length}개 파일 발견`);
 
-            // 대화 파일 찾기 (Talk_*.txt 우선, 없으면 유일한 .txt)
-            let chatFile = entries.find(name =>
-                name.match(/Talk_.*\.txt$/i) && !zip.files[name].dir
+            // 대화 파일 찾기 (모든 .txt 파일 검증)
+            const allTxtFiles = entries.filter(name =>
+                name.match(/\.txt$/i) && !zip.files[name].dir
             );
 
-            if (!chatFile) {
-                const txtFiles = entries.filter(name =>
-                    name.match(/\.txt$/i) && !zip.files[name].dir
-                );
-                if (txtFiles.length === 1) {
-                    chatFile = txtFiles[0];
-                } else if (txtFiles.length === 0) {
-                    throw new Error('대화 파일(.txt)을 찾을 수 없습니다');
-                } else {
-                    throw new Error(`txt 파일이 ${txtFiles.length}개 있습니다. 어떤 파일인지 확인이 필요합니다`);
+            if (allTxtFiles.length === 0) {
+                throw new Error('대화 파일(.txt)을 찾을 수 없습니다');
+            }
+
+            updateProgress(15, `${allTxtFiles.length}개 txt 파일 검증 중...`);
+
+            // 각 txt 파일 읽고 검증
+            const validChatFiles = [];
+            for (const txtFile of allTxtFiles) {
+                const content = await zip.files[txtFile].async('string');
+                if (validateChatFile(content)) {
+                    validChatFiles.push({ name: txtFile, content });
                 }
             }
 
-            updateProgress(20, '대화 파일 파싱 중...');
+            if (validChatFiles.length === 0) {
+                throw new Error('유효한 대화 파일을 찾을 수 없습니다. txt 파일이 카카오톡 대화 형식이 아닙니다');
+            }
 
-            // 대화 파일 읽기
-            const chatContent = await zip.files[chatFile].async('string');
+            console.log(`⏱️ ${validChatFiles.length}개 유효한 대화 파일 발견`);
+
+            updateProgress(20, '대화 파일 파싱 중...');
 
             // 첨부파일 엔트리 매핑 (지연 로딩 - blob 생성 안 함)
             updateProgress(40, '첨부파일 목록 확인 중...');
@@ -1815,7 +1877,7 @@
             const attachEntryList = entries.filter(name => {
                 if (zip.files[name].dir) return false;
                 const filename = name.split('/').pop();
-                return PATTERNS.ATTACHMENT_FILENAME.test(filename);
+                return isAttachmentFile(filename);
             });
 
             // 파일명 -> ZIP 엔트리 경로 매핑
@@ -1827,8 +1889,14 @@
 
             updateProgress(60, '대화 내용 파싱 중...');
 
-            // 대화 파싱
-            parseKakaoChat(chatContent);
+            // 대화 파싱 (단일 또는 병합)
+            if (validChatFiles.length === 1) {
+                parseKakaoChat(validChatFiles[0].content);
+            } else {
+                const contents = validChatFiles.map(f => f.content);
+                parseMergedChatFiles(contents);
+                console.log(`⏱️ ${validChatFiles.length}개 파일 병합 완료, 총 ${messages.length}개 메시지`);
+            }
 
             updateProgress(90, '첨부파일 매핑 중...');
 
@@ -1861,22 +1929,37 @@
 
             updateProgress(5, '파일 분석 중...');
 
-            // 대화 파일 찾기 (Talk_*.txt 우선, 없으면 유일한 .txt)
-            let chatFile = files.find(f => f.name.match(/Talk_.*\.txt$/i));
+            // 대화 파일 찾기 (모든 .txt 파일 검증)
+            const allTxtFiles = files.filter(f => f.name.match(/\.txt$/i));
 
-            if (!chatFile) {
-                const txtFiles = files.filter(f => f.name.match(/\.txt$/i));
-                if (txtFiles.length === 1) {
-                    chatFile = txtFiles[0];
-                } else if (txtFiles.length === 0) {
-                    throw new Error('대화 파일(.txt)을 찾을 수 없습니다');
-                } else {
-                    throw new Error(`txt 파일이 ${txtFiles.length}개 있습니다. 어떤 파일인지 확인이 필요합니다`);
+            if (allTxtFiles.length === 0) {
+                throw new Error('대화 파일(.txt)을 찾을 수 없습니다');
+            }
+
+            updateProgress(7, `${allTxtFiles.length}개 txt 파일 검증 중...`);
+
+            // 각 txt 파일 읽고 검증
+            const validChatFiles = [];
+            for (const txtFile of allTxtFiles) {
+                const content = await txtFile.text();
+                if (validateChatFile(content)) {
+                    validChatFiles.push({ file: txtFile, content });
                 }
             }
 
-            // === 캐시 확인 (대화 파일 기준) ===
-            const cacheKey = generateCacheKey(chatFile.name, chatFile.size, chatFile.lastModified);
+            if (validChatFiles.length === 0) {
+                throw new Error('유효한 대화 파일을 찾을 수 없습니다. txt 파일이 카카오톡 대화 형식이 아닙니다');
+            }
+
+            console.log(`⏱️ ${validChatFiles.length}개 유효한 대화 파일 발견`);
+
+            // === 캐시 확인 (첫 번째 대화 파일 + 파일 개수 기준) ===
+            const firstFile = validChatFiles[0].file;
+            const cacheKey = generateCacheKey(
+                `${firstFile.name}_count${validChatFiles.length}`,
+                firstFile.size,
+                firstFile.lastModified
+            );
 
             updateProgress(7, '캐시 확인 중...');
             const cachedData = await getCache(cacheKey);
@@ -1893,7 +1976,7 @@
                 // 첨부파일은 다시 로드 필요 (Blob URL은 캐시 불가)
                 updateProgress(50, '첨부파일 로드 중...');
 
-                const attachmentFiles_arr = files.filter(f => PATTERNS.ATTACHMENT_FILENAME.test(f.name));
+                const attachmentFiles_arr = files.filter(f => isAttachmentFile(f.name));
 
                 let loadedCount = 0;
                 for (let i = 0; i < attachmentFiles_arr.length; i++) {
@@ -1926,12 +2009,7 @@
             updateProgress(10, `${files.length}개 파일 발견`);
 
             // 첨부파일 필터링
-            const attachmentFiles_arr = files.filter(f => PATTERNS.ATTACHMENT_FILENAME.test(f.name));
-
-            updateProgress(15, '대화 파일 읽는 중...');
-
-            // 대화 파일 읽기
-            const chatContent = await chatFile.text();
+            const attachmentFiles_arr = files.filter(f => isAttachmentFile(f.name));
 
             updateProgress(30, '첨부파일 로드 중...');
 
@@ -1956,8 +2034,14 @@
 
             updateProgress(60, '대화 내용 파싱 중...');
 
-            // 대화 파싱
-            parseKakaoChat(chatContent);
+            // 대화 파싱 (단일 또는 병합)
+            if (validChatFiles.length === 1) {
+                parseKakaoChat(validChatFiles[0].content);
+            } else {
+                const contents = validChatFiles.map(f => f.content);
+                parseMergedChatFiles(contents);
+                console.log(`⏱️ ${validChatFiles.length}개 파일 병합 완료, 총 ${messages.length}개 메시지`);
+            }
 
             updateProgress(90, '첨부파일 매핑 중...');
 
@@ -1979,6 +2063,40 @@
             console.log(`⏱️ 총 처리 시간: ${(performance.now() - startTime).toFixed(0)}ms`);
 
             cleanOldCache();
+        }
+
+        // ========== 대화 파일 검증 (카카오톡 패턴 확인) ==========
+        function validateChatFile(content) {
+            const lines = content.split('\n');
+
+            // 최소 20줄 이상이어야 함
+            if (lines.length < 20) return false;
+
+            let hasDateHeader = false;
+            let hasMessage = false;
+
+            // 처음 100줄만 검사 (성능 최적화)
+            const checkLines = Math.min(lines.length, 100);
+            for (let i = 0; i < checkLines; i++) {
+                const line = lines[i].trim();
+
+                // 날짜 헤더 체크
+                if (PATTERNS.DATE_HEADER.test(line)) {
+                    hasDateHeader = true;
+                }
+
+                // 메시지 패턴 체크 (iOS 또는 Android)
+                if (PATTERNS.MESSAGE_IOS.test(line) || PATTERNS.MESSAGE_ANDROID.test(line)) {
+                    hasMessage = true;
+                }
+
+                // 둘 다 발견되면 유효한 파일
+                if (hasDateHeader && hasMessage) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         // ========== 카카오톡 대화 파싱 (정규식 최적화) ==========
@@ -2019,21 +2137,38 @@
                         }
                     }
 
-                    // 2. 시스템 메시지 (문자열 포함 여부로 먼저 필터링)
+                    // 2. 시스템 메시지 (iOS/Android 패턴)
                     if (line.includes('님이 들어왔습니다.') || line.includes('님이 나갔습니다.')) {
-                        if (PATTERNS.ENTER_LEAVE.test(line)) {
+                        if (PATTERNS.ENTER_LEAVE.test(line) || PATTERNS.ENTER_LEAVE_ANDROID.test(line)) {
                             continue;
                         }
                     }
 
-                    // 3. 일반 메시지
+                    // 3. 일반 메시지 (iOS/Android 패턴)
                     if (line.includes(', ') && line.includes(' : ')) {
-                        const msgMatch = PATTERNS.MESSAGE.exec(line);
-                        if (msgMatch) {
-                            const [, year, month, day, hour, minute, user, content] = msgMatch;
+                        // iOS 패턴 시도
+                        let msgMatch = PATTERNS.MESSAGE_IOS.exec(line);
+                        let year, month, day, hour, minute, user, content;
 
+                        if (msgMatch) {
+                            [, year, month, day, hour, minute, user, content] = msgMatch;
+                        } else {
+                            // Android 패턴 시도
+                            msgMatch = PATTERNS.MESSAGE_ANDROID.exec(line);
+                            if (msgMatch) {
+                                [, year, month, day, , hour, minute, user, content] = msgMatch;
+                                const ampm = msgMatch[4]; // 오전/오후
+                                // 24시간 형식으로 변환
+                                let h = parseInt(hour);
+                                if (ampm === '오후' && h !== 12) h += 12;
+                                if (ampm === '오전' && h === 12) h = 0;
+                                hour = h.toString().padStart(2, '0');
+                            }
+                        }
+
+                        if (msgMatch) {
                             const dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-                            const timeStr = `${hour}:${minute}`;
+                            const timeStr = `${hour.padStart(2, '0')}:${minute}`;
                             const datetimeStr = `${dateStr} ${timeStr}`;
 
                             // 메시지 타입 분류
@@ -2112,6 +2247,43 @@
             }
 
             dates = Object.keys(messagesByDate).sort().reverse(); // 최신 날짜부터 표시 (내림차순)
+        }
+
+        // ========== 여러 대화 파일 병합 ==========
+        function parseMergedChatFiles(chatContents) {
+            const allMessages = [];
+
+            // 각 파일을 파싱하고 메시지 수집
+            for (const content of chatContents) {
+                parseKakaoChat(content);
+                allMessages.push(...messages);
+            }
+
+            // 시간순으로 정렬
+            allMessages.sort((a, b) => {
+                const dtA = new Date(a.datetime);
+                const dtB = new Date(b.datetime);
+                return dtA - dtB;
+            });
+
+            // 전역 변수 재구성
+            messages = allMessages;
+            messagesByDate = {};
+            leaderCountByDate = {};
+
+            for (const msg of messages) {
+                if (!messagesByDate[msg.date]) {
+                    messagesByDate[msg.date] = [];
+                    leaderCountByDate[msg.date] = 0;
+                }
+                messagesByDate[msg.date].push(msg);
+
+                if (msg.user === LEADER_NAME) {
+                    leaderCountByDate[msg.date]++;
+                }
+            }
+
+            dates = Object.keys(messagesByDate).sort().reverse();
         }
 
         // ========== 메시지 내용 분류 ==========
@@ -2290,25 +2462,9 @@
                 ? attachmentEntries
                 : attachmentFiles;
 
-            const attachmentList = Object.keys(filenameSource).map(filename => {
-                const match = PATTERNS.ATTACHMENT_FILENAME.exec(filename);
-                if (!match) {
-                    return null;
-                }
-
-                const [, dateStr, timeStr, ext] = match;
-                const dt = new Date(
-                    parseInt(dateStr.slice(0, 4)),
-                    parseInt(dateStr.slice(4, 6)) - 1,
-                    parseInt(dateStr.slice(6, 8)),
-                    parseInt(timeStr.slice(0, 2)),
-                    parseInt(timeStr.slice(2, 4)),
-                    parseInt(timeStr.slice(4, 6))
-                );
-
-                const type = ['jpeg', 'jpg', 'png', 'webp'].includes(ext.toLowerCase()) ? 'image' : 'pdf';
-                return { filename, datetime: dt, type, used: false };
-            }).filter(x => x);
+            const attachmentList = Object.keys(filenameSource)
+                .map(filename => parseAttachmentFilename(filename))
+                .filter(x => x);
 
             // 시간순 정렬
             attachmentList.sort((a, b) => a.datetime - b.datetime);
