@@ -283,6 +283,31 @@
             cursor: not-allowed;
         }
 
+        .drop-zone {
+            border: 2px dashed var(--border-color, #d0d0d0);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #4a90d9;
+            background: rgba(74, 144, 217, 0.08);
+        }
+
+        .drop-message {
+            color: var(--text-secondary, #888);
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .drop-or {
+            font-size: 12px;
+            color: var(--text-secondary, #aaa);
+            margin-bottom: 10px;
+        }
+
         .file-name {
             margin-top: 8px;
             font-size: 13px;
@@ -1320,16 +1345,17 @@
 
             <div class="setup-step" id="step1">
                 <label><span class="icon">📦</span> 내보내기 한 카카오톡 대화 선택</label>
-                <p class="hint">
-                    <strong>iOS:</strong> ZIP 파일 선택<br>
-                    <strong>Android:</strong> KakaoTalk &gt; Chats &gt; 대화폴더 진입 → <strong>폴더 안의 모든 파일 선택</strong> (우측 상단 메뉴 → 전체선택)
-                </p>
-                <div class="file-btn-group">
-                    <label class="file-btn" id="zipBtn">📁 ZIP 파일 🍏</label>
-                    <input type="file" id="zipInput" accept=".zip">
-                    <label class="file-btn" id="folderBtn">📂 폴더 🤖</label>
-                    <input type="file" id="folderInput" webkitdirectory multiple accept="*/*">
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-message">📥 ZIP 파일 또는 폴더를 여기에 끌어다 놓으세요</div>
+                    <div class="drop-or">또는</div>
+                    <div class="file-btn-group">
+                        <label class="file-btn" id="zipBtn">📁 ZIP 파일 🍏</label>
+                        <input type="file" id="zipInput" accept=".zip">
+                        <label class="file-btn" id="folderBtn">📂 폴더 🤖</label>
+                        <input type="file" id="folderInput" webkitdirectory multiple accept="*/*">
+                    </div>
                 </div>
+                <ul class="hint"><li><strong>iOS:</strong> ZIP 파일 선택</li><li><strong>Android:</strong> KakaoTalk &gt; Chats &gt; 대화폴더 진입 → <strong>폴더 안의 모든 파일 선택</strong> (우측 상단 메뉴 → 전체선택)</li></ul>
                 <div class="file-name" id="zipName"></div>
 
                 <div class="progress-container" id="progressContainer">
@@ -1784,6 +1810,88 @@
             }
         });
 
+        // ========== 공통 업로드 처리 헬퍼 ==========
+        async function processFilesOrFolder(files) {
+            // 단일 .zip 파일이면 ZIP 처리로 라우팅 (폴더 버튼으로 zip을 올린 경우 등)
+            if (files.length === 1 && files[0].name.toLowerCase().endsWith('.zip')) {
+                return processZipFile(files[0]);
+            }
+            return processFolderFiles(files);
+        }
+
+        async function readDirectoryEntry(dirEntry, fileList) {
+            return new Promise((resolve) => {
+                const reader = dirEntry.createReader();
+                const readBatch = () => {
+                    reader.readEntries(async (entries) => {
+                        if (entries.length === 0) { resolve(); return; }
+                        for (const entry of entries) {
+                            if (entry.isFile) {
+                                await new Promise(res => entry.file(f => { fileList.push(f); res(); }));
+                            } else if (entry.isDirectory) {
+                                await readDirectoryEntry(entry, fileList);
+                            }
+                        }
+                        readBatch();
+                    });
+                };
+                readBatch();
+            });
+        }
+
+        // ========== 드래그 앤 드롭 ==========
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        dropZone.addEventListener('dragleave', (e) => {
+            if (!dropZone.contains(e.relatedTarget)) {
+                dropZone.classList.remove('drag-over');
+            }
+        });
+        dropZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+
+            const items = Array.from(e.dataTransfer.items);
+            const files = [];
+            for (const item of items) {
+                const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
+                if (entry && entry.isDirectory) {
+                    await readDirectoryEntry(entry, files);
+                } else {
+                    const f = item.getAsFile();
+                    if (f) files.push(f);
+                }
+            }
+            if (files.length === 0) return;
+
+            zipName.textContent = `${files.length}개 파일 감지됨`;
+            zipBtn.disabled = true;
+            folderBtn.disabled = true;
+            step1.classList.add('processing');
+            progressContainer.classList.add('active');
+
+            try {
+                await processFilesOrFolder(files);
+                zipName.textContent = `✓ ${files.length}개 파일 - 처리 완료!`;
+                zipName.classList.remove('error');
+                step1.classList.remove('processing');
+                step1.classList.add('completed');
+                startBtn.disabled = false;
+                startBtn.style.display = 'inline-block';
+                document.getElementById('heroImage').style.display = 'block';
+            } catch (error) {
+                zipName.textContent = `✗ 오류: ${error.message}`;
+                zipName.classList.add('error');
+                step1.classList.remove('processing');
+                step1.classList.add('error');
+                zipBtn.disabled = false;
+                folderBtn.disabled = false;
+            }
+        });
+
         // ========== 폴더 선택 ==========
         folderBtn.addEventListener('click', () => folderInput.click());
         folderInput.addEventListener('change', async (e) => {
@@ -1803,7 +1911,8 @@
                 progressContainer.classList.add('active');
 
                 try {
-                    await processFolderFiles(files);
+                    // 교차 감지: 단일 .zip이면 ZIP 처리
+                    await processFilesOrFolder(files);
                     zipName.textContent = `✓ ${files.length}개 파일 - 처리 완료!`;
                     zipName.classList.remove('error');
                     folderBtn.classList.add('selected');
@@ -1888,7 +1997,7 @@
             }
 
             if (validChatFiles.length === 0) {
-                throw new Error('유효한 대화 파일을 찾을 수 없습니다. txt 파일이 카카오톡 대화 형식이 아닙니다');
+                throw new Error('유효한 대화 파일을 찾을 수 없습니다. 카카오톡 대화 내용 폴더를 선택하셨는지 확인해주세요');
             }
 
             console.log(`⏱️ ${validChatFiles.length}개 유효한 대화 파일 발견`);
@@ -1975,7 +2084,7 @@
             }
 
             if (validChatFiles.length === 0) {
-                throw new Error('유효한 대화 파일을 찾을 수 없습니다. txt 파일이 카카오톡 대화 형식이 아닙니다');
+                throw new Error('유효한 대화 파일을 찾을 수 없습니다. 카카오톡 대화 내용 폴더를 선택하셨는지 확인해주세요');
             }
 
             console.log(`⏱️ ${validChatFiles.length}개 유효한 대화 파일 발견`);
@@ -2106,23 +2215,30 @@
 
             let hasDateHeader = false;
             let hasMessage = false;
+            let hasAndroidMessage = false;
 
             // 처음 100줄만 검사 (성능 최적화)
             const checkLines = Math.min(lines.length, 100);
             for (let i = 0; i < checkLines; i++) {
                 const line = lines[i].trim();
 
-                // 날짜 헤더 체크
+                // 날짜 헤더 체크 (iOS 전용)
                 if (PATTERNS.DATE_HEADER.test(line)) {
                     hasDateHeader = true;
                 }
 
                 // 메시지 패턴 체크 (iOS 또는 Android)
-                if (PATTERNS.MESSAGE_IOS.test(line) || PATTERNS.MESSAGE_ANDROID.test(line)) {
+                if (PATTERNS.MESSAGE_IOS.test(line)) {
                     hasMessage = true;
                 }
+                if (PATTERNS.MESSAGE_ANDROID.test(line)) {
+                    hasAndroidMessage = true;
+                }
 
-                // 둘 다 발견되면 유효한 파일
+                // Android: 메시지만 있어도 유효 (날짜 헤더 없음)
+                if (hasAndroidMessage) return true;
+
+                // iOS: 날짜 헤더 + 메시지 둘 다 발견되면 유효한 파일
                 if (hasDateHeader && hasMessage) {
                     return true;
                 }
