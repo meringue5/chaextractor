@@ -859,9 +859,15 @@
             pointer-events: none;
         }
 
-        /* 꿀팁 열기 버튼 */
-        .tips-open-btn {
+        /* 꿀팁/제보 버튼 그룹 */
+        .setup-footer-btns {
+            display: flex;
+            gap: 10px;
             margin-top: 24px;
+        }
+
+        .tips-open-btn {
+            flex: 1;
             padding: 12px 24px;
             background: var(--bg-tertiary);
             border: 1px solid var(--border-color);
@@ -872,6 +878,9 @@
             color: var(--text-primary);
             font-family: inherit;
             transition: background 0.2s;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .tips-open-btn:hover {
@@ -1334,8 +1343,11 @@
             <img src="og-image.png" alt="머니버스 대화 뷰어" class="hero-image" id="heroImage" style="display: none;">
             <button class="start-btn" id="startBtn" disabled style="display: none;">대화 보기 시작</button>
 
-            <!-- 머니버스 꿀팁 버튼 -->
-            <button type="button" class="tips-open-btn" id="setupTipsBtn">💡 머니버스 꿀팁</button>
+            <!-- 하단 버튼 그룹 -->
+            <div class="setup-footer-btns">
+                <button type="button" class="tips-open-btn" id="setupTipsBtn">💡 머니버스 꿀팁</button>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform?usp=dialog" target="_blank" rel="noopener" class="tips-open-btn">🐛 문의/제보</a>
+            </div>
         </div>
     </div>
 
@@ -1348,6 +1360,7 @@
                     <div class="header-btns">
                         <button type="button" class="header-btn" id="tipsBtn" title="꿀팁">💡</button>
                         <button type="button" class="header-btn" id="leaderFilterBtn" title="채상욱 리더 대화만 보기">👑</button>
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform?usp=dialog" target="_blank" rel="noopener" class="header-btn" title="문의/버그 제보">🐛</a>
                         <button type="button" class="header-btn" id="settingsBtn" title="설정">⚙️</button>
                     </div>
                 </div>
