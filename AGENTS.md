@@ -3,30 +3,32 @@
 
 # 원본 파일 설명
 카카오톡 오픈채팅방에서 추출해낸 대화 내역과 첨부파일을 프로젝트 디렉토리 하위 data 폴더에 넣어두었다.
-* 대화 내용: 'Talk_YYYY.M.D HH_mm-n.txt' 파일에 다 들어가 있다
-  * 예: `Talk_2026.1.27 21_37-1.txt`
-  * 월/일은 한 자리일 때 0 패딩 없음, 날짜와 시간 사이 공백
+* 대화 내용 파일명 (플랫폼별 다름)
+  * **iOS**: `Talk_YYYY.M.D HH_mm-n.txt` (예: `Talk_2026.1.27 21_37-1.txt`)
+    - 월/일은 한 자리일 때 0 패딩 없음, 날짜와 시간 사이 공백
+  * **Android**: `KakaoTalkChats.txt` (고정 파일명!)
 * 사진 및 첨부파일 (플랫폼별 패턴 다름)
-  * **iOS 패턴**: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
+  * **iOS 첨부파일**: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
     - 이미지: `20250725_200815_1.jpeg` (번호 있음)
     - PDF: `20250922_180822.pdf` (번호 없음)
-  * **Android 패턴**: `KakaoTalk_Photo_YYYY-MM-DD-HH-MM-SS[ NNN].(jpeg|jpg|png)`
-    - 이미지: `KakaoTalk_Photo_2026-02-07-18-57-46.jpeg`
-    - 번호 있음: `KakaoTalk_Photo_2026-02-07-18-30-13 001.jpeg`
+  * **Android 첨부파일**: `{64자리 hex hash}.(jpg|jpeg|png|gif|webp)`
+    - 예: `5bb9f52bba8bbca2649ff696c703f29b5af20acf3b1913908a4614546640c28d.jpg`
+    - 파일명에 날짜/시간 정보 없음 (순수 hash)
 * 참고: 카카오톡 내보내기는 이미지와 PDF만 저장함
   * 대화에서 공유된 .html, .wav, .mp4, .zip, .xlsx 등은 내보내기에서 제외됨
-  * 대화 내 "파일: {원본파일명}" 메시지의 파일명과 data 폴더의 실제 파일명은 다름
+  * iOS: 대화 내 "파일: {원본파일명}" 메시지의 파일명과 실제 파일명 다름
+  * Android: 대화 내에 직접 파일명을 명시함 → 실제 첨부파일과 직접 매핑 가능
 
 # 대화 내용 패턴
 ## 시스템 메시지 예시
 * 첫행부터 5행까지는 제목 행 (1행: 파일명, 2행: 저장 날짜, 3-5행: 빈 줄)
-* 각 날짜별로 "YYYY년 M월 D일 d요일" 형식의 한 줄로 내용이 시작돼.
-* **iOS 패턴**:
-  - "YYYY. M. D. HH:mm: {사용자 이름}님이 들어왔습니다."
-  - "YYYY. M. D. HH:mm: {사용자 이름}님이 나갔습니다."
-* **Android 패턴**:
-  - "YYYY년 M월 D일 오전/오후 H:mm: {사용자 이름}님이 들어왔습니다."
-  - "YYYY년 M월 D일 오전/오후 H:mm: {사용자 이름}님이 나갔습니다."
+* **날짜 구분선**:
+  - iOS: `YYYY년 M월 D일 d요일` (요일 포함 별도 행)
+  - Android: 없음! (각 메시지에 날짜+시간 포함)
+  - Android에는 시간만 있는 행 존재: `YYYY년 M월 D일 오전/오후 H:mm` → 스킵 필요
+* **입장/퇴장**:
+  - iOS: "YYYY. M. D. HH:mm: {사용자 이름}님이 들어왔습니다."
+  - Android: "YYYY년 M월 D일 오전/오후 H:mm, {사용자 이름}님이 들어왔습니다."
 * "메시지가 삭제되었습니다."
 
 ## 일반 대화 (플랫폼별 패턴 다름)
@@ -36,10 +38,16 @@
   - 사진: "YYYY. M. D. HH:mm, {사용자 이름} : 사진"
   - 이모티콘: "YYYY. M. D. HH:mm, {사용자 이름} : 이모티콘"
 * **Android 패턴**: `YYYY년 M월 D일 오전/오후 H:mm, {사용자 이름} : {발언 내용}`
-  - 예: "2016년 2월 5일 오전 1:33, 회원님 : 공부하기"
-  - 파일: "YYYY년 M월 D일 오전/오후 H:mm, {사용자 이름} : 파일: {파일명}"
-  - 사진: "YYYY년 M월 D일 오전/오후 H:mm, {사용자 이름} : 사진"
+  - 예: "2026년 2월 8일 오후 3:17, 티비 보는 라이언 : 후후"
+  - 파일: "YYYY년 M월 D일 오전/오후 H:mm, {사용자 이름} : 파일: {파일명}" (URL 인코딩 가능)
+  - **사진**: "YYYY년 M월 D일 오전/오후 H:mm, {사용자 이름} : {64자리 hex}.jpg" (iOS의 '사진'과 다름!)
   - 이모티콘: "YYYY년 M월 D일 오전/오후 H:mm, {사용자 이름} : 이모티콘"
+  - **연속 사진**: 두번째부터는 파일명만 새 줄에 나열 (사용자/시간 없음):
+    ```
+    2026년 2월 8일 오후 3:18, 테스터 : f5c8fbdb...jpg
+    5bb9f52bba8...jpg
+    f92f6c1f66...jpg
+    ```
 
 # 할 일
 ## 1단계: 대화 내용 확인
@@ -350,17 +358,11 @@ async function testParallel(zip, entries) {
   * 첨부파일 로드: 순차 처리 유지
   * 리더 비중 계산: 파싱 시점에 사전 계산 (leaderCountByDate)
 
-## 2-1-2단계: Android 플랫폼 지원 (2026-02-07)
-* **Android 폴더 업로드 개선**
+## 2-1-2단계: Android 플랫폼 지원 (2026-02-07 ~ 2026-02-08)
+* **Android 폴더 업로드 개선** (commit f514d88)
   * `multiple` 속성 추가: 여러 파일 동시 선택 가능
   * `accept="*/*"` 속성 추가: 모든 파일 타입 허용
   * 안내 문구 개선: Android 사용자를 위한 전체선택 가이드
-  * 배포: commit f514d88 (2026-02-07)
-* **Android 첨부파일 패턴 지원**
-  * iOS 패턴: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
-  * Android 패턴: `KakaoTalk_Photo_YYYY-MM-DD-HH-MM-SS[ NNN].(jpeg|jpg|png)`
-  * `parseAttachmentFilename()` 함수: 두 패턴 자동 감지 및 파싱
-  * `isAttachmentFile()` 함수: 두 패턴 필터링
 * **Android 대화 메시지 패턴 지원**
   * iOS 패턴: `YYYY. M. D. HH:mm, 사용자 : 내용`
   * Android 패턴: `YYYY년 M월 D일 오전/오후 H:mm, 사용자 : 내용`
@@ -370,11 +372,13 @@ async function testParallel(zip, entries) {
 * **UI 버그 수정**
   * guide-step 다크 테마 지원 (CSS 변수 사용)
   * 리스트 불릿 위치 수정 (`padding-left` 추가)
-  * 다크 테마에서 텍스트 가독성 개선
-* **참고 자료**
-  * GitHub 프로젝트: https://github.com/uoneway/kakaotalk_msg_preprocessor
-  * Android 샘플: tests/datasets/KakaoTalk_export_file_exmple_android_kr.txt
-* **테스트 대기**
-  * 실제 Android 데이터로 최종 검증 예정
-  * Samsung Remote Test Lab 또는 지인 데이터 활용
+* **Android 실제 데이터 분석 (2026-02-08)**: 샘플 `tmp/android/` 확보
+  * 대화 파일명: `KakaoTalkChats.txt` (고정, iOS와 다름!)
+  * 첨부파일명: **64자리 hex hash** (기존에 잘못 추정한 `KakaoTalk_Photo_...` 아님)
+  * 사진 참조: 대화 내에 hash 파일명 직접 명시 (iOS의 '사진' 텍스트와 다름)
+  * 연속 사진: 두번째부터 파일명만 줄바꿈으로 나열
+  * Android 날짜 구분선: `YYYY년 M월 D일 오전/오후 H:mm` (요일 없는 시간만 있는 줄)
+  * 플랫폼 감지: txt 파일명 우선, 보조로 첨부파일명 패턴 사용
+  * `detectedPlatform` 전역 변수로 처리 분기
+  * 첨부파일 매핑: iOS=날짜 기반 탐색, Android=attachment_ref로 직접 매핑
 

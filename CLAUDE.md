@@ -25,28 +25,26 @@ AGENTS.md에는 다음 중요한 내용이 포함되어 있습니다:
 4. **리더 하이라이트 기능 유지**: 채상욱 리더 발언을 황금색으로 강조
 5. **플랫폼 호환성**: iOS/Android 파일 패턴 및 대화 패턴 모두 지원
 
-## 최근 업데이트 (2026-02-07)
+## 최근 업데이트 (2026-02-07~08)
 
 ### Android 지원 추가
 1. **폴더 업로드 개선**:
-   - `multiple` 속성 추가 → 여러 파일 선택 가능
-   - `accept="*/*"` 속성 추가 → 모든 파일 타입 허용
-   - 안내 문구 개선 (Android 전체선택 가이드)
+   - `multiple`, `accept="*/*"` 속성 추가 → 여러 파일 선택 가능
 
-2. **Android 첨부파일 패턴 지원**:
-   - iOS: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
-   - Android: `KakaoTalk_Photo_YYYY-MM-DD-HH-MM-SS[ NNN].(jpeg|jpg|png)`
-   - `parseAttachmentFilename()` 함수로 자동 감지
-
-3. **Android 대화 메시지 패턴 지원**:
+2. **Android 대화 메시지 패턴 지원**:
    - iOS: `YYYY. M. D. HH:mm, 사용자 : 내용`
    - Android: `YYYY년 M월 D일 오전/오후 H:mm, 사용자 : 내용`
    - 오전/오후 → 24시간 형식 자동 변환
-   - 입장/퇴장 시스템 메시지도 Android 패턴 지원
+
+3. **Android 실제 첨부파일 패턴 확인 (2026-02-08)**:
+   - Android 대화 파일명: `KakaoTalkChats.txt` (고정)
+   - Android 첨부파일명: **64자리 hex hash** (예: `5bb9f52b...c28d.jpg`)
+   - 사진 참조: iOS `사진` 텍스트 대신 hash 파일명 직접 명시
+   - 연속 사진: 두번째부터 파일명만 줄바꿈으로 나열
+   - 플랫폼 감지: txt 파일명 → 첨부파일명 순서로 자동 감지
 
 4. **UI 개선**:
    - guide-step 다크 테마 지원
-   - 리스트 불릿 위치 수정
 
 ## 상세 정보
 **모든 상세 정보는 AGENTS.md를 참고하세요.**

@@ -1461,6 +1461,8 @@
         // ========== 정규식 패턴 (AGENTS.md 기반) ==========
         const PATTERNS = {
             DATE_HEADER: /^(\d{4})년 (\d{1,2})월 (\d{1,2})일 [월화수목금토일]요일$/,
+            // Android 날짜 구분선: 2026년 2월 8일 오후 3:17 (사용자/내용 없음)
+            DATE_HEADER_ANDROID: /^(\d{4})년 (\d{1,2})월 (\d{1,2})일 (오전|오후) \d{1,2}:\d{2}$/,
             // iOS 메시지 패턴: 2026. 1. 27. 21:37, 사용자 : 내용
             MESSAGE_IOS: /^(\d{4})\. (\d{1,2})\. (\d{1,2})\. (\d{2}):(\d{2}), (.+?) : (.*)$/,
             // Android 메시지 패턴: 2016년 2월 5일 오전 1:33, 사용자 : 내용
@@ -1471,8 +1473,8 @@
             URL: /https?:\/\/[^\s]+/g,
             // iOS 첨부파일 패턴: 20250725_200815_1.jpeg
             ATTACHMENT_FILENAME_IOS: /^(\d{8})_(\d{6})(?:_\d+)?\.(jpeg|jpg|png|webp|pdf)$/i,
-            // Android 첨부파일 패턴: KakaoTalk_Photo_2026-02-07-18-57-46.jpeg
-            ATTACHMENT_FILENAME_ANDROID: /^KakaoTalk_Photo_(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})(?: \d{3})?\.(jpeg|jpg|png)$/i
+            // Android 첨부파일 패턴: 64자리 hex hash
+            ATTACHMENT_FILENAME_ANDROID: /^[0-9a-f]{64}\.(jpg|jpeg|png|gif|webp)$/i
         };
 
         // 첨부파일 여부 확인 (iOS/Android 패턴 모두 지원)
@@ -1499,23 +1501,32 @@
                 return { filename, datetime: dt, type, used: false };
             }
 
-            // Android 패턴 시도
+            // Android 패턴 시도 (64자리 hex hash - 날짜 정보 없음)
             match = PATTERNS.ATTACHMENT_FILENAME_ANDROID.exec(filename);
             if (match) {
-                const [, year, month, day, hour, min, sec, ext] = match;
-                const dt = new Date(
-                    parseInt(year),
-                    parseInt(month) - 1,
-                    parseInt(day),
-                    parseInt(hour),
-                    parseInt(min),
-                    parseInt(sec)
-                );
-                const type = 'image'; // Android 패턴은 항상 이미지
-                return { filename, datetime: dt, type, used: false };
+                return { filename, datetime: null, type: 'image', used: false };
             }
 
             return null;
+        }
+
+        // ========== 플랫폼 감지 ==========
+        let detectedPlatform = 'ios'; // 'ios' | 'android'
+
+        function detectPlatform(txtFilenames, attachFilenames) {
+            // txt 파일명으로 우선 감지
+            for (const name of txtFilenames) {
+                const base = name.split('/').pop();
+                if (/Talk_.*\.txt$/i.test(base)) return 'ios';
+                if (/KakaoTalkChats\.txt$/i.test(base)) return 'android';
+            }
+            // 첨부파일명으로 보조 감지
+            for (const name of attachFilenames) {
+                const base = name.split('/').pop();
+                if (PATTERNS.ATTACHMENT_FILENAME_IOS.test(base)) return 'ios';
+                if (PATTERNS.ATTACHMENT_FILENAME_ANDROID.test(base)) return 'android';
+            }
+            return 'ios'; // 기본값: iOS (기존 동작 유지)
         }
 
         // 삭제 메시지는 문자열 비교로 최적화
@@ -1869,10 +1880,8 @@
 
             console.log(`⏱️ ${validChatFiles.length}개 유효한 대화 파일 발견`);
 
-            updateProgress(20, '대화 파일 파싱 중...');
-
             // 첨부파일 엔트리 매핑 (지연 로딩 - blob 생성 안 함)
-            updateProgress(40, '첨부파일 목록 확인 중...');
+            updateProgress(30, '첨부파일 목록 확인 중...');
 
             const attachEntryList = entries.filter(name => {
                 if (zip.files[name].dir) return false;
@@ -1886,6 +1895,11 @@
                 attachmentEntries[filename] = entry;
             }
             console.log(`⏱️ 첨부파일 ${attachEntryList.length}개 발견 (지연 로딩 준비)`);
+
+            // 플랫폼 감지 (txt 파일명 + 첨부파일명 기반)
+            const attachFilenames = attachEntryList.map(e => e.split('/').pop());
+            detectedPlatform = detectPlatform(allTxtFiles, attachFilenames);
+            console.log(`플랫폼 감지: ${detectedPlatform}`);
 
             updateProgress(60, '대화 내용 파싱 중...');
 
@@ -1952,6 +1966,11 @@
             }
 
             console.log(`⏱️ ${validChatFiles.length}개 유효한 대화 파일 발견`);
+
+            // 플랫폼 감지 (txt 파일명 + 첨부파일명 기반)
+            const attachFilenames = files.filter(f => isAttachmentFile(f.name)).map(f => f.name);
+            detectedPlatform = detectPlatform(allTxtFiles.map(f => f.name), attachFilenames);
+            console.log(`플랫폼 감지: ${detectedPlatform}`);
 
             // === 캐시 확인 (첫 번째 대화 파일 + 파일 개수 기준) ===
             const firstFile = validChatFiles[0].file;
@@ -2135,6 +2154,10 @@
                             currentDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
                             continue;
                         }
+                        // Android 날짜 구분선: 시간만 있는 행 (사용자/내용 없음)
+                        if (!line.includes(', ') && PATTERNS.DATE_HEADER_ANDROID.test(line)) {
+                            continue;
+                        }
                     }
 
                     // 2. 시스템 메시지 (iOS/Android 패턴)
@@ -2236,8 +2259,32 @@
                     // 삭제 메시지 (문자열 정확 비교 - 정규식보다 10배 빠름)
                     continue;
                 } else {
-                    // 기타 - 이전 메시지 연속
-                    if (lastMessage && lastMessage.message_type === 'text') {
+                    // Android 연속 사진: 파일명만 있는 줄 (사용자/시간 없음)
+                    const stripped = line.trim();
+                    if (PATTERNS.ATTACHMENT_FILENAME_ANDROID.test(stripped) && lastMessage) {
+                        const msg = {
+                            datetime: lastMessage.datetime,
+                            date: lastMessage.date,
+                            time: lastMessage.time,
+                            user: lastMessage.user,
+                            message_type: 'photo',
+                            content: stripped,
+                            has_attachment: true,
+                            attachment_type: 'photo',
+                            attachment_ref: stripped,
+                            attachment_path: '',
+                            has_link: false
+                        };
+                        messages.push(msg);
+                        if (!messagesByDate[msg.date]) {
+                            messagesByDate[msg.date] = [];
+                            leaderCountByDate[msg.date] = 0;
+                        }
+                        messagesByDate[msg.date].push(msg);
+                        if (msg.user === LEADER_NAME) leaderCountByDate[msg.date]++;
+                        lastMessage = msg;
+                    } else if (lastMessage && lastMessage.message_type === 'text') {
+                        // 기타 - 이전 메시지 연속
                         lastMessage.content += '\n' + line;
                         if (PATTERNS.URL.test(line)) {
                             lastMessage.has_link = true;
@@ -2297,6 +2344,9 @@
             } else if (stripped.startsWith('파일: ')) {
                 const filename = stripped.slice(4).trim();
                 return { type: 'file', attachType: 'file', attachRef: filename };
+            } else if (PATTERNS.ATTACHMENT_FILENAME_ANDROID.test(stripped)) {
+                // Android: 내용이 직접 hash 파일명
+                return { type: 'photo', attachType: 'photo', attachRef: stripped };
             }
 
             return { type: 'text', attachType: '', attachRef: '' };
@@ -2462,38 +2512,44 @@
                 ? attachmentEntries
                 : attachmentFiles;
 
-            const attachmentList = Object.keys(filenameSource)
-                .map(filename => parseAttachmentFilename(filename))
-                .filter(x => x);
-
-            // 시간순 정렬
-            attachmentList.sort((a, b) => a.datetime - b.datetime);
-
-            // 첨부파일 날짜 범위 확인
-            if (attachmentList.length > 0) {
-                const firstDate = attachmentList[0].datetime.toISOString().slice(0, 10);
-                const lastDate = attachmentList[attachmentList.length - 1].datetime.toISOString().slice(0, 10);
-            }
-
-            // 메시지와 매핑
             let matchedCount = 0;
 
-            for (const msg of messages) {
-                if (msg.message_type === 'photo') {
-                    const msgDt = parseDateTime(msg.datetime);
-                    const match = findClosestAttachment(attachmentList, msgDt, 'image', 30);
-                    if (match) {
-                        msg.attachment_path = match.filename;
-                        match.used = true;
-                        matchedCount++;
+            if (detectedPlatform === 'android') {
+                // Android: attachment_ref가 직접 파일명 → 직접 매핑
+                for (const msg of messages) {
+                    if (msg.attachment_ref) {
+                        if (filenameSource[msg.attachment_ref]) {
+                            msg.attachment_path = msg.attachment_ref;
+                            matchedCount++;
+                        }
                     }
-                } else if (msg.message_type === 'file' && msg.attachment_ref.toLowerCase().endsWith('.pdf')) {
-                    const msgDt = parseDateTime(msg.datetime);
-                    const match = findClosestAttachment(attachmentList, msgDt, 'pdf', 30);
-                    if (match) {
-                        msg.attachment_path = match.filename;
-                        match.used = true;
-                        matchedCount++;
+                }
+            } else {
+                // iOS: 날짜 기반 탐색
+                const attachmentList = Object.keys(filenameSource)
+                    .map(filename => parseAttachmentFilename(filename))
+                    .filter(x => x && x.datetime); // datetime이 있는 파일만 (iOS 패턴)
+
+                // 시간순 정렬
+                attachmentList.sort((a, b) => a.datetime - b.datetime);
+
+                for (const msg of messages) {
+                    if (msg.message_type === 'photo') {
+                        const msgDt = parseDateTime(msg.datetime);
+                        const match = findClosestAttachment(attachmentList, msgDt, 'image', 30);
+                        if (match) {
+                            msg.attachment_path = match.filename;
+                            match.used = true;
+                            matchedCount++;
+                        }
+                    } else if (msg.message_type === 'file' && msg.attachment_ref.toLowerCase().endsWith('.pdf')) {
+                        const msgDt = parseDateTime(msg.datetime);
+                        const match = findClosestAttachment(attachmentList, msgDt, 'pdf', 30);
+                        if (match) {
+                            msg.attachment_path = match.filename;
+                            match.used = true;
+                            matchedCount++;
+                        }
                     }
                 }
             }
