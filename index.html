@@ -1488,23 +1488,63 @@
         let leaderFilterActive = false;
 
         // ========== 정규식 패턴 (AGENTS.md 기반) ==========
+        // 여러 언어/버전을 지원하기 위한 패턴 배열
         const PATTERNS = {
-            DATE_HEADER: /^(\d{4})년 (\d{1,2})월 (\d{1,2})일 [월화수목금토일]요일$/,
+            // iOS 날짜 헤더 (여러 변형 지원)
+            DATE_HEADER: [
+                // 한국어: "2024년 1월 27일 월요일" 또는 "------------------ 2024년 1월 27일 월요일 ------------------"
+                /^-*\s*(\d{4})년 (\d{1,2})월 (\d{1,2})일 [월화수목금토일]요일\s*-*$/,
+                // TODO: 영어, 일본어 등 다른 언어 패턴 추가 예정
+            ],
             // Android 날짜 구분선: 2026년 2월 8일 오후 3:17 (사용자/내용 없음)
-            DATE_HEADER_ANDROID: /^(\d{4})년 (\d{1,2})월 (\d{1,2})일 (오전|오후) \d{1,2}:\d{2}$/,
-            // iOS 메시지 패턴: 2026. 1. 27. 21:37, 사용자 : 내용
-            MESSAGE_IOS: /^(\d{4})\. (\d{1,2})\. (\d{1,2})\. (\d{2}):(\d{2}), (.+?) : (.*)$/,
+            DATE_HEADER_ANDROID: [
+                /^(\d{4})년 (\d{1,2})월 (\d{1,2})일 (오전|오후) \d{1,2}:\d{2}$/,
+            ],
+            // iOS 메시지 패턴 (여러 변형 지원)
+            MESSAGE_IOS: [
+                // 24시간 형식: 2026. 1. 27. 21:37, 사용자 : 내용 (초 선택적)
+                /^(\d{4})\. (\d{1,2})\. (\d{1,2})\. (\d{2}):(\d{2})(?::(\d{2}))?, (.+?) : (.*)$/,
+                // 12시간 형식: 2025. 9. 15. 오후 10:48, 사용자 : 내용 (초 선택적)
+                /^(\d{4})\. (\d{1,2})\. (\d{1,2})\. (오전|오후) (\d{1,2}):(\d{2})(?::(\d{2}))?, (.+?) : (.*)$/,
+                // TODO: 영어, 일본어 등 다른 언어 패턴 추가 예정
+            ],
             // Android 메시지 패턴: 2016년 2월 5일 오전 1:33, 사용자 : 내용
-            MESSAGE_ANDROID: /^(\d{4})년 (\d{1,2})월 (\d{1,2})일 (오전|오후) (\d{1,2}):(\d{2}), (.+?) : (.*)$/,
-            // ENTER/LEAVE 통합 (성능 최적화)
-            ENTER_LEAVE: /^\d{4}\. \d{1,2}\. \d{1,2}\. \d{2}:\d{2}: .+?님이 (?:들어왔습니다|나갔습니다)\.$/,
-            ENTER_LEAVE_ANDROID: /^\d{4}년 \d{1,2}월 \d{1,2}일 (오전|오후) \d{1,2}:\d{2}: .+?님이 (?:들어왔습니다|나갔습니다)\.$/,
+            MESSAGE_ANDROID: [
+                /^(\d{4})년 (\d{1,2})월 (\d{1,2})일 (오전|오후) (\d{1,2}):(\d{2}), (.+?) : (.*)$/,
+            ],
+            // ENTER/LEAVE 통합 (성능 최적화) - 초 선택적
+            ENTER_LEAVE: [
+                // 24시간 형식
+                /^\d{4}\. \d{1,2}\. \d{1,2}\. \d{2}:\d{2}(?::\d{2})?: .+?님이 (?:들어왔습니다|나갔습니다)\.$/,
+                // 12시간 형식 (오전/오후)
+                /^\d{4}\. \d{1,2}\. \d{1,2}\. (오전|오후) \d{1,2}:\d{2}(?::\d{2})?: .+?님이 (?:들어왔습니다|나갔습니다)\.$/,
+            ],
+            ENTER_LEAVE_ANDROID: [
+                /^\d{4}년 \d{1,2}월 \d{1,2}일 (오전|오후) \d{1,2}:\d{2}: .+?님이 (?:들어왔습니다|나갔습니다)\.$/,
+            ],
             URL: /https?:\/\/[^\s]+/g,
             // iOS 첨부파일 패턴: 20250725_200815_1.jpeg
             ATTACHMENT_FILENAME_IOS: /^(\d{8})_(\d{6})(?:_\d+)?\.(jpeg|jpg|png|webp|pdf)$/i,
             // Android 첨부파일 패턴: 64자리 hex hash
             ATTACHMENT_FILENAME_ANDROID: /^[0-9a-f]{64}\.(jpg|jpeg|png|gif|webp)$/i
         };
+
+        // 패턴 배열을 순차적으로 테스트하는 헬퍼 함수
+        function testPatternArray(line, patternArray) {
+            for (const pattern of patternArray) {
+                if (pattern.test(line)) return true;
+            }
+            return false;
+        }
+
+        // 패턴 배열을 순차적으로 실행하여 매칭되는 첫 번째 결과 반환
+        function execPatternArray(line, patternArray) {
+            for (const pattern of patternArray) {
+                const match = pattern.exec(line);
+                if (match) return match;
+            }
+            return null;
+        }
 
         // 첨부파일 여부 확인 (iOS/Android 패턴 모두 지원)
         function isAttachmentFile(filename) {
@@ -2201,7 +2241,10 @@
             const lines = content.split('\n');
 
             // 최소 20줄 이상이어야 함
-            if (lines.length < 20) return false;
+            if (lines.length < 20) {
+                console.log('⚠️ 파일 검증 실패: 20줄 미만 (실제: ' + lines.length + '줄)');
+                return false;
+            }
 
             let hasDateHeader = false;
             let hasMessage = false;
@@ -2212,27 +2255,41 @@
             for (let i = 0; i < checkLines; i++) {
                 const line = lines[i].trim();
 
-                // 날짜 헤더 체크 (iOS 전용)
-                if (PATTERNS.DATE_HEADER.test(line)) {
+                // 날짜 헤더 체크 (iOS 전용) - 배열의 모든 패턴 시도
+                if (testPatternArray(line, PATTERNS.DATE_HEADER)) {
                     hasDateHeader = true;
+                    console.log('✅ iOS 날짜 헤더 발견:', line);
                 }
 
-                // 메시지 패턴 체크 (iOS 또는 Android)
-                if (PATTERNS.MESSAGE_IOS.test(line)) {
+                // 메시지 패턴 체크 (iOS 또는 Android) - 배열의 모든 패턴 시도
+                if (testPatternArray(line, PATTERNS.MESSAGE_IOS)) {
                     hasMessage = true;
+                    console.log('✅ iOS 메시지 패턴 발견:', line.substring(0, 100));
                 }
-                if (PATTERNS.MESSAGE_ANDROID.test(line)) {
+                if (testPatternArray(line, PATTERNS.MESSAGE_ANDROID)) {
                     hasAndroidMessage = true;
+                    console.log('✅ Android 메시지 패턴 발견:', line.substring(0, 100));
                 }
 
                 // Android: 메시지만 있어도 유효 (날짜 헤더 없음)
-                if (hasAndroidMessage) return true;
+                if (hasAndroidMessage) {
+                    console.log('✅ 유효한 Android 대화 파일로 확인됨');
+                    return true;
+                }
 
                 // iOS: 날짜 헤더 + 메시지 둘 다 발견되면 유효한 파일
                 if (hasDateHeader && hasMessage) {
+                    console.log('✅ 유효한 iOS 대화 파일로 확인됨');
                     return true;
                 }
             }
+
+            // 디버그: 파일의 처음 5줄 출력
+            console.log('⚠️ 파일 검증 실패 - 처음 5줄:');
+            for (let i = 0; i < Math.min(5, lines.length); i++) {
+                console.log(`  줄 ${i + 1}: ${lines[i]}`);
+            }
+            console.log(`hasDateHeader: ${hasDateHeader}, hasMessage: ${hasMessage}, hasAndroidMessage: ${hasAndroidMessage}`);
 
             return false;
         }
@@ -2267,21 +2324,21 @@
                 if (firstChar >= '0' && firstChar <= '9') {
                     // 1. 날짜 헤더 ("2024년...")
                     if (line.includes('년 ')) {
-                        const dateMatch = PATTERNS.DATE_HEADER.exec(line);
+                        const dateMatch = execPatternArray(line, PATTERNS.DATE_HEADER);
                         if (dateMatch) {
                             const [, year, month, day] = dateMatch;
                             currentDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
                             continue;
                         }
                         // Android 날짜 구분선: 시간만 있는 행 (사용자/내용 없음)
-                        if (!line.includes(', ') && PATTERNS.DATE_HEADER_ANDROID.test(line)) {
+                        if (!line.includes(', ') && testPatternArray(line, PATTERNS.DATE_HEADER_ANDROID)) {
                             continue;
                         }
                     }
 
                     // 2. 시스템 메시지 (iOS/Android 패턴)
                     if (line.includes('님이 들어왔습니다.') || line.includes('님이 나갔습니다.')) {
-                        if (PATTERNS.ENTER_LEAVE.test(line) || PATTERNS.ENTER_LEAVE_ANDROID.test(line)) {
+                        if (testPatternArray(line, PATTERNS.ENTER_LEAVE) || testPatternArray(line, PATTERNS.ENTER_LEAVE_ANDROID)) {
                             continue;
                         }
                     }
@@ -2289,14 +2346,27 @@
                     // 3. 일반 메시지 (iOS/Android 패턴)
                     if (line.includes(', ') && line.includes(' : ')) {
                         // iOS 패턴 시도
-                        let msgMatch = PATTERNS.MESSAGE_IOS.exec(line);
+                        let msgMatch = execPatternArray(line, PATTERNS.MESSAGE_IOS);
                         let year, month, day, hour, minute, user, content;
 
                         if (msgMatch) {
-                            [, year, month, day, hour, minute, user, content] = msgMatch;
+                            // iOS 패턴 구분: 24시간 vs 12시간 형식
+                            if (msgMatch[4] === '오전' || msgMatch[4] === '오후') {
+                                // 12시간 형식: year, month, day, ampm, hour, minute, second(선택적), user, content
+                                const ampm = msgMatch[4];
+                                [, year, month, day, , hour, minute, , user, content] = msgMatch;
+                                // 24시간 형식으로 변환
+                                let h = parseInt(hour);
+                                if (ampm === '오후' && h !== 12) h += 12;
+                                if (ampm === '오전' && h === 12) h = 0;
+                                hour = h.toString();
+                            } else {
+                                // 24시간 형식: year, month, day, hour, minute, second(선택적), user, content
+                                [, year, month, day, hour, minute, , user, content] = msgMatch;
+                            }
                         } else {
                             // Android 패턴 시도
-                            msgMatch = PATTERNS.MESSAGE_ANDROID.exec(line);
+                            msgMatch = execPatternArray(line, PATTERNS.MESSAGE_ANDROID);
                             if (msgMatch) {
                                 [, year, month, day, , hour, minute, user, content] = msgMatch;
                                 const ampm = msgMatch[4]; // 오전/오후
