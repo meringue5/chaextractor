@@ -1,4 +1,5 @@
 # Ignore everything by default
+.DS_Store
 .claude/*
 tmp/*
 
