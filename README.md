@@ -1,102 +1,76 @@
-# 채상욱의 머니버스 대화 분석
+# 채상욱의 머니버스 대화 뷰어
 
-카카오톡 오픈채팅방 대화 내역에서 중요한 레슨과 인사이트를 추출하는 프로젝트입니다.
+카카오톡 오픈채팅방 대화 내역을 브라우저에서 바로 보는 뷰어입니다.
+서버 업로드 없이 클라이언트에서만 처리하므로 개인정보가 외부로 전송되지 않습니다.
+
+**배포**: <https://meringue5.github.io/chaextractor/>
 
 ## 사용법
 
 ### Step 1: 카카오톡에서 대화 내보내기
-1. 설정 메뉴 진입: 오픈채팅방에서 설정 메뉴(⚙️)로 들어갑니다
-2. 대화내용 내보내기: 대화내용 내보내기 선택
-3. 모든 메시지 저장: 모든 메시지 저장하기 선택
-4. PC로 전송: 폰에 저장된 압축파일을 PC로 전송
+
+1. 오픈채팅방에서 설정 메뉴(⚙️)로 들어갑니다
+2. 대화내용 내보내기를 선택합니다
+3. 모든 메시지 저장하기를 선택합니다
+4. 저장된 파일을 PC로 전송합니다
 
 ### Step 2: 뷰어에서 대화 보기
-5. 압축파일 선택: 백업한 대화 내용 파일/폴더를 선택합니다
-6. 날짜 선택하여 복기: 분석이 끝나면 날짜를 선택하여 대화를 복기합니다
+
+1. **iOS**: ZIP 파일을 선택합니다
+2. **Android**: 폴더를 선택하거나, 압축 해제 후 파일을 전체 선택합니다
+3. 분석이 완료되면 날짜를 선택하여 대화를 복기합니다
 
 ## 주요 기능
 
-- **ZIP 직접 처리**: Python 설치 없이 브라우저에서 바로 분석
-- **월별 캘린더**: 날짜별 대화 탐색
-- **날짜 정렬**: 최신 날짜부터 표시 (내림차순)
+- **브라우저 내 처리**: Python 등 별도 설치 없이 브라우저에서 바로 분석
+- **iOS / Android 지원**: 두 플랫폼의 내보내기 형식 모두 파싱
+- **월별 캘린더**: 날짜별 대화 탐색, 최신 날짜부터 표시
 - **메시지 검색**: 키워드로 대화 찾기
-- **사진/PDF 보기**: 첨부파일 확대 및 다운로드
-- **리더 하이라이트**: 채상욱 리더 발언을 황금색으로 강조
-- **스크롤 마커**: 리더 발언 위치로 빠르게 이동
-- **테마 기반 폰트 자동 전환**:
-  - Light 테마 → RIDI바탕 자동 적용
-  - Dark 테마 → Neo둥근모Pro 자동 적용
-  - System 테마 → 시스템 밝기 따라 자동 전환
-  - 수동 폰트 선택 시 자동 전환 비활성화
-- **모바일 반응형**: 스마트폰에서도 편리하게 사용 가능
-  - 사이드바 토글 버튼 (고정 위치)
-  - 사이드바 열림 시 배경 스크롤 차단
-  - 터치 친화적 UI
-  - 가이드 스크린샷 캐러셀
-- **브라우저 호환성**: Chrome, Firefox, Edge, Safari 모두 지원
-  - Edge 브라우저 특화 최적화
-  - Firefox 빠른 스크롤 성능
+- **사진/PDF 보기**: 첨부파일 인라인 표시, 클릭 시 확대/다운로드
+- **리더 하이라이트**: 채상욱 리더 발언을 황금색으로 강조 + 스크롤 마커로 빠르게 이동
+- **리더 필터**: 리더 발언만 모아보기
+- **테마 & 폰트**: Light / Dark / System 테마, 테마별 자동 폰트 전환 (RIDI바탕 / Neo둥근모Pro)
+- **모바일 반응형**: 스마트폰에서도 사용 가능 (사이드바 토글, 터치 친화적 UI)
+- **IndexedDB 캐시**: 같은 파일 재방문 시 빠른 로딩
+- **브라우저 호환성**: Chrome, Firefox, Edge, Safari
 
 ## 프로젝트 구조
 
 ```
-chae/
-├── index.html          # 대화 뷰어 (메인, ZIP 통합)
-├── AGENTS.md           # 프로젝트 명세 및 진행상황
-└── README.md           # 이 파일
+chaextractor/
+├── index.html           # 메인 앱 (HTML + CSS + JS 단일 파일, ~2MB)
+├── parse_kakao_chat.py  # Python CSV 파서 (대안, 선택사항)
+├── pyproject.toml       # Python 프로젝트 설정
+├── og-image.png         # Open Graph 이미지
+├── CLAUDE.md            # AI 에이전트 작업 지침
+├── AGENTS.md            # 프로젝트 명세 (도메인 지식, 코드 구조, 패턴)
+├── HISTORY.md           # 진행 이력
+├── LICENSE              # MIT License
+└── README.md            # 이 파일
 ```
 
 ## 요구사항
 
 - 최신 웹 브라우저 (Chrome, Firefox, Edge, Safari)
 - 모바일 브라우저 지원 (iOS Safari, Android Chrome)
-- Python 3.12 이상 (parse_kakao_chat.py 사용 시에만 필요, 선택사항)
 
 ## 배포
 
-`index.html`은 GitHub Pages, Netlify, Vercel 등 정적 호스팅에 배포 가능합니다.
-- 서버 업로드 없음: 모든 처리가 브라우저에서 수행
-- 개인정보 보호: 대화 내용이 외부로 전송되지 않음
+`index.html` 하나만 정적 호스팅(GitHub Pages, Netlify 등)에 올리면 됩니다.
+외부 의존성은 JSZip CDN 하나뿐입니다.
 
-## 성능 테스트
+## 대안: Python CSV 파서
 
-### 브라우저 콘솔에서 처리 시간 확인
-1. 브라우저에서 index.html 열기
-2. F12 → Console 탭 열기
-3. ZIP 파일/폴더 선택
-4. 콘솔에서 처리 시간 확인:
-   ```
-   ⏱️ ZIP 처리 시작
-   ⏱️ 첨부파일 165개 로드: 7942ms
-   ⏱️ 총 처리 시간: 12567ms
-   ```
-
-### Node.js로 첨부파일 로드 성능 비교
-```bash
-npm init -y
-npm install jszip
-node perf-test.js
-```
-- 테스트 스크립트: 순차 처리 vs 병렬 처리 비교
-- 상세 이력: AGENTS.md 참조
-
-## 진행 단계
-
-- [x] 1단계: 대화 내용 확인 및 패턴 검증
-- [x] 2단계: 대화 포맷 재구성 (CSV)
-- [x] 2-1단계: 간이 시각화 도구 (index.html)
-- [ ] 3단계: 요약 추출
-- [ ] 4단계: 시각화 도구
-
-## 대안: Python 파서
-
-별도로 CSV 파일을 생성해야 하는 경우:
+브라우저 뷰어 대신 CSV 파일로 추출해야 하는 경우:
 
 ```bash
 python parse_kakao_chat.py [입력파일] [출력파일]
 ```
 
-### CSV 출력 형식
+- Python 3.12 이상 필요
+- iOS 대화 파일만 지원
+
+### CSV 출력 컬럼
 
 | 컬럼 | 설명 |
 |------|------|
@@ -107,14 +81,8 @@ python parse_kakao_chat.py [입력파일] [출력파일]
 | message_type | text, photo, file, emoticon |
 | content | 메시지 내용 |
 | has_attachment | 첨부파일 유무 |
+| attachment_type | 첨부파일 유형 (image, pdf) |
+| attachment_ref | 대화 내 첨부파일 참조 텍스트 |
 | attachment_path | 실제 파일 경로 |
 | has_link | URL 포함 여부 |
-
-# 머니버스 꿀팁
-## 개발자: 춤추는 토끼 171879 
-머니버스 하지 마라 15계명 https://moneybus-labs.github.io/hidden-gems/
-머니버스 톡 추천 도서 https://github.com/moneybus-labs/books/blob/main/머니버스톡.md
-채부심 북스 추천 도서 https://github.com/moneybus-labs/books/blob/main/채부심북스.md
-
-## 개발자: 우드워커
-액티브 ETF 구성 변화 시각화 앱 https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view
+| word_count | 단어 수 |
