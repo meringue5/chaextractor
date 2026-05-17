@@ -10,7 +10,7 @@
 # 프로젝트 개요
 카카오톡 오픈채팅방 대화 내역 뷰어. 빌드 없는 정적 앱, 서버 불필요, 클라이언트 사이드 처리.
 - 배포: https://meringue5.github.io/chaextractor/
-- 기술: HTML + CSS + JS (`index.html` 중심), `assets/guide` 정적 이미지, JSZip 인라인, IndexedDB (캐시), 폰트 CDN
+- 기술: HTML + JS (`index.html` 중심), CSS (`assets/styles/app.css`), `assets/guide` 정적 이미지, JSZip 인라인, IndexedDB (캐시), 폰트 CDN
 - 플랫폼: iOS / Android / Windows 카카오톡 내보내기 파일 지원
 - TODO: macOS 카카오톡 데스크톱 내보내기 지원 예정
 
@@ -95,9 +95,9 @@
 
 # 코드 구조: index.html + 정적 자산
 
-현재 앱 진입점은 `index.html`이다. 구조: `<style>` → `<body>` (HTML) → `<script>` (JSZip 인라인 + 앱 로직)
+현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `<script>` (JSZip 인라인 + 앱 로직)
 
-빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 가이드 스크린샷은 `assets/guide/*.png`에 둔다.
+빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 가이드 스크린샷은 `assets/guide/*.png`에 둔다.
 
 ## HTML 컴포넌트
 - `#setupScreen` — 초기 화면
@@ -137,6 +137,8 @@
 - `#settingsModal` — 설정 모달 (`.theme-btn`, `.font-btn`)
 
 ## CSS 주요 클래스
+정본 스타일시트는 `assets/styles/app.css`다.
+
 - 레이아웃: `.setup-screen`, `.setup-box`, `.app`, `.sidebar`, `.chat-area`
 - 가이드: `.guide-section`, `.guide-row`, `.guide-item`, `.guide-step`
 - 업로드: `.file-btn-group`, `.file-btn`, `.file-btn.selected`, `.drop-zone`, `.drop-zone.drag-over`

@@ -48,6 +48,7 @@
 | H-012 Android 일반 파일/PDF 매핑 결정 및 구현 | `harness/DOMAIN_RULES.md`, `test/parser-golden/android-files.json`, `index.html` | 반영 |
 | H-013 합성 대용량 성능 smoke 추가 | `harness/scripts/check_performance_smoke.py`, `harness/TESTING.md` | 반영 |
 | 가이드 이미지 정적 자산 분리 | `assets/guide/*.png`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
+| 앱 CSS 정적 자산 분리 | `assets/styles/app.css`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
 
 ## 우선순위 백로그
 
@@ -61,4 +62,4 @@
 
 ## 다음 구현 묶음
 
-다음 구현 묶음은 CSS/JS/vendor를 빌드 없는 정적 파일로 분리할지 검토하거나, 실제 Windows 첨부파일 export 샘플 확보 후 결정한다.
+다음 구현 묶음은 JS/vendor를 빌드 없는 정적 파일로 분리할지 검토하거나, 실제 Windows 첨부파일 export 샘플 확보 후 결정한다.

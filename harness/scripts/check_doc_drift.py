@@ -64,6 +64,10 @@ def main() -> int:
     history = read("HISTORY.md")
     index = read("index.html")
 
+    style_assets = sorted(set(re.findall(r'href="(assets/styles/[^"]+\.css)"', index)))
+    styles = "\n".join(read(asset) for asset in style_assets if exists(asset))
+    runtime = index + "\n" + styles
+
     check_markdown_links(errors)
 
     check("iOS / Android / Windows" in readme, "README must publicly support iOS / Android / Windows", errors)
@@ -88,7 +92,15 @@ def main() -> int:
         check("JSZip 인라인" in manifest, "MANIFEST must track JSZip inline dependency", errors)
         check("JSZip 3.10.1 인라인" in decisions, "DECISIONS must record JSZip inline status", errors)
 
-    if "cdn.jsdelivr.net" in index:
+    if style_assets:
+        check("assets/styles" in readme, "README must document stylesheet asset directory", errors)
+        check("assets/styles/app.css" in agents, "AGENTS must document app stylesheet path", errors)
+        check("assets/styles/app.css" in manifest, "MANIFEST must classify app stylesheet as runtime static asset", errors)
+        check("assets/styles/app.css" in decisions, "DECISIONS must record stylesheet asset policy", errors)
+        for asset in style_assets:
+            check(exists(asset), f"stylesheet referenced by index.html is missing: {asset}", errors)
+
+    if "cdn.jsdelivr.net" in runtime:
         check("폰트는 CDN에서 로드" in readme, "README must document font CDN loading", errors)
         check("폰트 CDN" in agents, "AGENTS must mention font CDN", errors)
         check("cdn.jsdelivr.net/gh/neodgm" in manifest, "MANIFEST must list NeoDunggeunmo CDN surface", errors)

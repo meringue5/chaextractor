@@ -39,7 +39,8 @@
 
 ```
 chaextractor/
-├── index.html           # 메인 앱 진입점 (현재 CSS + JS 앱 로직 포함)
+├── index.html           # 메인 앱 진입점 (HTML + JS 앱 로직)
+├── assets/styles/       # 앱 스타일시트
 ├── assets/guide/        # 사용 가이드 스크린샷 정적 자산
 ├── tools/               # 선택 유틸리티 (Python CSV 파서 등)
 ├── pyproject.toml       # Python 프로젝트 설정

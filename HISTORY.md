@@ -296,6 +296,20 @@
   * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
   * `git diff --check` 및 Python 유틸 import smoke 통과
 
+## 2-1-16단계: 앱 CSS 정적 자산 분리 (2026-05-17)
+* 결정:
+  * CSS는 `assets/styles/app.css`로 분리하되 빌드 산출물은 만들지 않음
+  * `index.html`은 앱 진입점과 JS 앱 로직 중심으로 유지
+* 변경:
+  * `index.html` 내부 `<style>` 블록을 `assets/styles/app.css`로 이동
+  * `index.html`에서 `assets/styles/app.css`를 `<link rel="stylesheet">`로 로드
+  * README/AGENTS/harness 문서와 doc drift checker에 스타일시트 경로와 폰트 CDN 점검 기준 반영
+* 검증:
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
+  * `git diff --check` 및 Python 유틸 import smoke 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

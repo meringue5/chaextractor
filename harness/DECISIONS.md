@@ -11,7 +11,8 @@
 | 결정 | 상태 | 근거/메모 |
 |---|---|---|
 | 앱 런타임은 빌드 없는 정적 앱으로 유지한다. `index.html`은 진입점이고 정적 자산은 별도 파일로 둘 수 있다. | 채택 | GitHub Pages 직접 배포와 소스/배포 드리프트 방지 |
-| CSS/JS/vendor 분리는 빌드 산출물을 만들지 않는 범위에서 단계적으로 검토한다. | 채택 | 저장소 가독성과 Pages 직접 동작 균형 |
+| JS/vendor 분리는 빌드 산출물을 만들지 않는 범위에서 단계적으로 검토한다. | 채택 | 저장소 가독성과 Pages 직접 동작 균형 |
+| 앱 CSS는 `assets/styles/app.css`로 분리한다. | 채택 | 스타일 변경 가독성 개선, 빌드 없는 정적 배포 유지 |
 | 가이드 스크린샷은 `assets/guide/*.png` 개별 파일로 둔다. | 채택 | 내용 이미지라 스프라이트보다 alt/lazy loading/cache/replacement가 유리 |
 | 하네스, fixture, 문서, 테스트 도구는 앱 런타임 밖의 보조 파일로 둔다. | 채택 | 앱 런타임과 개발 검증 레이어 분리 |
 | 대화 원문과 첨부파일은 클라이언트 로컬에서 처리한다. | 채택 | 개인정보 표준 |
@@ -38,6 +39,7 @@
 | Android 샘플 | `tmp/android/` 확보 | tracked 샘플 기준은 `test/dataset/android/` |
 | Windows | 구현-only | 데스크톱 텍스트 내보내기 파싱은 fixture/expected를 추가해 공식 지원으로 승격 |
 | 앱 파일 구조 | 단일 `index.html` 파일 | 현재 기준은 빌드 없는 정적 앱. `index.html`은 진입점이고 `assets/guide/*.png` 같은 정적 자산 분리 허용 |
+| 앱 스타일 | `index.html` 내부 `<style>` | 현재 기준은 `assets/styles/app.css` 외부 스타일시트 |
 
 ## 미결정 결정
 
