@@ -101,7 +101,6 @@
 | Google Forms 문의 링크 | setup/footer/header 링크 | 사용자 클릭 외부 이동 | 개인정보 문구에 "클릭 시 외부 이동" 명시 |
 | 20줄 미만 대화 파일 거부 | `validateChatFile` | 짧은 실제 내보내기 거부 가능 | 요구사항으로 인정할지 결정 |
 | 캐시 키 전략 | 파일명/크기/mtime 중심 | 폴더/첨부 변경 감지 부족 가능 | 캐시 정책 표준화 |
-| 캐시 hit 날짜 reverse | `cachedData.dates.slice().reverse()` | 날짜 정렬 회귀 가능 | 테스트로 고정 또는 수정 |
 | 검색 결과 하이라이트 부재 | 검색은 `renderDateList`에만 연결 | AGENTS와 불일치 | 구현 또는 요구사항 수정 |
 | Windows 첨부파일 매핑 | 텍스트 파싱은 지원하나 첨부파일 패턴은 미확정 | Windows 사용자 기대 혼선 | 실제 샘플 확보 후 정식화 |
 

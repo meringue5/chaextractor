@@ -249,6 +249,13 @@ if (input.mode === 'modalEscape') {
   process.exit(0);
 }
 
+if (input.mode === 'cacheDateSort') {
+  const api = windowObject.__CHAEXTRACTOR_TEST__;
+  api.restoreCachedChatData(input.cachedData || {});
+  process.stdout.write(JSON.stringify(api.getSnapshot(), null, 2));
+  process.exit(0);
+}
+
 let result = windowObject.__CHAEXTRACTOR_TEST__.parseChat(input.content, {
   platform: input.platform,
   attachments: input.attachments || [],

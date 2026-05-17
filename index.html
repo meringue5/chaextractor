@@ -2068,10 +2068,7 @@
                 // 캐시 히트 - 상태 복원
                 updateProgress(50, '캐시에서 데이터 로드 중...');
 
-                messages = cachedData.messages;
-                messagesByDate = cachedData.messagesByDate;
-                leaderCountByDate = cachedData.leaderCountByDate;
-                dates = cachedData.dates.slice().reverse(); // 최신 날짜부터 표시 (내림차순)
+                restoreCachedChatData(cachedData);
                 attachmentEntries = cachedData.attachmentEntries || {};
 
                 // ZIP 인스턴스는 다시 로드 필요
@@ -2230,10 +2227,7 @@
                 // 캐시 히트 - 상태 복원
                 updateProgress(30, '캐시에서 데이터 로드 중...');
 
-                messages = cachedData.messages;
-                messagesByDate = cachedData.messagesByDate;
-                leaderCountByDate = cachedData.leaderCountByDate;
-                dates = cachedData.dates.slice().reverse(); // 최신 날짜부터 표시 (내림차순)
+                restoreCachedChatData(cachedData);
 
                 // 첨부파일은 다시 로드 필요 (Blob URL은 캐시 불가)
                 updateProgress(50, '첨부파일 로드 중...');
@@ -2674,7 +2668,7 @@
                 }
             }
 
-            dates = Object.keys(messagesByDate).sort().reverse(); // 최신 날짜부터 표시 (내림차순)
+            dates = sortDatesDescending(Object.keys(messagesByDate)); // 최신 날짜부터 표시 (내림차순)
         }
 
         // ========== 여러 대화 파일 병합 ==========
@@ -2711,7 +2705,7 @@
                 }
             }
 
-            dates = Object.keys(messagesByDate).sort().reverse();
+            dates = sortDatesDescending(Object.keys(messagesByDate));
         }
 
         // ========== 메시지 내용 분류 ==========
@@ -2785,6 +2779,21 @@
         // 캐시 키 생성
         function generateCacheKey(fileName, fileSize, lastModified) {
             return `${fileName}_${fileSize}_${lastModified || 0}`;
+        }
+
+        function sortDatesDescending(dateKeys) {
+            return [...new Set(dateKeys || [])].sort().reverse();
+        }
+
+        function restoreCachedChatData(cachedData) {
+            messages = cachedData.messages || [];
+            messagesByDate = cachedData.messagesByDate || {};
+            leaderCountByDate = cachedData.leaderCountByDate || {};
+
+            const cachedDates = Array.isArray(cachedData.dates) && cachedData.dates.length > 0
+                ? cachedData.dates
+                : Object.keys(messagesByDate);
+            dates = sortDatesDescending(cachedDates);
         }
 
         // 캐시 조회
@@ -3507,7 +3516,8 @@
                 closeActiveModal,
                 handleModalKeydown,
                 isModalOpen,
-                showImage
+                showImage,
+                restoreCachedChatData
             };
         }
 

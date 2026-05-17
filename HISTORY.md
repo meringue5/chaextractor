@@ -195,6 +195,16 @@
 * 검증:
   * `python3 harness/scripts/check_modal_escape.py` 통과
 
+## 2-1-8단계: 캐시 날짜 정렬 회귀 고정 (2026-05-17)
+* 대상 백로그:
+  * H-007 cache hit 날짜 정렬 회귀 고정
+* 변경:
+  * 캐시 hit에서 저장된 `dates`를 다시 `reverse()`하지 않고 `sortDatesDescending()`으로 정규화
+  * 기존/미래 캐시가 오름차순, 내림차순, 또는 `dates` 누락 상태여도 `messagesByDate` 기준 최신순 복원 가능
+  * [harness/scripts/check_cache_date_sort.py](harness/scripts/check_cache_date_sort.py) 추가
+* 검증:
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트
