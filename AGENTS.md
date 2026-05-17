@@ -77,6 +77,7 @@
 - iOS 첨부파일: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
 - Android 이미지 첨부파일: `{64자리 hex}.(jpg|jpeg|png|gif|webp)`
 - Android 일반 파일/PDF: `파일: {파일명}`. 파일명은 URL 인코딩될 수 있으며 디코딩 비교로 직접 매핑한다.
+- Windows 첨부파일 매핑은 실제 export 구조 확인 전까지 공식 범위 밖이다.
 - Windows 데스크톱 텍스트 내보내기는 공식 지원한다.
 - macOS 공식 지원은 실제 export 규칙과 fixture가 확인되기 전까지 TODO다.
 - 대화 내용, 사용자명, 파일명, 첨부파일 참조는 모두 신뢰하지 않는 입력으로 취급한다.

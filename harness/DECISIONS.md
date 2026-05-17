@@ -24,6 +24,7 @@
 | IndexedDB 캐시는 로컬 편의 기능이며 민감 데이터로 취급한다. | 채택 | 설정 모달에서 캐시 삭제 제공 |
 | Blob URL은 새 업로드 전 해제한다. | 채택 | 런타임 첨부 URL 메모리/개인정보 잔류 최소화 |
 | Android 일반 파일/PDF는 URL 인코딩/디코딩 비교로 직접 매핑한다. | 채택 | `android-files` parser golden fixture |
+| Windows 첨부파일 매핑은 실제 export 샘플 확보 전까지 미지원으로 둔다. | 보류 | `windows-attachments-unsupported` fixture로 현 범위 고정 |
 | 하네스 리뷰의 미반영 항목은 `harness/BACKLOG.md`에서 추적한다. | 채택 | 리뷰 문서는 스냅샷, 백로그는 실행 대기열 |
 
 ## 문서화로 정정한 결정

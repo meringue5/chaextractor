@@ -51,12 +51,16 @@
 
 | ID | 우선순위 | 영역 | 작업 | 완료 기준 |
 |---|---|---|---|---|
-| H-014 | P1 | Attachment | Windows 첨부파일 매핑 조사 및 결정 | 실제 Windows 첨부파일 export 구조와 fixture 확보 |
 | H-013 | P2 | Performance | 합성 대용량 성능 smoke 추가 | 1만 메시지 로컬 smoke와 50만 메시지 수동 측정 절차 문서화 |
+
+## 외부 샘플 필요
+
+| ID | 영역 | 상태 | 다음 필요 증거 |
+|---|---|---|---|
+| H-014 | Windows attachment | 실제 Windows 첨부파일 export 구조 미확인. `windows-attachments-unsupported` fixture로 현재 미지원 범위를 고정 | 실제 Windows 첨부파일 포함 export 샘플과 파일 구조 |
 
 ## 다음 구현 묶음
 
 다음으로 가장 작은 구현 단위:
 
-1. 파일명/첨부 ref HTML escape 보강과 XSS fixture 추가
-2. Windows 첨부파일 매핑 범위 결정
+1. 합성 대용량 성능 smoke 추가

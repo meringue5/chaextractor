@@ -255,6 +255,20 @@
 * 검증:
   * `python3 harness/scripts/run_parser_golden.py test/parser-golden/android-files.json` 통과
 
+## 2-1-13단계: Windows 첨부파일 범위 고정 (2026-05-17)
+* 대상 백로그:
+  * H-014 Windows 첨부파일 매핑 조사 및 결정
+* 결정:
+  * Windows 텍스트 내보내기 파싱은 공식 지원을 유지
+  * Windows 첨부파일 매핑은 실제 첨부파일 포함 export 샘플 확보 전까지 공식 범위 밖으로 유지
+  * 현재 코드는 Windows 첨부파일을 직접 매핑하지 않는 상태를 fixture로 고정
+* 변경:
+  * [test/fixtures/windows-attachments-unsupported/KakaoTalk_20260303_1300_00_123_windows.txt](test/fixtures/windows-attachments-unsupported/KakaoTalk_20260303_1300_00_123_windows.txt) 추가
+  * [test/parser-golden/windows-attachments-unsupported.json](test/parser-golden/windows-attachments-unsupported.json) 추가
+  * [harness/BACKLOG.md](harness/BACKLOG.md)의 H-014를 외부 샘플 필요 상태로 이동
+* 검증:
+  * `python3 harness/scripts/run_parser_golden.py test/parser-golden/windows-attachments-unsupported.json` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

@@ -80,7 +80,7 @@
 | 영역 | 요구사항 | 현재 검증 수준 |
 |---|---|---|
 | 입력 | ZIP 또는 폴더 입력으로 대화 로그와 첨부파일 파싱 | parser golden, UI smoke 부분 검증 |
-| 플랫폼 | iOS/Android/Windows 내보내기 지원 | Android 실제 ZIP/iOS 최소/Windows 최소 fixture golden 검증 |
+| 플랫폼 | iOS/Android/Windows 내보내기 지원 | Android 실제 ZIP/iOS 최소/Windows 최소/Windows 첨부 미지원 fixture golden 검증 |
 | 파싱 | 날짜 그룹화, 시스템 메시지 제외, 연속 텍스트 병합 | parser golden 부분 검증 |
 | 메시지 타입 | text/photo/file/emoticon 분리 | parser golden 부분 검증 |
 | 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음 | parser golden: iOS PDF/사진, Android hash/일반 파일, 누락 첨부 검증 |
@@ -103,7 +103,7 @@
 | 20줄 미만 대화 파일 거부 | `validateChatFile` | 짧은 실제 내보내기 거부 가능 | 요구사항으로 인정할지 결정 |
 | 캐시 키 전략 | 파일명/크기/mtime 중심 | 폴더/첨부 변경 감지 부족 가능 | 캐시 정책 표준화 |
 | 검색 결과 하이라이트 부재 | 검색은 `renderDateList`에만 연결 | AGENTS와 불일치 | 구현 또는 요구사항 수정 |
-| Windows 첨부파일 매핑 | 텍스트 파싱은 지원하나 첨부파일 패턴은 미확정 | Windows 사용자 기대 혼선 | 실제 샘플 확보 후 정식화 |
+| Windows 첨부파일 매핑 | 텍스트 파싱은 지원하나 첨부파일 패턴은 미확정. 현재 직접 매핑하지 않도록 fixture로 고정 | Windows 사용자 기대 혼선 | 실제 샘플 확보 후 정식화 |
 
 ## 미결정 항목
 
