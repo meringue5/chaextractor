@@ -24,6 +24,10 @@ def check(condition: bool, message: str, errors: list[str]) -> None:
         errors.append(message)
 
 
+def asset_paths(pattern: str, text: str) -> list[str]:
+    return sorted({match.split("?", 1)[0] for match in re.findall(pattern, text)})
+
+
 def check_markdown_links(errors: list[str]) -> None:
     files = [
         *REPO_ROOT.glob("*.md"),
@@ -64,9 +68,9 @@ def main() -> int:
     history = read("HISTORY.md")
     index = read("index.html")
 
-    style_assets = sorted(set(re.findall(r'href="(assets/styles/[^"]+\.css)"', index)))
-    app_script_assets = sorted(set(re.findall(r'src="(assets/scripts/[^"]+\.js)"', index)))
-    vendor_script_assets = sorted(set(re.findall(r'src="(assets/vendor/[^"]+\.js)"', index)))
+    style_assets = asset_paths(r'href="(assets/styles/[^"]+\.css(?:\?[^"]*)?)"', index)
+    app_script_assets = asset_paths(r'src="(assets/scripts/[^"]+\.js(?:\?[^"]*)?)"', index)
+    vendor_script_assets = asset_paths(r'src="(assets/vendor/[^"]+\.js(?:\?[^"]*)?)"', index)
     styles = "\n".join(read(asset) for asset in style_assets if exists(asset))
     scripts = "\n".join(read(asset) for asset in [*app_script_assets, *vendor_script_assets] if exists(asset))
     runtime = index + "\n" + styles + "\n" + scripts

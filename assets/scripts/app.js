@@ -23,6 +23,11 @@ const DIAGNOSTIC_CHAT_CANDIDATE_LIMIT = 20;
 const DIAGNOSTIC_ZIP_ENTRY_SAMPLE_LIMIT = 40;
 const DIAGNOSTIC_TEXT_SAMPLE_LINE_LIMIT = 12;
 const CHAT_FILE_PATTERN = /\.(txt|csv)$/i;
+const DEFAULT_THEME = '1995';
+const DEFAULT_1995_FONT = 'iyagi';
+const APP_STORAGE_VERSION_KEY = 'chaextractorAppVersion';
+const APP_VERSION = document.querySelector('meta[name="app-version"]')?.getAttribute('content')
+    || '2026-05-18-1995-default-reset';
 const THEME_1995_WINDOW_ANIMATION_MS = 240;
 const THEME_1995_GHOST_SIZE = 12;
 const THEME_1995_GHOST_FRAME_COUNT = 9;
@@ -1669,12 +1674,12 @@ function applyFont(font, isAutoSwitch = false) {
 }
 
 function updateSettingsUI() {
-    const currentTheme = localStorage.getItem('theme') || '1995';
+    const currentTheme = localStorage.getItem('theme') || DEFAULT_THEME;
     const storedFont = localStorage.getItem('font');
     const appliedFont = document.documentElement.getAttribute('data-font') || 'default';
     const currentFont = localStorage.getItem('fontAutoSwitch') === 'false'
-        ? (storedFont || 'iyagi')
-        : (appliedFont || storedFont || 'iyagi');
+        ? (storedFont || DEFAULT_1995_FONT)
+        : (appliedFont || storedFont || DEFAULT_1995_FONT);
 
     document.querySelectorAll('.theme-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.theme === currentTheme);
@@ -1684,9 +1689,22 @@ function updateSettingsUI() {
     });
 }
 
+function resetVersionedSettings() {
+    if (localStorage.getItem(APP_STORAGE_VERSION_KEY) === APP_VERSION) {
+        return;
+    }
+
+    localStorage.setItem('theme', DEFAULT_THEME);
+    localStorage.setItem('font', DEFAULT_1995_FONT);
+    localStorage.removeItem('fontAutoSwitch');
+    localStorage.setItem(APP_STORAGE_VERSION_KEY, APP_VERSION);
+}
+
 function initSettings() {
-    const savedTheme = localStorage.getItem('theme') || '1995';
-    let savedFont = localStorage.getItem('font') || 'iyagi';
+    resetVersionedSettings();
+
+    const savedTheme = localStorage.getItem('theme') || DEFAULT_THEME;
+    let savedFont = localStorage.getItem('font') || DEFAULT_1995_FONT;
     const fontAutoSwitch = localStorage.getItem('fontAutoSwitch');
 
     // 'default' 값을 'neodgm'으로 마이그레이션

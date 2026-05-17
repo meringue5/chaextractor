@@ -841,6 +841,23 @@
   * `python3 harness/scripts/check_ui_smoke.py` 통과
   * `npm run test:browser` 통과: 4 passed, 2 skipped
 
+## 2-1-52단계: 앱 버전 기반 테마 저장값 초기화 (2026-05-18)
+* 결정:
+  * 과거 버전이 저장한 테마/폰트 설정은 새 기본 테마 적용을 막으므로, 앱 버전이 바뀌면 한 번만 1995 기본값으로 초기화한다.
+  * 같은 앱 버전 안에서 사용자가 다시 다른 테마를 선택하면 그 선택은 유지한다.
+* 변경:
+  * `meta[name="app-version"]`와 CSS/JS 버전 query를 추가해 새 배포 자산 캐시 갱신 기준을 명시
+  * `resetVersionedSettings()`를 추가해 앱 버전 변경 시 기존 테마/폰트 저장값을 `1995`/`iyagi`로 1회 초기화
+  * 브라우저 smoke에 기존 저장 테마가 앱 버전 변경 시 1995로 초기화되고 이후 같은 버전의 사용자 선택은 유지되는 회귀 검증 추가
+  * 문서 드리프트 검사에서 버전 query가 붙은 CSS/JS 자산 경로를 정적 자산으로 인식하도록 갱신
+  * README/AGENTS/harness 요구사항을 앱 버전 기반 설정 초기화 기준에 맞게 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 6 passed, 2 skipped
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

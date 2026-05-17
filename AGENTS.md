@@ -107,7 +107,7 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 
 # 코드 구조: index.html + 정적 자산
 
-현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` 로드 → `assets/scripts/app.js` 로드
+현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` 로드 → `assets/scripts/app.js` 로드. 앱 CSS/JS에는 `meta[name="app-version"]`과 같은 버전 query를 붙여 새 배포 시 브라우저 자산 캐시를 갱신한다.
 
 빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 로직은 `assets/scripts/app.js`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph 이미지는 `assets/og-image.png`에 둔다.
 
@@ -235,6 +235,7 @@ UI 렌더링:
 설정/테마:
 - `applyTheme(theme)` — light/dark/1995/system 테마 적용
 - `applyFont(font, isAutoSwitch)` — 폰트 적용, 자동 전환 관리
+- `resetVersionedSettings()` — 앱 버전 변경 시 테마/폰트 저장값을 1995 테마/이야기 폰트로 1회 초기화
 - `initSettings()` — 저장된 테마/폰트 로드 (localStorage)
 - `updateSettingsUI()` — 설정 모달 활성 버튼 표시
 - `applyLeaderFilter()` — 필터 대상 사용자 발언만 표시/전체 표시 토글

@@ -46,9 +46,10 @@ test('static shell loads local assets and vendor script', async ({ page }) => {
   await expect(page.locator('#setupScreen')).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', '1995');
   await expect(page.locator('html')).toHaveAttribute('data-font', 'iyagi');
-  await expect(page.locator('link[href="assets/styles/app.css"]')).toHaveCount(1);
+  await expect(page.locator('meta[name="app-version"]')).toHaveAttribute('content', /1995-default-reset/);
+  await expect(page.locator('link[href^="assets/styles/app.css"]')).toHaveCount(1);
   await expect(page.locator('script[src="assets/vendor/jszip-3.10.1.min.js"]')).toHaveCount(1);
-  await expect(page.locator('script[src="assets/scripts/app.js"]')).toHaveCount(1);
+  await expect(page.locator('script[src^="assets/scripts/app.js"]')).toHaveCount(1);
   await expect(page.locator('img[src^="assets/guide/"]')).toHaveCount(6);
   await expect(page.locator('#heroImage')).toHaveCount(0);
   await expect(page.locator('#setupTipsBtn')).toHaveCount(0);
@@ -94,6 +95,41 @@ test('static shell loads local assets and vendor script', async ({ page }) => {
   });
 
   await expect.poll(() => page.evaluate(() => typeof window.JSZip)).toBe('function');
+  expect(failures).toEqual([]);
+});
+
+test('new app version resets stored theme once', async ({ page }) => {
+  const failures = watchLocalRuntime(page);
+
+  await openApp(page);
+  await page.evaluate(() => {
+    localStorage.setItem('chaextractorAppVersion', 'legacy');
+    localStorage.setItem('theme', 'dark');
+    localStorage.setItem('font', 'neodgm');
+    localStorage.setItem('fontAutoSwitch', 'false');
+  });
+  await page.reload();
+
+  await expect(page).toHaveTitle(/머니버스 대화 뷰어/);
+
+  const appVersion = await page.locator('meta[name="app-version"]').getAttribute('content');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', '1995');
+  await expect(page.locator('html')).toHaveAttribute('data-font', 'iyagi');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('theme'))).toBe('1995');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('font'))).toBe('iyagi');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('fontAutoSwitch'))).toBe(null);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('chaextractorAppVersion'))).toBe(appVersion);
+
+  await page.evaluate(() => {
+    localStorage.setItem('theme', 'light');
+    localStorage.setItem('font', 'ridi');
+    localStorage.setItem('fontAutoSwitch', 'false');
+  });
+  await page.reload();
+  await expect(page).toHaveTitle(/머니버스 대화 뷰어/);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('html')).toHaveAttribute('data-font', 'ridi');
+
   expect(failures).toEqual([]);
 });
 
