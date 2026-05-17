@@ -8,9 +8,10 @@
 -->
 
 # 프로젝트 개요
-카카오톡 오픈채팅방 대화 내역 뷰어. 단일 HTML 파일, 서버 불필요, 클라이언트 사이드 처리.
+카카오톡 오픈채팅방 대화 내역 뷰어. 빌드 없는 정적 앱, 서버 불필요, 클라이언트 사이드 처리.
 - 배포: https://meringue5.github.io/chaextractor/
-- 기술: HTML + CSS + JS (단일 파일), JSZip 인라인, IndexedDB (캐시), 폰트 CDN
+- 기술: HTML (`index.html`), CSS (`assets/styles/app.css`), JS (`assets/scripts/app.js`), JSZip local vendor (`assets/vendor/jszip-3.10.1.min.js`), `assets/guide` 정적 이미지, `assets/og-image.png`, IndexedDB (캐시), 폰트 CDN
+- 개발 검증: Python/Node VM 하네스 + 선택 실행 Playwright browser smoke (`npm run test:browser`)
 - 플랫폼: iOS / Android / Windows 카카오톡 내보내기 파일 지원
 - TODO: macOS 카카오톡 데스크톱 내보내기 지원 예정
 
@@ -76,6 +77,8 @@
 - Android 대화 파일명: `KakaoTalkChats.txt`
 - iOS 첨부파일: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
 - Android 이미지 첨부파일: `{64자리 hex}.(jpg|jpeg|png|gif|webp)`
+- Android 일반 파일/PDF: `파일: {파일명}`. 파일명은 URL 인코딩될 수 있으며 디코딩 비교로 직접 매핑한다.
+- Windows 첨부파일 매핑은 실제 export 구조 확인 전까지 공식 범위 밖이다.
 - Windows 데스크톱 텍스트 내보내기는 공식 지원한다.
 - macOS 공식 지원은 실제 export 규칙과 fixture가 확인되기 전까지 TODO다.
 - 대화 내용, 사용자명, 파일명, 첨부파일 참조는 모두 신뢰하지 않는 입력으로 취급한다.
@@ -91,13 +94,17 @@
 ### 개발자: 우드워커
 액티브 ETF 구성 변화 시각화 앱 https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view
 
-# 코드 구조: index.html
+# 코드 구조: index.html + 정적 자산
 
-단일 HTML 파일. 구조: `<style>` → `<body>` (HTML) → `<script>` (JSZip 인라인 + 앱 로직)
+현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` 로드 → `assets/scripts/app.js` 로드
+
+빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 로직은 `assets/scripts/app.js`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph/hero 이미지는 `assets/og-image.png`에 둔다.
+
+브라우저 회귀 검증은 `harness/browser/`의 Playwright smoke를 선택 실행한다. 이 하네스는 정적 서버로 저장소 루트의 `index.html`을 열고, 앱 배포 파일을 빌드 없이 그대로 검증한다.
 
 ## HTML 컴포넌트
 - `#setupScreen` — 초기 화면
-  - `.guide-section` — 사용 가이드 (base64 스크린샷 6장)
+  - `.guide-section` — 사용 가이드 (`assets/guide` 스크린샷 6장)
   - `#step1` — 파일 업로드 영역
     - `#zipBtn` / `#zipInput` — ZIP/TXT 파일 선택 (iOS/Windows)
     - `#folderBtn` / `#folderInput` — 폴더 선택 (Android, webkitdirectory)
@@ -106,7 +113,7 @@
     - `#progressContainer` > `#progressFill` + `.progress-text` — 진행률 바
   - `#startBtn` — 대화 보기 시작 버튼 (처리 완료 전 hidden)
   - `#setupTipsBtn` — 꿀팁 모달 열기
-  - `#heroImage` — 히어로 이미지 (처리 완료 후 표시)
+  - `#heroImage` — 히어로 이미지 (`assets/og-image.png`, 처리 완료 후 표시)
 - `#app` — 메인 뷰어 (초기 hidden)
   - `.sidebar` — 좌측 패널 (320px, 모바일: 86vw 슬라이드)
     - `.sidebar-header` — 제목 + 헤더 버튼들
@@ -133,6 +140,8 @@
 - `#settingsModal` — 설정 모달 (`.theme-btn`, `.font-btn`)
 
 ## CSS 주요 클래스
+정본 스타일시트는 `assets/styles/app.css`다.
+
 - 레이아웃: `.setup-screen`, `.setup-box`, `.app`, `.sidebar`, `.chat-area`
 - 가이드: `.guide-section`, `.guide-row`, `.guide-item`, `.guide-step`
 - 업로드: `.file-btn-group`, `.file-btn`, `.file-btn.selected`, `.drop-zone`, `.drop-zone.drag-over`
@@ -152,6 +161,7 @@
 - 테마: `[data-theme="dark"]`, `[data-font="ridi"]` (RIDIBatang), `[data-font="neodgm"]` (NeoDunggeunmo Pro)
 
 ## JavaScript 주요 함수
+정본 앱 스크립트는 `assets/scripts/app.js`다.
 
 파일 처리:
 - `processFilesOrFolder(files)` — 파일 라우팅 (ZIP vs 폴더)
@@ -180,7 +190,11 @@
 - `initDB()` — IndexedDB 초기화
 - `getCache(cacheKey)` / `setCache(cacheKey, data)` — 캐시 읽기/쓰기
 - `cleanOldCache()` — 오래된 캐시 정리
+- `clearAllCache()` — 설정 모달 캐시 삭제
 - `generateCacheKey(fileName, fileSize, lastModified)` — 캐시 키 생성
+- `sortDatesDescending(dateKeys)` — 날짜 목록 최신순 정규화
+- `restoreCachedChatData(cachedData)` — 캐시 hit 상태 복원
+- `clearRuntimeAttachmentFiles()` / `resetRuntimeAttachmentState()` — Blob URL 해제와 런타임 첨부 상태 초기화
 
 UI 렌더링:
 - `initApp()` — 앱 초기화 (파일 처리 완료 후)
@@ -199,6 +213,10 @@ UI 렌더링:
 - `initSettings()` — 저장된 테마/폰트 로드 (localStorage)
 - `updateSettingsUI()` — 설정 모달 활성 버튼 표시
 - `applyLeaderFilter()` — 리더 발언만 표시/전체 표시 토글
+
+브라우저 기능 제한:
+- `getBrowserCapabilityStatus()` — `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 지원 확인
+- `applyBrowserCapabilityStatus(status)` — 미지원 기능 안내와 업로드 제한 상태 반영
 
 모달:
 - `openModal(modalId)` / `closeModal(modalId)` — 모달 열기/닫기
@@ -237,6 +255,7 @@ UI 렌더링:
 - `URL` — URL 감지
 - `ATTACHMENT_FILENAME_IOS` — iOS 첨부파일명 (`YYYYMMDD_HHMMSS[_n].ext`)
 - `ATTACHMENT_FILENAME_ANDROID` — Android 첨부파일명 (`[0-9a-f]{64}.ext`)
+- `ATTACHMENT_FILENAME_ANDROID_FILE` — Android 일반 문서 첨부파일명
 - TODO: macOS 공식 패턴 확인 필요
 
 # 진행 이력

@@ -1,0 +1,46 @@
+{
+  "id": "windows-attachments-unsupported",
+  "description": "Windows 첨부파일 매핑은 실제 export 구조 확인 전까지 지원하지 않음을 고정",
+  "platform": "windows",
+  "input": {
+    "text": "test/fixtures/windows-attachments-unsupported/KakaoTalk_20260303_1300_00_123_windows.txt",
+    "attachments": [
+      "보고서.pdf",
+      "photo.jpg"
+    ]
+  },
+  "expected": {
+    "detectedPlatform": "windows",
+    "messageCount": 3,
+    "dateCount": 1,
+    "dates": ["2026-03-03"],
+    "typeCounts": {
+      "file": 1,
+      "photo": 1,
+      "text": 1
+    },
+    "attachmentRefCount": 2,
+    "attachmentMappedCount": 0,
+    "leaderCountByDate": {
+      "2026-03-03": 0
+    },
+    "messages": [
+      {
+        "index": 0,
+        "message_type": "file",
+        "attachment_ref": "보고서.pdf",
+        "attachment_path": ""
+      },
+      {
+        "index": 1,
+        "message_type": "photo",
+        "attachment_path": ""
+      },
+      {
+        "index": 2,
+        "message_type": "text",
+        "content": "첨부파일 매핑은 아직 지원하지 않습니다"
+      }
+    ]
+  }
+}

@@ -32,17 +32,23 @@
 - **리더 필터**: 리더 발언만 모아보기
 - **테마 & 폰트**: Light / Dark / System 테마, 테마별 자동 폰트 전환 (RIDI바탕 / Neo둥근모Pro)
 - **모바일 반응형**: 스마트폰에서도 사용 가능 (사이드바 토글, 터치 친화적 UI)
-- **IndexedDB 캐시**: 같은 파일 재방문 시 빠른 로딩
+- **IndexedDB 캐시**: 같은 파일 재방문 시 빠른 로딩, 설정에서 로컬 캐시 삭제 가능
 - **브라우저 호환성**: Chrome, Firefox, Edge, Safari
 
 ## 프로젝트 구조
 
 ```
 chaextractor/
-├── index.html           # 메인 앱 (HTML + CSS + JS 단일 파일, ~2MB)
+├── index.html           # 메인 앱 진입점 (HTML)
+├── assets/og-image.png  # Open Graph 및 앱 hero 이미지
+├── assets/styles/       # 앱 스타일시트
+├── assets/scripts/      # 앱 JavaScript
+├── assets/vendor/       # 로컬 vendor JavaScript (JSZip 등)
+├── assets/guide/        # 사용 가이드 스크린샷 정적 자산
 ├── tools/               # 선택 유틸리티 (Python CSV 파서 등)
+├── harness/browser/     # 선택 실행 Playwright browser smoke
 ├── pyproject.toml       # Python 프로젝트 설정
-├── og-image.png         # Open Graph 이미지
+├── package.json         # 선택 실행 브라우저 테스트 의존성/명령
 ├── harness/             # 요구사항/도메인 규칙/결정/하네스 매니페스트
 ├── .agents/skills/      # Project-specific skill procedures
 ├── CLAUDE.md            # Claude Code용 AGENTS.md 포워딩 문서
@@ -59,8 +65,23 @@ chaextractor/
 
 ## 배포
 
-`index.html` 하나만 정적 호스팅(GitHub Pages, Netlify 등)에 올리면 됩니다.
-JSZip은 `index.html`에 인라인되어 있으며, 폰트는 CDN에서 로드됩니다.
+저장소 루트의 `index.html`과 `assets/` 정적 파일을 함께 호스팅하면 됩니다.
+GitHub Pages처럼 저장소 루트를 그대로 배포하는 방식이면 별도 빌드 없이 동작합니다.
+JSZip은 `assets/vendor/jszip-3.10.1.min.js` 로컬 vendor 파일로 제공되며, 폰트는 CDN에서 로드됩니다.
+
+오프라인으로 열 때도 `index.html`과 `assets/` 디렉터리를 함께 보관하면 됩니다.
+
+## 선택: 브라우저 smoke 테스트
+
+실제 브라우저에서 정적 자산 로드, Windows TXT 업로드, 검색/리더 필터/설정 모달, 모바일 사이드바를 확인하려면:
+
+```bash
+npm install
+npm run test:browser:install
+npm run test:browser
+```
+
+이 테스트는 개발 검증용이며, 앱 배포에는 빌드 단계가 필요하지 않습니다.
 
 ## 개인정보와 외부 요청
 

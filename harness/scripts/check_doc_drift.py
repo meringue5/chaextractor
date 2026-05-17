@@ -64,6 +64,13 @@ def main() -> int:
     history = read("HISTORY.md")
     index = read("index.html")
 
+    style_assets = sorted(set(re.findall(r'href="(assets/styles/[^"]+\.css)"', index)))
+    app_script_assets = sorted(set(re.findall(r'src="(assets/scripts/[^"]+\.js)"', index)))
+    vendor_script_assets = sorted(set(re.findall(r'src="(assets/vendor/[^"]+\.js)"', index)))
+    styles = "\n".join(read(asset) for asset in style_assets if exists(asset))
+    scripts = "\n".join(read(asset) for asset in [*app_script_assets, *vendor_script_assets] if exists(asset))
+    runtime = index + "\n" + styles + "\n" + scripts
+
     check_markdown_links(errors)
 
     check("iOS / Android / Windows" in readme, "README must publicly support iOS / Android / Windows", errors)
@@ -74,7 +81,7 @@ def main() -> int:
     )
     check("iOS / Android / Windows 카카오톡 내보내기 파일 지원" in agents, "AGENTS must state iOS / Android / Windows support", errors)
 
-    if "MESSAGE_WINDOWS" in index or "DATE_HEADER_WINDOWS" in index:
+    if "MESSAGE_WINDOWS" in runtime or "DATE_HEADER_WINDOWS" in runtime:
         check("Windows 데스크톱 텍스트 내보내기는 공식 지원" in agents, "AGENTS must state Windows text export support", errors)
         check("Windows | 공식 지원" in domain, "DOMAIN_RULES must classify Windows as official support", errors)
         check("Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원" in decisions, "DECISIONS must adopt Windows text support", errors)
@@ -82,17 +89,59 @@ def main() -> int:
         check(exists("test/parser-golden/windows-minimal.json"), "Windows support requires parser golden expected", errors)
         check(exists("test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt"), "Windows support requires fixture txt", errors)
 
-    if "JSZip v3.10.1" in index:
-        check("JSZip은 `index.html`에 인라인" in readme, "README must say JSZip is inlined", errors)
-        check("JSZip 인라인" in agents, "AGENTS must say JSZip is inlined", errors)
-        check("JSZip 인라인" in manifest, "MANIFEST must track JSZip inline dependency", errors)
-        check("JSZip 3.10.1 인라인" in decisions, "DECISIONS must record JSZip inline status", errors)
+    if app_script_assets:
+        check("assets/scripts" in readme, "README must document app script asset directory", errors)
+        check("assets/scripts/app.js" in agents, "AGENTS must document app script path", errors)
+        check("assets/scripts/app.js" in manifest, "MANIFEST must classify app script as runtime static asset", errors)
+        check("assets/scripts/app.js" in decisions, "DECISIONS must record app script asset policy", errors)
+        for asset in app_script_assets:
+            check(exists(asset), f"app script referenced by index.html is missing: {asset}", errors)
 
-    if "cdn.jsdelivr.net" in index:
+    if vendor_script_assets:
+        check("assets/vendor" in readme, "README must document vendor script asset directory", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in agents, "AGENTS must document JSZip vendor path", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in manifest, "MANIFEST must classify JSZip vendor asset", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in decisions, "DECISIONS must record JSZip vendor asset policy", errors)
+        for asset in vendor_script_assets:
+            check(exists(asset), f"vendor script referenced by index.html is missing: {asset}", errors)
+
+    if "JSZip v3.10.1" in runtime:
+        check("JSZip은 `assets/vendor/jszip-3.10.1.min.js`" in readme, "README must say JSZip is local vendor", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in agents, "AGENTS must say JSZip is local vendor", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in manifest, "MANIFEST must track JSZip local vendor dependency", errors)
+        check("JSZip 3.10.1은 `assets/vendor/jszip-3.10.1.min.js`" in decisions, "DECISIONS must record JSZip local vendor status", errors)
+
+    if style_assets:
+        check("assets/styles" in readme, "README must document stylesheet asset directory", errors)
+        check("assets/styles/app.css" in agents, "AGENTS must document app stylesheet path", errors)
+        check("assets/styles/app.css" in manifest, "MANIFEST must classify app stylesheet as runtime static asset", errors)
+        check("assets/styles/app.css" in decisions, "DECISIONS must record stylesheet asset policy", errors)
+        for asset in style_assets:
+            check(exists(asset), f"stylesheet referenced by index.html is missing: {asset}", errors)
+
+    if "cdn.jsdelivr.net" in runtime:
         check("폰트는 CDN에서 로드" in readme, "README must document font CDN loading", errors)
         check("폰트 CDN" in agents, "AGENTS must mention font CDN", errors)
         check("cdn.jsdelivr.net/gh/neodgm" in manifest, "MANIFEST must list NeoDunggeunmo CDN surface", errors)
         check("cdn.jsdelivr.net/gh/projectnoonnu" in manifest, "MANIFEST must list RIDIBatang CDN surface", errors)
+
+    guide_assets = sorted(set(re.findall(r'src="(assets/guide/[^"]+)"', index)))
+    if guide_assets:
+        check("assets/guide" in readme, "README must document guide asset directory", errors)
+        check("assets/guide" in agents, "AGENTS must document guide asset directory", errors)
+        check("assets/guide/*.png" in manifest, "MANIFEST must classify guide images as runtime static assets", errors)
+        check("assets/guide/*.png" in decisions, "DECISIONS must record guide image asset policy", errors)
+        for asset in guide_assets:
+            check(exists(asset), f"guide asset referenced by index.html is missing: {asset}", errors)
+
+    if "og-image.png" in index:
+        check("assets/og-image.png" in index, "index.html must reference OG image under assets/", errors)
+        check("assets/og-image.png" in readme, "README must document OG image asset path", errors)
+        check("assets/og-image.png" in agents, "AGENTS must document OG image asset path", errors)
+        check("assets/og-image.png" in manifest, "MANIFEST must classify OG image as runtime static asset", errors)
+        check("assets/og-image.png" in decisions, "DECISIONS must record OG image asset policy", errors)
+        check(exists("assets/og-image.png"), "OG image asset is missing: assets/og-image.png", errors)
+        check(not exists("og-image.png"), "root og-image.png should remain moved to assets/", errors)
 
     check(not exists("parse_kakao_chat.py"), "root parse_kakao_chat.py should remain moved to tools/", errors)
     check("tools/parse_kakao_chat.py" in readme, "README must point to tools/parse_kakao_chat.py", errors)

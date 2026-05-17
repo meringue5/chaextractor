@@ -173,6 +173,187 @@
   * `python3 harness/scripts/run_parser_golden.py` 통과 (`android-sample`, `ios-minimal`, `windows-minimal`)
   * `python3 harness/scripts/check_doc_drift.py` 통과
 
+## 2-1-6단계: 보안 렌더링 하네스 보강 (2026-05-17)
+* 대상 백로그:
+  * H-005 파일명/첨부 ref HTML escape 보강
+* 변경:
+  * `index.html`의 파일 링크/누락 파일/지연 로딩 파일 렌더링에서 첨부 ref와 파일명을 `escapeHtml` 처리
+  * 대화 본문 URL 링크와 파일 링크에 `rel="noopener"` 적용
+  * [harness/scripts/parse_with_index.mjs](harness/scripts/parse_with_index.mjs)와 [harness/scripts/run_parser_golden.py](harness/scripts/run_parser_golden.py)에 `renderChat` HTML 검증 경로 추가
+  * [test/fixtures/security-xss/xss_attachment_ref.txt](test/fixtures/security-xss/xss_attachment_ref.txt), [test/parser-golden/security-xss.json](test/parser-golden/security-xss.json) 추가
+* 검증:
+  * `python3 harness/scripts/run_parser_golden.py test/parser-golden/security-xss.json` 통과
+
+## 2-1-7단계: 모달 키보드 접근성 보강 (2026-05-17)
+* 대상 백로그:
+  * H-006 Escape 모달 닫기와 키보드 접근성 보강
+* 변경:
+  * 이미지/꿀팁/설정 모달에 `role="dialog"`, `aria-modal`, `aria-hidden`, 닫기 버튼 `aria-label` 적용
+  * 공통 `closeActiveModal()`과 Escape 키 처리 추가
+  * 이미지 모달 닫기 요소를 키보드 포커스 가능한 버튼으로 변경
+  * [harness/scripts/check_modal_escape.py](harness/scripts/check_modal_escape.py) 추가
+* 검증:
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+
+## 2-1-8단계: 캐시 날짜 정렬 회귀 고정 (2026-05-17)
+* 대상 백로그:
+  * H-007 cache hit 날짜 정렬 회귀 고정
+* 변경:
+  * 캐시 hit에서 저장된 `dates`를 다시 `reverse()`하지 않고 `sortDatesDescending()`으로 정규화
+  * 기존/미래 캐시가 오름차순, 내림차순, 또는 `dates` 누락 상태여도 `messagesByDate` 기준 최신순 복원 가능
+  * [harness/scripts/check_cache_date_sort.py](harness/scripts/check_cache_date_sort.py) 추가
+* 검증:
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+
+## 2-1-9단계: UI smoke 하네스 추가 (2026-05-17)
+* 대상 백로그:
+  * H-009 주요 UI 흐름 smoke 추가
+* 결정:
+  * Playwright 의존성은 현재 저장소에 없으므로, 첫 단계는 Node VM에서 실제 `index.html` UI 함수를 호출하는 deterministic smoke로 시작
+  * 실제 브라우저 smoke는 의존성 도입 시 [harness/scripts/check_ui_smoke.py](harness/scripts/check_ui_smoke.py) 위에 확장
+* 변경:
+  * `index.html` test API에 `initApp`, `selectDate`, `renderDateList`, 리더 필터, 설정, 사이드바 상태 snapshot 추가
+  * [harness/scripts/check_ui_smoke.py](harness/scripts/check_ui_smoke.py) 추가
+* 검증:
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+
+## 2-1-10단계: 브라우저 기능 제한 안내 구현 (2026-05-17)
+* 대상 백로그:
+  * H-010 브라우저 기능 제한 안내 구현
+* 변경:
+  * 초기 업로드 영역에 기능 제한 안내 영역 추가
+  * `File`/`Blob`/`URL.createObjectURL` 미지원 시 업로드 컨트롤 비활성화
+  * `IndexedDB` 미지원 시 캐시 없이 동작한다는 복구 가능한 안내 표시
+  * [harness/scripts/check_capability_notice.py](harness/scripts/check_capability_notice.py) 추가
+* 검증:
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+
+## 2-1-11단계: 캐시 삭제와 Blob URL 정리 구현 (2026-05-17)
+* 대상 백로그:
+  * H-011 캐시 삭제 UX와 Blob URL 해제 정책 구현
+* 결정:
+  * IndexedDB 캐시는 설정 모달에서 삭제할 수 있게 제공
+  * 새 업로드 전 기존 런타임 첨부 Blob URL은 `URL.revokeObjectURL`로 해제
+* 변경:
+  * 설정 모달에 로컬 캐시 삭제 버튼과 상태 문구 추가
+  * `clearAllCache()`, `clearRuntimeAttachmentFiles()`, `resetRuntimeAttachmentState()` 추가
+  * ZIP/폴더 새 처리 시작 시 런타임 첨부 상태 초기화
+  * [harness/scripts/check_cache_privacy.py](harness/scripts/check_cache_privacy.py) 추가
+* 검증:
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+
+## 2-1-12단계: Android 일반 파일/PDF 매핑 구현 (2026-05-17)
+* 대상 백로그:
+  * H-012 Android 일반 파일/PDF 매핑 결정 및 구현
+* 결정:
+  * Android `파일: {파일명}` 일반 문서 첨부는 공식 요구사항으로 승격
+  * 파일명은 URL 인코딩될 수 있으므로 원문/디코딩 값을 모두 비교해 직접 매핑
+* 변경:
+  * Android 일반 문서 확장자 첨부 후보 패턴 추가
+  * `findAttachmentByReference()`로 URL 인코딩/디코딩 파일명 매핑
+  * [test/fixtures/android-files/KakaoTalkChats.txt](test/fixtures/android-files/KakaoTalkChats.txt), [test/parser-golden/android-files.json](test/parser-golden/android-files.json) 추가
+* 검증:
+  * `python3 harness/scripts/run_parser_golden.py test/parser-golden/android-files.json` 통과
+
+## 2-1-13단계: Windows 첨부파일 범위 고정 (2026-05-17)
+* 대상 백로그:
+  * H-014 Windows 첨부파일 매핑 조사 및 결정
+* 결정:
+  * Windows 텍스트 내보내기 파싱은 공식 지원을 유지
+  * Windows 첨부파일 매핑은 실제 첨부파일 포함 export 샘플 확보 전까지 공식 범위 밖으로 유지
+  * 현재 코드는 Windows 첨부파일을 직접 매핑하지 않는 상태를 fixture로 고정
+* 변경:
+  * [test/fixtures/windows-attachments-unsupported/KakaoTalk_20260303_1300_00_123_windows.txt](test/fixtures/windows-attachments-unsupported/KakaoTalk_20260303_1300_00_123_windows.txt) 추가
+  * [test/parser-golden/windows-attachments-unsupported.json](test/parser-golden/windows-attachments-unsupported.json) 추가
+  * [harness/BACKLOG.md](harness/BACKLOG.md)의 H-014를 외부 샘플 필요 상태로 이동
+* 검증:
+  * `python3 harness/scripts/run_parser_golden.py test/parser-golden/windows-attachments-unsupported.json` 통과
+
+## 2-1-14단계: 합성 성능 smoke 추가 (2026-05-17)
+* 대상 백로그:
+  * H-013 합성 대용량 성능 smoke 추가
+* 변경:
+  * [harness/scripts/check_performance_smoke.py](harness/scripts/check_performance_smoke.py) 추가
+  * Node VM helper에 합성 Android 로그 생성과 실제 `index.html` 파서 시간 측정 모드 추가
+  * 1만 메시지 자동 smoke와 50만 메시지 수동 측정 명령 문서화
+* 검증:
+  * `python3 harness/scripts/check_performance_smoke.py` 통과: 10,000 메시지, 15.5ms
+  * `python3 harness/scripts/check_performance_smoke.py --messages 500000 --budget-ms 10000` 통과: 500,000 메시지, 502.7ms
+
+## 2-1-15단계: 가이드 이미지 정적 자산 분리 (2026-05-17)
+* 결정:
+  * 앱 구조 기준을 "단일 HTML 파일"에서 "빌드 없는 정적 앱"으로 조정
+  * `index.html`은 앱 진입점으로 유지하고, 정적 자산은 소스 파일 그대로 GitHub Pages에 배포
+  * 가이드 스크린샷은 내용 이미지이므로 스프라이트/base64 대신 `assets/guide/*.png` 개별 파일로 관리
+* 변경:
+  * 사용 가이드 base64 PNG 6장을 `assets/guide/` 아래 개별 파일로 추출
+  * `index.html`의 가이드 이미지를 상대 경로 `<img>`로 교체하고 `loading="lazy"`, `decoding="async"` 적용
+  * README/AGENTS/harness 문서와 doc drift checker에 빌드 없는 정적 앱 기준 반영
+* 검증:
+  * `file assets/guide/*.png`로 PNG 형식과 해상도 확인
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
+  * `git diff --check` 및 Python 유틸 import smoke 통과
+
+## 2-1-16단계: 앱 CSS 정적 자산 분리 (2026-05-17)
+* 결정:
+  * CSS는 `assets/styles/app.css`로 분리하되 빌드 산출물은 만들지 않음
+  * `index.html`은 앱 진입점과 JS 앱 로직 중심으로 유지
+* 변경:
+  * `index.html` 내부 `<style>` 블록을 `assets/styles/app.css`로 이동
+  * `index.html`에서 `assets/styles/app.css`를 `<link rel="stylesheet">`로 로드
+  * README/AGENTS/harness 문서와 doc drift checker에 스타일시트 경로와 폰트 CDN 점검 기준 반영
+* 검증:
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
+  * `git diff --check` 및 Python 유틸 import smoke 통과
+
+## 2-1-17단계: Open Graph 이미지 자산 위치 정리 (2026-05-17)
+* 결정:
+  * 루트의 `og-image.png`를 `assets/og-image.png`로 이동해 런타임 정적 자산 위치를 일관화
+  * 소셜 메타 태그는 크롤러 호환을 위해 절대 URL을 유지
+* 변경:
+  * `index.html`의 `og:image`, `twitter:image`, `#heroImage` 경로 갱신
+  * README/AGENTS/harness 문서와 doc drift checker에 `assets/og-image.png` 기준 반영
+* 검증:
+  * `file assets/og-image.png`로 PNG 형식과 해상도 확인
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `git diff --check` 통과
+
+## 2-1-18단계: 앱 JS와 JSZip vendor 정적 자산 분리 (2026-05-17)
+* 결정:
+  * 앱 JavaScript는 `assets/scripts/app.js`로 분리하되 빌드 산출물은 만들지 않음
+  * JSZip 3.10.1은 `assets/vendor/jszip-3.10.1.min.js` 로컬 vendor 파일로 고정
+  * `index.html`은 HTML 진입점으로 유지하고 vendor script → app script 순서로 로드
+* 변경:
+  * `index.html` 내부 앱 스크립트를 `assets/scripts/app.js`로 이동
+  * 인라인 JSZip을 `assets/vendor/jszip-3.10.1.min.js`로 이동
+  * [harness/scripts/parse_with_index.mjs](harness/scripts/parse_with_index.mjs)가 `assets/scripts/app.js`를 직접 읽도록 갱신
+  * README/AGENTS/harness 문서와 doc drift checker에 앱 JS/JSZip vendor 경로 반영
+* 검증:
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
+  * `git diff --check` 및 Python 유틸 import smoke 통과
+
+## 2-1-19단계: 선택 실행 Playwright browser smoke 추가 (2026-05-17)
+* 결정:
+  * 실제 브라우저 검증은 앱 배포 빌드가 아니라 개발 하네스로 둠
+  * 초기 범위는 Chromium 기반 정적 자산 로드, Windows TXT 업로드, 핵심 UI 흐름, 모바일 사이드바 smoke로 제한
+  * GitHub Actions 필수 게이트는 아직 도입하지 않고 로컬 선택 실행 명령으로 유지
+* 변경:
+  * [package.json](package.json)에 Playwright 개발 의존성과 `test:browser` 명령 추가
+  * [harness/browser/playwright.config.js](harness/browser/playwright.config.js) 추가
+  * [harness/browser/smoke.spec.js](harness/browser/smoke.spec.js) 추가
+  * README/AGENTS/harness 문서와 tester skill에 browser smoke 실행 기준 반영
+  * `.gitignore`에 `node_modules/`, `playwright-report/`, `test-results/` 추가
+* 검증:
+  * `npm install` 및 `npm run test:browser:install`로 Playwright/Chromium 설치 완료
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+  * 기존 deterministic 하네스와 문서 검사 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

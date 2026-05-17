@@ -1,0 +1,57 @@
+{
+  "id": "security-xss",
+  "description": "파일명/첨부 ref/사용자명 렌더링 escape 회귀 fixture",
+  "platform": "ios",
+  "renderDate": "2026-04-01",
+  "input": {
+    "text": "test/fixtures/security-xss/xss_attachment_ref.txt",
+    "attachments": []
+  },
+  "expected": {
+    "detectedPlatform": "ios",
+    "messageCount": 3,
+    "dateCount": 1,
+    "dates": ["2026-04-01"],
+    "typeCounts": {
+      "file": 1,
+      "text": 2
+    },
+    "attachmentRefCount": 1,
+    "attachmentMappedCount": 0,
+    "leaderCountByDate": {
+      "2026-04-01": 0
+    },
+    "messages": [
+      {
+        "index": 0,
+        "user": "테스터",
+        "message_type": "file",
+        "attachment_ref": "<img src=x onerror=alert(1)>.pdf",
+        "attachment_path": ""
+      },
+      {
+        "index": 1,
+        "user": "<script>alert(2)</script>",
+        "message_type": "text"
+      },
+      {
+        "index": 2,
+        "user": "테스터",
+        "message_type": "text",
+        "has_link": true
+      }
+    ],
+    "renderedMessageCount": 3,
+    "renderedHtmlContains": [
+      "&lt;img src=x onerror=alert(1)&gt;.pdf",
+      "&lt;script&gt;alert(2)&lt;/script&gt;",
+      "target=\"_blank\" rel=\"noopener\""
+    ],
+    "renderedHtmlNotContains": [
+      "<img src=x",
+      "<script>",
+      "</script>",
+      "target=\"_blank\">"
+    ]
+  }
+}
