@@ -45,12 +45,12 @@
 | H-009 주요 UI 흐름 smoke 추가 | `harness/scripts/check_ui_smoke.py`, `harness/scripts/parse_with_index.mjs` | 반영 |
 | H-010 브라우저 기능 제한 안내 구현 | `index.html`, `harness/scripts/check_capability_notice.py` | 반영 |
 | H-011 캐시 삭제 UX와 Blob URL 해제 정책 구현 | `index.html`, `harness/scripts/check_cache_privacy.py` | 반영 |
+| H-012 Android 일반 파일/PDF 매핑 결정 및 구현 | `harness/DOMAIN_RULES.md`, `test/parser-golden/android-files.json`, `index.html` | 반영 |
 
 ## 우선순위 백로그
 
 | ID | 우선순위 | 영역 | 작업 | 완료 기준 |
 |---|---|---|---|---|
-| H-012 | P1 | Attachment | Android 일반 파일/PDF 매핑 결정 및 구현 | URL 인코딩 파일명 fixture와 expected 추가 |
 | H-014 | P1 | Attachment | Windows 첨부파일 매핑 조사 및 결정 | 실제 Windows 첨부파일 export 구조와 fixture 확보 |
 | H-013 | P2 | Performance | 합성 대용량 성능 smoke 추가 | 1만 메시지 로컬 smoke와 50만 메시지 수동 측정 절차 문서화 |
 
@@ -59,4 +59,4 @@
 다음으로 가장 작은 구현 단위:
 
 1. 파일명/첨부 ref HTML escape 보강과 XSS fixture 추가
-2. Android 일반 파일/PDF와 Windows 첨부파일 매핑 범위 결정
+2. Windows 첨부파일 매핑 범위 결정

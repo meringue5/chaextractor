@@ -83,7 +83,7 @@
 | 플랫폼 | iOS/Android/Windows 내보내기 지원 | Android 실제 ZIP/iOS 최소/Windows 최소 fixture golden 검증 |
 | 파싱 | 날짜 그룹화, 시스템 메시지 제외, 연속 텍스트 병합 | parser golden 부분 검증 |
 | 메시지 타입 | text/photo/file/emoticon 분리 | parser golden 부분 검증 |
-| 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음 | parser golden 부분 검증 |
+| 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음 | parser golden: iOS PDF/사진, Android hash/일반 파일, 누락 첨부 검증 |
 | 검색 | 전체 메시지 대상, 날짜 목록/결과 반영 | UI smoke에서 날짜 목록 필터 검증 |
 | 통계 | 날짜별 메시지 수, 참여자, 리더 발언 수, 사진 수 | parser golden이 타입/리더 수 일부 검증 |
 | UI | 꿀팁, 리더 필터, 설정, 테마/폰트 유지 | UI smoke에서 주요 함수 흐름 부분 검증 |

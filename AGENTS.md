@@ -76,6 +76,7 @@
 - Android 대화 파일명: `KakaoTalkChats.txt`
 - iOS 첨부파일: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
 - Android 이미지 첨부파일: `{64자리 hex}.(jpg|jpeg|png|gif|webp)`
+- Android 일반 파일/PDF: `파일: {파일명}`. 파일명은 URL 인코딩될 수 있으며 디코딩 비교로 직접 매핑한다.
 - Windows 데스크톱 텍스트 내보내기는 공식 지원한다.
 - macOS 공식 지원은 실제 export 규칙과 fixture가 확인되기 전까지 TODO다.
 - 대화 내용, 사용자명, 파일명, 첨부파일 참조는 모두 신뢰하지 않는 입력으로 취급한다.
@@ -245,6 +246,7 @@ UI 렌더링:
 - `URL` — URL 감지
 - `ATTACHMENT_FILENAME_IOS` — iOS 첨부파일명 (`YYYYMMDD_HHMMSS[_n].ext`)
 - `ATTACHMENT_FILENAME_ANDROID` — Android 첨부파일명 (`[0-9a-f]{64}.ext`)
+- `ATTACHMENT_FILENAME_ANDROID_FILE` — Android 일반 문서 첨부파일명
 - TODO: macOS 공식 패턴 확인 필요
 
 # 진행 이력

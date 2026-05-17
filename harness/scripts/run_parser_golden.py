@@ -20,6 +20,10 @@ ATTACHMENT_RE = re.compile(
     r"|(^[0-9a-f]{64}\.(?:jpg|jpeg|png|gif|webp)$)",
     re.IGNORECASE,
 )
+ANDROID_FILE_RE = re.compile(
+    r"^.+\.(?:pdf|doc|docx|xls|xlsx|ppt|pptx|hwp|hwpx|zip)$",
+    re.IGNORECASE,
+)
 
 
 def read_case(path: Path) -> dict[str, Any]:
@@ -51,7 +55,11 @@ def load_input(case: dict[str, Any]) -> dict[str, Any]:
             content = archive.read(chat_name).decode("utf-8-sig")
             attachments = [
                 name for name in names
-                if not name.endswith("/") and ATTACHMENT_RE.match(Path(name).name)
+                if not name.endswith("/")
+                and (
+                    ATTACHMENT_RE.match(Path(name).name)
+                    or ANDROID_FILE_RE.match(Path(name).name)
+                )
             ]
 
         return {

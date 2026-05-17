@@ -242,6 +242,19 @@
 * 검증:
   * `python3 harness/scripts/check_cache_privacy.py` 통과
 
+## 2-1-12단계: Android 일반 파일/PDF 매핑 구현 (2026-05-17)
+* 대상 백로그:
+  * H-012 Android 일반 파일/PDF 매핑 결정 및 구현
+* 결정:
+  * Android `파일: {파일명}` 일반 문서 첨부는 공식 요구사항으로 승격
+  * 파일명은 URL 인코딩될 수 있으므로 원문/디코딩 값을 모두 비교해 직접 매핑
+* 변경:
+  * Android 일반 문서 확장자 첨부 후보 패턴 추가
+  * `findAttachmentByReference()`로 URL 인코딩/디코딩 파일명 매핑
+  * [test/fixtures/android-files/KakaoTalkChats.txt](test/fixtures/android-files/KakaoTalkChats.txt), [test/parser-golden/android-files.json](test/parser-golden/android-files.json) 추가
+* 검증:
+  * `python3 harness/scripts/run_parser_golden.py test/parser-golden/android-files.json` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

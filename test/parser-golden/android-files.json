@@ -1,0 +1,52 @@
+{
+  "id": "android-files",
+  "description": "Android 일반 파일/PDF fixture: URL 인코딩 파일명과 누락 첨부파일 매핑",
+  "platform": "android",
+  "input": {
+    "text": "test/fixtures/android-files/KakaoTalkChats.txt",
+    "attachments": [
+      "공유자료.pdf",
+      "%EB%B3%B4%EA%B3%A0%EC%84%9C.pdf"
+    ]
+  },
+  "expected": {
+    "detectedPlatform": "android",
+    "messageCount": 4,
+    "dateCount": 1,
+    "dates": ["2026-04-02"],
+    "typeCounts": {
+      "file": 3,
+      "text": 1
+    },
+    "attachmentRefCount": 3,
+    "attachmentMappedCount": 2,
+    "leaderCountByDate": {
+      "2026-04-02": 0
+    },
+    "messages": [
+      {
+        "index": 0,
+        "message_type": "file",
+        "attachment_ref": "%EA%B3%B5%EC%9C%A0%EC%9E%90%EB%A3%8C.pdf",
+        "attachment_path": "공유자료.pdf"
+      },
+      {
+        "index": 1,
+        "message_type": "file",
+        "attachment_ref": "보고서.pdf",
+        "attachment_path": "%EB%B3%B4%EA%B3%A0%EC%84%9C.pdf"
+      },
+      {
+        "index": 2,
+        "message_type": "file",
+        "attachment_ref": "missing.pdf",
+        "attachment_path": ""
+      },
+      {
+        "index": 3,
+        "message_type": "text",
+        "content": "일반 메시지"
+      }
+    ]
+  }
+}

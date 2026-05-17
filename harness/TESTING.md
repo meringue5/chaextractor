@@ -15,6 +15,7 @@ python3 harness/scripts/run_parser_golden.py
 현재 케이스:
 
 - `android-sample`: `test/dataset/android/`의 실제 ZIP 샘플
+- `android-files`: `test/fixtures/android-files/`의 Android 일반 파일/PDF fixture
 - `ios-minimal`: `test/fixtures/ios-minimal/`의 최소 iOS fixture
 - `windows-minimal`: `test/fixtures/windows-minimal/`의 최소 Windows 데스크톱 TXT fixture
 - `security-xss`: 파일명/첨부 ref/사용자명 렌더링 escape fixture
@@ -27,6 +28,7 @@ python3 harness/scripts/run_parser_golden.py
 - 연속 텍스트 병합
 - 시스템 메시지 제외
 - Android hash 이미지와 연속 사진 줄
+- Android 일반 파일/PDF URL 인코딩/디코딩 매핑
 - iOS 사진/PDF 타임스탬프 매핑
 - Windows 날짜 헤더, 오전/오후 메시지, 시스템 메시지 제외, 연속 텍스트 병합
 - 누락 첨부파일의 비중단 처리

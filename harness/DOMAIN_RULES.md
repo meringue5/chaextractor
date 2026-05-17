@@ -34,7 +34,7 @@ iOS 월/일은 한 자리일 때 0 패딩이 없고, 날짜와 시간 사이에 
 |---|---|---|---|
 | iOS | `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)` | 메시지 시간 기준 가까운 첨부파일 매핑, 기본 허용 범위 ±30분 | 요구사항 |
 | Android | `{64자리 hex}.(jpg|jpeg|png|gif|webp)` | 대화 내용의 파일명을 `attachment_ref`로 직접 매핑 | 요구사항 |
-| Android 일반 파일/PDF | 대화에 `파일: {파일명}`으로 등장 가능 | 구현 검증 부족 | 미결정 |
+| Android 일반 파일/PDF | `파일: {파일명}`. 파일명은 URL 인코딩될 수 있음 | URL 인코딩/디코딩 비교 후 직접 매핑 | 요구사항 |
 | Windows | 미확정 | 미확정 | 미결정/TODO |
 | macOS | 미확정 | 미확정 | TODO |
 
@@ -150,7 +150,7 @@ f92f6c1f66...jpg
 | 플랫폼 | 필요한 fixture |
 |---|---|
 | iOS | 날짜 헤더, 텍스트, 사진, PDF, 누락 첨부파일, 연속 텍스트 병합 |
-| Android | `KakaoTalkChats.txt`, 64자리 hash 이미지, 연속 사진, URL 인코딩 파일명 |
+| Android | `KakaoTalkChats.txt`, 64자리 hash 이미지, 연속 사진, URL 인코딩 일반 파일명 |
 | Windows | 데스크톱 txt, 날짜 헤더, 오전/오후 메시지, 시스템 메시지, 연속 텍스트 병합 |
 | macOS | 실제 내보내기 txt와 첨부파일 구조 |
 

@@ -1606,7 +1606,9 @@
             // iOS 첨부파일 패턴: 20250725_200815_1.jpeg
             ATTACHMENT_FILENAME_IOS: /^(\d{8})_(\d{6})(?:_\d+)?\.(jpeg|jpg|png|webp|pdf)$/i,
             // Android 첨부파일 패턴: 64자리 hex hash
-            ATTACHMENT_FILENAME_ANDROID: /^[0-9a-f]{64}\.(jpg|jpeg|png|gif|webp)$/i
+            ATTACHMENT_FILENAME_ANDROID: /^[0-9a-f]{64}\.(jpg|jpeg|png|gif|webp)$/i,
+            // Android 일반 파일: 대화 내용에 "파일: {파일명}"으로 직접 등장하는 문서 파일
+            ATTACHMENT_FILENAME_ANDROID_FILE: /^.+\.(pdf|doc|docx|xls|xlsx|ppt|pptx|hwp|hwpx|zip)$/i
         };
 
         // 패턴 배열을 순차적으로 테스트하는 헬퍼 함수
@@ -1629,7 +1631,8 @@
         // 첨부파일 여부 확인 (iOS/Android 패턴 모두 지원)
         function isAttachmentFile(filename) {
             return PATTERNS.ATTACHMENT_FILENAME_IOS.test(filename) ||
-                   PATTERNS.ATTACHMENT_FILENAME_ANDROID.test(filename);
+                   PATTERNS.ATTACHMENT_FILENAME_ANDROID.test(filename) ||
+                   PATTERNS.ATTACHMENT_FILENAME_ANDROID_FILE.test(filename);
         }
 
         // 첨부파일 파일명 파싱 (iOS/Android 패턴 모두 지원)
@@ -2944,6 +2947,34 @@
             return { type: 'text', attachType: '', attachRef: '' };
         }
 
+        function decodeAttachmentName(filename) {
+            try {
+                return decodeURIComponent(filename);
+            } catch (error) {
+                return filename;
+            }
+        }
+
+        function findAttachmentByReference(filenameSource, ref) {
+            if (!ref) return '';
+
+            const candidates = [ref, decodeAttachmentName(ref)];
+            for (const candidate of candidates) {
+                if (filenameSource[candidate]) {
+                    return candidate;
+                }
+            }
+
+            const normalizedRef = decodeAttachmentName(ref);
+            for (const filename of Object.keys(filenameSource)) {
+                if (decodeAttachmentName(filename) === normalizedRef) {
+                    return filename;
+                }
+            }
+
+            return '';
+        }
+
         // ========== 첨부파일 지연 로딩 ==========
         async function loadAttachment(filename) {
             // 이미 로드된 경우 캐시에서 반환
@@ -3125,8 +3156,9 @@
                 // Android: attachment_ref가 직접 파일명 → 직접 매핑
                 for (const msg of messages) {
                     if (msg.attachment_ref) {
-                        if (filenameSource[msg.attachment_ref]) {
-                            msg.attachment_path = msg.attachment_ref;
+                        const matchedFilename = findAttachmentByReference(filenameSource, msg.attachment_ref);
+                        if (matchedFilename) {
+                            msg.attachment_path = matchedFilename;
                             matchedCount++;
                         }
                     }
