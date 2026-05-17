@@ -125,6 +125,17 @@ def main() -> int:
         check("cdn.jsdelivr.net/gh/neodgm" in manifest, "MANIFEST must list NeoDunggeunmo CDN surface", errors)
         check("cdn.jsdelivr.net/gh/projectnoonnu" in manifest, "MANIFEST must list RIDIBatang CDN surface", errors)
 
+    if "reportIssueModal" in runtime or "diagnosticState" in runtime:
+        check("오류 진단 리포트" in readme, "README must document diagnostic report behavior", errors)
+        check("오류 진단 리포트" in agents, "AGENTS must document diagnostic report UI", errors)
+        check("진단 리포트는 대화 원문" in manifest, "MANIFEST must classify diagnostic privacy boundary", errors)
+        check("오류 보고" in read("harness/REQUIREMENTS.md"), "REQUIREMENTS must include diagnostic issue reporting", errors)
+        check(exists(".github/ISSUE_TEMPLATE/bug_report.yml"), "diagnostic reporting requires GitHub issue form", errors)
+        check(exists(".github/ISSUE_TEMPLATE/config.yml"), "diagnostic reporting requires issue template config", errors)
+        check("python3 harness/scripts/check_diagnostic_report.py" in testing, "TESTING must document diagnostic report check", errors)
+        check("python3 harness/scripts/check_diagnostic_report.py" in tester_skill, "tester skill must include diagnostic report check", errors)
+        check("github.com/meringue5/chaextractor/issues/new" in manifest, "MANIFEST must list GitHub issue form surface", errors)
+
     guide_assets = sorted(set(re.findall(r'src="(assets/guide/[^"]+)"', index)))
     if guide_assets:
         check("assets/guide" in readme, "README must document guide asset directory", errors)

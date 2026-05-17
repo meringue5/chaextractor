@@ -60,6 +60,7 @@ function createElement(tagName = 'div') {
     attributes: {},
     classList: createClassList(),
     disabled: false,
+    hidden: false,
     value: '',
     files: [],
     appendChild(child) {
@@ -117,6 +118,9 @@ function getElementById(id) {
   if (!elementsById.has(id)) {
     const el = createElement('div');
     el.id = id;
+    if (id === 'diagnosticToast') {
+      el.hidden = true;
+    }
     elementsById.set(id, el);
   }
   return elementsById.get(id);
@@ -274,7 +278,7 @@ if (!windowObject.__CHAEXTRACTOR_TEST__) {
 
 if (input.mode === 'modalEscape') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
-  const modalIds = ['settingsModal'];
+  const modalIds = ['settingsModal', 'reportIssueModal'];
   const results = [];
 
   for (const modalId of modalIds) {
@@ -307,6 +311,25 @@ if (input.mode === 'modalEscape') {
   });
 
   process.stdout.write(JSON.stringify({ results }, null, 2));
+  process.exit(0);
+}
+
+if (input.mode === 'diagnosticReport') {
+  const api = windowObject.__CHAEXTRACTOR_TEST__;
+  api.recordDiagnosticInput([
+    { name: 'private-chat-name.txt', size: 2048 },
+    { name: '20260517_120000.jpeg', size: 4096 }
+  ], 'testInput');
+  api.setDiagnosticStage('test-processing');
+  api.captureDiagnosticError(new Error('synthetic diagnostic failure in private-chat-name.txt'), {
+    type: 'test-error',
+    stage: 'test-processing',
+    filename: 'http://127.0.0.1/assets/scripts/app.js',
+    line: 123,
+    column: 4
+  });
+  api.openDiagnosticReportModal();
+  process.stdout.write(JSON.stringify(api.getDiagnosticSnapshot(), null, 2));
   process.exit(0);
 }
 

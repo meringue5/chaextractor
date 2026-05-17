@@ -387,6 +387,27 @@
   * `python3 harness/scripts/check_doc_drift.py` 통과
   * `python3 harness/scripts/check_ui_smoke.py` 통과
 
+## 2-1-22단계: 오류 진단 리포트와 GitHub 버그 제보 폼 추가 (2026-05-17)
+* 결정:
+  * Google Forms 문의 흐름 대신 GitHub Issue Form 기반 버그 제보 흐름을 사용
+  * 앱이 JS 오류와 파일 처리 실패를 감지하면 대화 원문 없이 진단 리포트를 준비
+  * 진단 리포트에는 파일명 원문, 사용자명, 첨부파일 내용, 대화 본문을 자동 포함하지 않고 파일 수/크기/확장자/처리 단계/스택만 기록
+* 변경:
+  * [index.html](index.html)에 `#reportIssueModal`, `#diagnosticToast`, 버그 제보 버튼 추가
+  * [assets/scripts/app.js](assets/scripts/app.js)에 `window.error`, `unhandledrejection`, 업로드 처리 실패 진단 수집과 GitHub Issue Form URL 생성 추가
+  * [assets/styles/app.css](assets/styles/app.css)에 오류 보고 모달과 진단 토스트 스타일 추가
+  * [.github/ISSUE_TEMPLATE/bug_report.yml](.github/ISSUE_TEMPLATE/bug_report.yml)와 `config.yml` 추가
+  * [harness/scripts/check_diagnostic_report.py](harness/scripts/check_diagnostic_report.py) 추가
+  * README/AGENTS/harness 문서와 Playwright smoke를 오류 보고 흐름에 맞게 갱신
+* 검증:
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+  * `git diff --check` 통과
+
 ## 2-1-23단계: 왕관 사용자 필터 대상 입력 추가 (2026-05-17)
 * 결정:
   * 왕관 버튼의 기본 필터 대상은 `채상욱 리더`로 유지하되, 사용자가 런타임에서 대상 사용자명을 직접 입력할 수 있게 함

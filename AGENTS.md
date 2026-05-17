@@ -97,6 +97,9 @@
 ## 유용한 팁
 ETF Checker https://www.etfcheck.co.kr
 
+## 버그 제보
+GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=bug_report.yml
+
 # 코드 구조: index.html + 정적 자산
 
 현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` 로드 → `assets/scripts/app.js` 로드
@@ -116,7 +119,7 @@ ETF Checker https://www.etfcheck.co.kr
     - `#progressContainer` > `#progressFill` + `.progress-text` — 진행률 바
   - `#startBtn` — 대화 보기 시작 버튼 (처리 완료 전 hidden)
   - `#heroImage` — 히어로 이미지 (`assets/og-image.png`, 처리 완료 후 표시)
-  - `.setup-footer-btns` — 문의/제보 외부 링크
+  - `.setup-footer-btns` — 버그 제보 버튼
 - `#app` — 메인 뷰어 (초기 hidden)
   - `.sidebar` — 좌측 패널 (320px, 모바일: 86vw 슬라이드)
     - `.sidebar-header` — 제목 + 헤더 버튼들
@@ -142,10 +145,12 @@ ETF Checker https://www.etfcheck.co.kr
     - `#chatMessages` — 메시지 목록
   - `.link-sidebar` — 우측 링크 패널 (데스크톱 상시 표시, 모바일: 86vw 슬라이드)
     - `.link-sidebar-header` — 링크 패널 제목
-    - `.link-group` — 머니버스 꿀팁/문의 링크 그룹
-    - `.link-item` — 외부 링크 버튼
+    - `.link-group` — 머니버스 꿀팁/버그 제보 링크 그룹
+    - `.link-item` — 외부 링크/제보 버튼
 - `#imageModal` — 이미지 확대 모달 (`#modalImage`, `#modalClose`)
 - `#settingsModal` — 설정 모달 (`.theme-btn`, `.font-btn`)
+- `#reportIssueModal` — 오류 진단 리포트/오류 보고 모달 (`#diagnosticReportText`, `#copyDiagnosticBtn`, `#openIssueBtn`)
+- `#diagnosticToast` — JS 오류/처리 실패 감지 시 표시되는 진단 리포트 토스트
 
 ## CSS 주요 클래스
 정본 스타일시트는 `assets/styles/app.css`다.
@@ -162,8 +167,9 @@ ETF Checker https://www.etfcheck.co.kr
 - 첨부파일: `.attachment`, `.attachment img`, `.file-link`, `.emoticon`, `.no-file`, `.loading-placeholder`
 - 스크롤마커: `.scroll-markers`, `.scroll-marker`
 - 모달: `.modal`, `.modal.active`, `.modal-overlay`, `.modal-overlay.open`, `.modal-box`, `.modal-header`, `.modal-close-btn`
+- 오류 보고: `.report-modal-box`, `.report-help`, `.report-actions`, `.report-action-btn`, `.diagnostic-report-text`, `.report-status`, `.diagnostic-toast`, `.diagnostic-toast-actions`
 - 설정: `.settings-group`, `.settings-options`, `.theme-btn`, `.font-btn`, `.theme-btn.active`, `.font-btn.active`
-- 링크 사이드바: `.link-sidebar`, `.link-sidebar.open`, `.link-sidebar-header`, `.link-group`, `.link-group-header`, `.link-list`, `.link-item`, `.footer-link-btn`, `.link-sidebar-toggle`
+- 링크 사이드바: `.link-sidebar`, `.link-sidebar.open`, `.link-sidebar-header`, `.link-group`, `.link-group-header`, `.link-list`, `.link-item`, `.link-button`, `.footer-link-btn`, `.link-sidebar-toggle`
 - 상태: `.setup-step.completed` (녹색), `.setup-step.processing` (주황), `.setup-step.error` (적색)
 - 모바일: `@media (max-width: 900px)` — `.sidebar.open`, `.link-sidebar.open`, `.sidebar-overlay.active`, `.sidebar-toggle`, `.link-sidebar-toggle`
 - 테마: `[data-theme="dark"]`, `[data-font="ridi"]` (RIDIBatang), `[data-font="neodgm"]` (NeoDunggeunmo Pro)
@@ -226,6 +232,15 @@ UI 렌더링:
 - `getBrowserCapabilityStatus()` — `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 지원 확인
 - `applyBrowserCapabilityStatus(status)` — 미지원 기능 안내와 업로드 제한 상태 반영
 
+오류 보고/진단:
+- `recordDiagnosticInput(files, source)` — 파일명 원문 없이 파일 수/총 크기/확장자 분포만 기록
+- `setDiagnosticStage(stage)` — 현재 처리 단계 기록
+- `captureDiagnosticError(error, context)` — JS 오류/처리 실패를 안전 진단 이벤트로 기록하고 토스트 표시
+- `buildDiagnosticReport(options)` — 대화 원문, 사용자명, 파일명, 첨부파일 내용 없이 마크다운 리포트 생성
+- `copyDiagnosticReport()` — 진단 리포트를 클립보드에 복사
+- `openIssueReportPage()` — GitHub Issue Form 버그 제보 링크 열기
+- `openDiagnosticReportModal()` — 오류 보고 모달 열기
+
 모달:
 - `openModal(modalId)` / `closeModal(modalId)` — 모달 열기/닫기
 
@@ -253,6 +268,7 @@ UI 렌더링:
 - `leaderFilterTarget` — 현재 필터 대상 사용자명 (기본값: `채상욱 리더`)
 - `detectedPlatform` — 'ios', 'android', 'windows'
 - `linkSidebar`/`linkSidebarToggle` — 오른쪽 링크 패널 DOM 상태 제어
+- `diagnosticState` — 안전 진단 리포트용 처리 단계, 입력 요약, 최근 오류 이벤트
 
 ## 정규식 패턴 (PATTERNS 객체)
 - `DATE_HEADER` — iOS 날짜 구분선 (`YYYY년 M월 D일 d요일`)

@@ -13,6 +13,11 @@ let selectedDate = null;
 let leaderFilterActive = false;
 let leaderFilterTarget = DEFAULT_LEADER_FILTER_TARGET;
 
+const ISSUE_REPORT_URL = 'https://github.com/meringue5/chaextractor/issues/new';
+const ISSUE_REPORT_TEMPLATE = 'bug_report.yml';
+const DIAGNOSTIC_EVENT_LIMIT = 8;
+const DIAGNOSTIC_REPORT_URL_LIMIT = 12000;
+
 // ========== 정규식 패턴 (AGENTS.md 기반) ==========
 // 여러 언어/버전을 지원하기 위한 패턴 배열
 const PATTERNS = {
@@ -191,6 +196,354 @@ const sidebarToggle = document.getElementById('sidebarToggle');
 const linkSidebar = document.getElementById('linkSidebar');
 const linkSidebarToggle = document.getElementById('linkSidebarToggle');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
+const reportIssueFooterBtn = document.getElementById('reportIssueFooterBtn');
+const reportIssueLinkBtn = document.getElementById('reportIssueLinkBtn');
+const reportIssueModal = document.getElementById('reportIssueModal');
+const copyDiagnosticBtn = document.getElementById('copyDiagnosticBtn');
+const openIssueBtn = document.getElementById('openIssueBtn');
+const diagnosticReportText = document.getElementById('diagnosticReportText');
+const diagnosticCopyStatus = document.getElementById('diagnosticCopyStatus');
+const diagnosticToast = document.getElementById('diagnosticToast');
+const diagnosticToastMessage = document.getElementById('diagnosticToastMessage');
+const diagnosticToastDetails = document.getElementById('diagnosticToastDetails');
+const diagnosticToastIssue = document.getElementById('diagnosticToastIssue');
+
+// ========== 안전 진단 리포트 ==========
+const diagnosticState = {
+    stage: 'app-loaded',
+    progress: { percent: 0, text: '앱 로드' },
+    input: {
+        source: 'none',
+        fileCount: 0,
+        totalBytes: 0,
+        extensions: [],
+        txtFileCount: 0,
+        zipFileCount: 0,
+        attachmentFileCount: 0
+    },
+    events: []
+};
+let diagnosticRedactions = [];
+
+function sanitizeDiagnosticText(value, maxLength = 1200) {
+    if (value === undefined || value === null) return '';
+
+    let text = String(value)
+        .replace(/\u0000/g, '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/blob:[^\s)]+/g, 'blob:[redacted]');
+
+    for (const token of diagnosticRedactions) {
+        if (token.length < 3) continue;
+        text = text.split(token).join('[redacted-filename]');
+    }
+
+    if (text.length <= maxLength) return text;
+    return `${text.slice(0, maxLength)}... [truncated]`;
+}
+
+function getNavigatorSnapshot() {
+    const nav = typeof navigator !== 'undefined'
+        ? navigator
+        : (window && window.navigator ? window.navigator : {});
+
+    return {
+        userAgent: sanitizeDiagnosticText(nav.userAgent || 'unknown', 500),
+        language: sanitizeDiagnosticText(nav.language || 'unknown', 80),
+        platform: sanitizeDiagnosticText(nav.platform || 'unknown', 80)
+    };
+}
+
+function getViewportSnapshot() {
+    return {
+        width: window.innerWidth || document.documentElement.clientWidth || 'unknown',
+        height: window.innerHeight || document.documentElement.clientHeight || 'unknown'
+    };
+}
+
+function getSafeAppUrl() {
+    try {
+        return sanitizeDiagnosticText(window.location && window.location.href ? window.location.href.split('#')[0] : 'unknown', 500);
+    } catch (error) {
+        return 'unknown';
+    }
+}
+
+function summarizeFileExtensions(files) {
+    const counts = {};
+
+    for (const file of files) {
+        const name = String(file.name || '').toLowerCase();
+        const ext = name.includes('.') ? name.split('.').pop() : '(none)';
+        counts[ext] = (counts[ext] || 0) + 1;
+    }
+
+    return Object.keys(counts)
+        .sort()
+        .map(ext => `${ext}:${counts[ext]}`);
+}
+
+function recordDiagnosticInput(files, source) {
+    const list = Array.from(files || []);
+    let totalBytes = 0;
+    let txtFileCount = 0;
+    let zipFileCount = 0;
+    let attachmentFileCount = 0;
+    const redactions = [];
+
+    for (const file of list) {
+        const name = String(file.name || '');
+        const relativePath = String(file.webkitRelativePath || '');
+        totalBytes += Number(file.size) || 0;
+        if (/\.txt$/i.test(name)) txtFileCount++;
+        if (/\.zip$/i.test(name)) zipFileCount++;
+        if (isAttachmentFile(name)) attachmentFileCount++;
+        if (name) redactions.push(name);
+        if (relativePath) redactions.push(relativePath);
+    }
+
+    diagnosticRedactions = [...new Set(redactions)].slice(0, 200);
+
+    diagnosticState.input = {
+        source,
+        fileCount: list.length,
+        totalBytes,
+        extensions: summarizeFileExtensions(list),
+        txtFileCount,
+        zipFileCount,
+        attachmentFileCount
+    };
+}
+
+function setDiagnosticStage(stage) {
+    diagnosticState.stage = sanitizeDiagnosticText(stage, 160) || 'unknown';
+}
+
+function getLatestDiagnosticEvent() {
+    if (diagnosticState.events.length === 0) return null;
+    return diagnosticState.events[diagnosticState.events.length - 1];
+}
+
+function normalizeDiagnosticError(error, context = {}) {
+    const fallbackMessage = typeof error === 'string' ? error : '알 수 없는 오류';
+    const message = error && error.message ? error.message : fallbackMessage;
+    const stack = error && error.stack ? error.stack : '';
+    const name = error && error.name ? error.name : context.type || 'Error';
+    const source = context.filename ? String(context.filename).split('?')[0].split('#')[0].split('/').pop() : '';
+
+    return {
+        id: `${Date.now()}-${diagnosticState.events.length + 1}`,
+        time: new Date().toISOString(),
+        type: sanitizeDiagnosticText(context.type || name, 80),
+        stage: sanitizeDiagnosticText(context.stage || diagnosticState.stage, 160),
+        message: sanitizeDiagnosticText(message, 600),
+        stack: sanitizeDiagnosticText(stack, 3000),
+        source: sanitizeDiagnosticText(source, 160),
+        line: context.line || context.lineno || '',
+        column: context.column || context.colno || ''
+    };
+}
+
+function showDiagnosticToast(event) {
+    if (!diagnosticToast) return;
+
+    if (diagnosticToastMessage) {
+        diagnosticToastMessage.textContent = `${event.stage} 단계의 진단 리포트를 준비했습니다.`;
+    }
+
+    diagnosticToast.hidden = false;
+}
+
+function captureDiagnosticError(error, context = {}) {
+    if (context.stage) {
+        setDiagnosticStage(context.stage);
+    }
+
+    const event = normalizeDiagnosticError(error, context);
+    diagnosticState.events.push(event);
+    if (diagnosticState.events.length > DIAGNOSTIC_EVENT_LIMIT) {
+        diagnosticState.events = diagnosticState.events.slice(-DIAGNOSTIC_EVENT_LIMIT);
+    }
+
+    showDiagnosticToast(event);
+    updateDiagnosticReportText();
+    return event;
+}
+
+function buildDiagnosticReport(options = {}) {
+    const latest = getLatestDiagnosticEvent();
+    const input = diagnosticState.input;
+    const capabilities = getBrowserCapabilityStatus();
+    const navigatorSnapshot = getNavigatorSnapshot();
+    const viewport = getViewportSnapshot();
+    const compact = !!options.compact;
+    const events = compact ? (latest ? [latest] : []) : diagnosticState.events;
+
+    const lines = [
+        '# chaextractor 오류 진단 리포트',
+        '',
+        '> 대화 원문, 사용자명, 파일명, 첨부파일 내용은 자동 수집하지 않습니다.',
+        '',
+        '## 오류',
+        `- 리포트 생성 시각: ${new Date().toISOString()}`,
+        `- 마지막 단계: ${diagnosticState.stage}`,
+        `- 진행률: ${diagnosticState.progress.percent}% / ${diagnosticState.progress.text}`,
+        `- 오류 유형: ${latest ? latest.type : 'manual-report'}`,
+        `- 오류 메시지: ${latest ? latest.message : '사용자가 직접 연 제보입니다.'}`,
+        '',
+        '## 입력 요약',
+        `- 입력 경로: ${input.source}`,
+        `- 파일 수: ${input.fileCount}`,
+        `- 총 크기: ${formatSize(input.totalBytes)}`,
+        `- 확장자 분포: ${input.extensions.length ? input.extensions.join(', ') : '없음'}`,
+        `- TXT 후보: ${input.txtFileCount}`,
+        `- ZIP 후보: ${input.zipFileCount}`,
+        `- 첨부파일 후보: ${input.attachmentFileCount}`,
+        '',
+        '## 앱 상태',
+        `- 앱 URL: ${getSafeAppUrl()}`,
+        `- 감지 플랫폼: ${detectedPlatform}`,
+        `- 메시지 수: ${messages.length}`,
+        `- 날짜 수: ${dates.length}`,
+        `- 선택 날짜: ${selectedDate || '없음'}`,
+        `- 사용자 필터: ${leaderFilterActive ? 'on' : 'off'}`,
+        '',
+        '## 브라우저',
+        `- User agent: ${navigatorSnapshot.userAgent}`,
+        `- Language: ${navigatorSnapshot.language}`,
+        `- Platform: ${navigatorSnapshot.platform}`,
+        `- Viewport: ${viewport.width}x${viewport.height}`,
+        `- File API: ${capabilities.file ? 'yes' : 'no'}`,
+        `- Blob API: ${capabilities.blob ? 'yes' : 'no'}`,
+        `- IndexedDB: ${capabilities.indexedDB ? 'yes' : 'no'}`,
+        `- Object URL: ${capabilities.objectURL ? 'yes' : 'no'}`
+    ];
+
+    if (events.length > 0) {
+        lines.push('', '## 최근 오류 이벤트');
+        for (const event of events) {
+            lines.push(
+                '',
+                `### ${event.time}`,
+                `- 유형: ${event.type}`,
+                `- 단계: ${event.stage}`,
+                `- 메시지: ${event.message}`
+            );
+            if (event.source) {
+                lines.push(`- 위치: ${event.source}:${event.line || '?'}:${event.column || '?'}`);
+            }
+            if (event.stack) {
+                lines.push('', '```text', event.stack, '```');
+            }
+        }
+    }
+
+    lines.push(
+        '',
+        '## 재현 절차',
+        '1.',
+        '2.',
+        '3.',
+        '',
+        '## 기대한 동작',
+        '',
+        '## 실제 동작'
+    );
+
+    return lines.join('\n');
+}
+
+function updateDiagnosticReportText() {
+    if (!diagnosticReportText) return '';
+
+    const report = buildDiagnosticReport();
+    diagnosticReportText.value = report;
+    return report;
+}
+
+function buildDiagnosticIssueTitle() {
+    const latest = getLatestDiagnosticEvent();
+    const message = latest ? latest.message.split('\n')[0] : '오류 제보';
+    return `[Bug] ${sanitizeDiagnosticText(message, 70)}`;
+}
+
+function buildDiagnosticIssueUrl() {
+    const params = {
+        template: ISSUE_REPORT_TEMPLATE,
+        title: buildDiagnosticIssueTitle()
+    };
+    const compactReport = buildDiagnosticReport({ compact: true });
+    if (encodeURIComponent(compactReport).length <= DIAGNOSTIC_REPORT_URL_LIMIT) {
+        params.diagnostic_report = compactReport;
+    }
+
+    const query = Object.keys(params)
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+        .join('&');
+    return `${ISSUE_REPORT_URL}?${query}`;
+}
+
+async function copyDiagnosticReport() {
+    const report = updateDiagnosticReportText();
+    const nav = typeof navigator !== 'undefined'
+        ? navigator
+        : (window && window.navigator ? window.navigator : {});
+
+    try {
+        if (!nav.clipboard || typeof nav.clipboard.writeText !== 'function') {
+            throw new Error('clipboard-unavailable');
+        }
+        await nav.clipboard.writeText(report);
+        if (diagnosticCopyStatus) {
+            diagnosticCopyStatus.textContent = '진단 리포트를 복사했습니다.';
+        }
+        return { ok: true };
+    } catch (error) {
+        if (diagnosticCopyStatus) {
+            diagnosticCopyStatus.textContent = '자동 복사가 안 되면 아래 리포트를 직접 선택해 복사해주세요.';
+        }
+        return { ok: false, reason: error.message || 'copy-failed' };
+    }
+}
+
+function openIssueReportPage() {
+    updateDiagnosticReportText();
+    const url = buildDiagnosticIssueUrl();
+
+    if (typeof window.open === 'function') {
+        const opened = window.open(url, '_blank', 'noopener');
+        if (opened) opened.opener = null;
+        return url;
+    }
+
+    return url;
+}
+
+function openDiagnosticReportModal() {
+    if (diagnosticState.events.length === 0) {
+        setDiagnosticStage('manual-report');
+    }
+    updateDiagnosticReportText();
+    if (diagnosticCopyStatus) {
+        diagnosticCopyStatus.textContent = '';
+    }
+    openModal('reportIssueModal');
+}
+
+function buildDiagnosticTestSnapshot() {
+    updateDiagnosticReportText();
+    return {
+        stage: diagnosticState.stage,
+        input: { ...diagnosticState.input },
+        eventCount: diagnosticState.events.length,
+        latestEvent: getLatestDiagnosticEvent(),
+        reportText: diagnosticReportText ? diagnosticReportText.value : '',
+        issueUrl: buildDiagnosticIssueUrl(),
+        toastVisible: diagnosticToast ? !diagnosticToast.hidden : false,
+        reportModalOpen: isModalOpen('reportIssueModal')
+    };
+}
 
 // ========== 브라우저 기능 제한 안내 ==========
 function getBrowserCapabilityStatus(scope = window) {
@@ -320,7 +673,7 @@ async function clearAllCache() {
 
 // ========== 공통 모달 함수 ==========
 let lastModalTrigger = null;
-const modalIds = ['settingsModal', 'imageModal'];
+const modalIds = ['settingsModal', 'reportIssueModal', 'imageModal'];
 
 function rememberModalTrigger() {
     lastModalTrigger = document.activeElement;
@@ -413,6 +766,40 @@ document.querySelectorAll('.modal-overlay').forEach(modal => {
         if (e.target === modal) {
             closeModal(modal.id);
         }
+    });
+});
+
+[reportIssueFooterBtn, reportIssueLinkBtn, diagnosticToastDetails].forEach(btn => {
+    if (!btn) return;
+    btn.addEventListener('click', openDiagnosticReportModal);
+});
+
+if (copyDiagnosticBtn) {
+    copyDiagnosticBtn.addEventListener('click', copyDiagnosticReport);
+}
+
+if (openIssueBtn) {
+    openIssueBtn.addEventListener('click', openIssueReportPage);
+}
+
+if (diagnosticToastIssue) {
+    diagnosticToastIssue.addEventListener('click', openIssueReportPage);
+}
+
+window.addEventListener('error', (event) => {
+    captureDiagnosticError(event.error || event.message, {
+        type: 'window.error',
+        stage: diagnosticState.stage,
+        filename: event.filename,
+        line: event.lineno,
+        column: event.colno
+    });
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    captureDiagnosticError(event.reason || 'Unhandled promise rejection', {
+        type: 'unhandledrejection',
+        stage: diagnosticState.stage
     });
 });
 
@@ -700,6 +1087,8 @@ zipInput.addEventListener('change', async (e) => {
     if (e.target.files.length > 0) {
         const files = Array.from(e.target.files);
         const file = files[0];
+        recordDiagnosticInput(files, 'zipInput');
+        setDiagnosticStage('zipInput-selected');
         zipName.textContent = `${file.name} (${formatSize(file.size)})`;
         zipBtn.disabled = true;
         folderBtn.disabled = true;
@@ -717,6 +1106,10 @@ zipInput.addEventListener('change', async (e) => {
             startBtn.style.display = 'inline-block';
             document.getElementById('heroImage').style.display = 'block';
         } catch (error) {
+            captureDiagnosticError(error, {
+                type: 'upload-processing',
+                stage: diagnosticState.stage
+            });
             zipName.textContent = `✗ 오류: ${error.message}`;
             zipName.classList.add('error');
             step1.classList.remove('processing');
@@ -729,6 +1122,7 @@ zipInput.addEventListener('change', async (e) => {
 
 // ========== 공통 업로드 처리 헬퍼 ==========
 async function processFilesOrFolder(files) {
+    setDiagnosticStage('input-routing');
     // 단일 .zip 파일이면 ZIP 처리로 라우팅 (폴더 버튼으로 zip을 올린 경우 등)
     if (files.length === 1 && files[0].name.toLowerCase().endsWith('.zip')) {
         return processZipFile(files[0]);
@@ -783,6 +1177,8 @@ dropZone.addEventListener('drop', async (e) => {
     }
     if (files.length === 0) return;
 
+    recordDiagnosticInput(files, 'dropZone');
+    setDiagnosticStage('dropZone-files-detected');
     zipName.textContent = `${files.length}개 파일 감지됨`;
     zipBtn.disabled = true;
     folderBtn.disabled = true;
@@ -799,6 +1195,10 @@ dropZone.addEventListener('drop', async (e) => {
         startBtn.style.display = 'inline-block';
         document.getElementById('heroImage').style.display = 'block';
     } catch (error) {
+        captureDiagnosticError(error, {
+            type: 'drop-processing',
+            stage: diagnosticState.stage
+        });
         zipName.textContent = `✗ 오류: ${error.message}`;
         zipName.classList.add('error');
         step1.classList.remove('processing');
@@ -820,6 +1220,8 @@ folderInput.addEventListener('change', async (e) => {
 
     if (e.target.files.length > 0) {
         const files = Array.from(e.target.files);
+        recordDiagnosticInput(files, 'folderInput');
+        setDiagnosticStage('folderInput-selected');
         zipName.textContent = `${files.length}개 파일 선택됨`;
         folderBtn.disabled = true;
         zipBtn.disabled = true;
@@ -838,6 +1240,10 @@ folderInput.addEventListener('change', async (e) => {
             startBtn.style.display = 'inline-block';
             document.getElementById('heroImage').style.display = 'block';
         } catch (error) {
+            captureDiagnosticError(error, {
+                type: 'folder-processing',
+                stage: diagnosticState.stage
+            });
             zipName.textContent = `✗ 오류: ${error.message}`;
             zipName.classList.add('error');
             step1.classList.remove('processing');
@@ -851,6 +1257,7 @@ folderInput.addEventListener('change', async (e) => {
 // ========== ZIP 파일 처리 (IndexedDB 캐싱 통합) ==========
 async function processZipFile(file) {
     const startTime = performance.now();
+    setDiagnosticStage('zip-processing-start');
     console.log('⏱️ ZIP 처리 시작');
     resetRuntimeAttachmentState();
 
@@ -935,6 +1342,7 @@ async function processZipFile(file) {
     // 플랫폼 감지 (txt 파일명 + 첨부파일명 기반)
     const attachFilenames = attachEntryList.map(e => e.split('/').pop());
     detectedPlatform = detectPlatform(allTxtFiles, attachFilenames);
+    setDiagnosticStage(`platform-detected-${detectedPlatform}`);
     console.log(`플랫폼 감지: ${detectedPlatform}`);
 
     updateProgress(60, '대화 내용 파싱 중...');
@@ -975,6 +1383,7 @@ async function processZipFile(file) {
 // ========== 폴더 파일 처리 (IndexedDB 캐싱 통합) ==========
 async function processFolderFiles(files) {
     const startTime = performance.now();
+    setDiagnosticStage('folder-processing-start');
     console.log('⏱️ 폴더 처리 시작');
     resetRuntimeAttachmentState();
 
@@ -1007,6 +1416,7 @@ async function processFolderFiles(files) {
     // 플랫폼 감지 (txt 파일명 + 첨부파일명 기반)
     const attachFilenames = files.filter(f => isAttachmentFile(f.name)).map(f => f.name);
     detectedPlatform = detectPlatform(allTxtFiles.map(f => f.name), attachFilenames);
+    setDiagnosticStage(`platform-detected-${detectedPlatform}`);
     console.log(`플랫폼 감지: ${detectedPlatform}`);
 
     // === 캐시 확인 (첫 번째 대화 파일 + 파일 개수 기준) ===
@@ -1804,6 +2214,11 @@ function findClosestAttachment(list, targetDt, type, toleranceMinutes) {
 function updateProgress(percent, text) {
     progressFill.style.width = `${percent}%`;
     progressText.textContent = text;
+    diagnosticState.progress = {
+        percent: Math.round(Number(percent) || 0),
+        text: sanitizeDiagnosticText(text, 160)
+    };
+    setDiagnosticStage(text);
 }
 
 // ========== 시작 버튼 ==========
@@ -2464,7 +2879,14 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
         handleModalKeydown,
         isModalOpen,
         showImage,
-        restoreCachedChatData
+        restoreCachedChatData,
+        recordDiagnosticInput,
+        setDiagnosticStage,
+        captureDiagnosticError,
+        buildDiagnosticReport,
+        buildDiagnosticIssueUrl,
+        openDiagnosticReportModal,
+        getDiagnosticSnapshot: buildDiagnosticTestSnapshot
     };
 }
 

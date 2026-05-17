@@ -52,6 +52,12 @@ test('static shell loads local assets and vendor script', async ({ page }) => {
   await expect(page.locator('#tipsModal')).toHaveCount(0);
   await expect(page.locator('#linkSidebar .link-item')).toHaveCount(6);
 
+  await page.locator('#reportIssueFooterBtn').click();
+  await expect(page.locator('#reportIssueModal')).toHaveClass(/open/);
+  await expect(page.locator('#diagnosticReportText')).toHaveValue(/chaextractor 오류 진단 리포트/);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#reportIssueModal')).not.toHaveClass(/open/);
+
   await page.waitForFunction(() => {
     const image = document.querySelector('img[src="assets/guide/guide-01-settings.png"]');
     return image && image.complete && image.naturalWidth > 0;

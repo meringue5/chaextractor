@@ -740,6 +740,13 @@ body {
     transition: border-color 0.2s, background 0.2s, color 0.2s;
 }
 
+.link-button {
+    width: 100%;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
 .link-item:hover {
     border-color: var(--button-primary);
     background: var(--bg-secondary);
@@ -1140,6 +1147,125 @@ body {
     color: var(--text-primary);
 }
 
+/* 오류 보고 */
+.report-modal-box {
+    width: min(720px, 92vw);
+    font-family: var(--font-family);
+}
+
+.report-help {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+
+.report-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.report-action-btn {
+    min-height: 38px;
+    padding: 9px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.report-action-btn.primary {
+    background: var(--button-primary);
+    border-color: var(--button-primary);
+    color: #fff;
+}
+
+.report-action-btn:hover {
+    border-color: var(--button-primary);
+}
+
+.diagnostic-report-text {
+    width: 100%;
+    min-height: 280px;
+    resize: vertical;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: pre;
+}
+
+.report-status {
+    min-height: 20px;
+    margin-top: 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.diagnostic-toast {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: min(560px, calc(100vw - 36px));
+    padding: 14px;
+    border: 1px solid var(--border-color);
+    border-left: 4px solid #d32f2f;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.22);
+}
+
+.diagnostic-toast[hidden] {
+    display: none;
+}
+
+.diagnostic-toast-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+}
+
+.diagnostic-toast-copy span {
+    color: var(--text-secondary);
+}
+
+.diagnostic-toast-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.diagnostic-toast-actions button {
+    min-height: 34px;
+    padding: 7px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+}
+
+.diagnostic-toast-actions button:hover {
+    border-color: var(--button-primary);
+    color: var(--button-primary);
+}
+
 /* 설정 모달 */
 #settingsModal .modal-box {
     width: 300px;
@@ -1421,5 +1547,22 @@ body {
     /* 모바일 모달 */
     .modal-box {
         width: 90vw !important;
+    }
+
+    .diagnostic-toast {
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        max-width: none;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .diagnostic-toast-actions {
+        width: 100%;
+    }
+
+    .diagnostic-toast-actions button {
+        flex: 1;
     }
 }
