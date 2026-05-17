@@ -97,8 +97,7 @@
 
             <!-- 하단 버튼 그룹 -->
             <div class="setup-footer-btns">
-                <button type="button" class="tips-open-btn" id="setupTipsBtn">💡 머니버스 꿀팁</button>
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform?usp=dialog" target="_blank" rel="noopener" class="tips-open-btn">🐛 문의/제보</a>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform?usp=dialog" target="_blank" rel="noopener" class="footer-link-btn">문의/제보</a>
             </div>
         </div>
     </div>
@@ -110,9 +109,7 @@
                 <div class="sidebar-header-top">
                     <h2>대화 뷰어</h2>
                     <div class="header-btns">
-                        <button type="button" class="header-btn" id="tipsBtn" title="꿀팁">💡</button>
                         <button type="button" class="header-btn" id="leaderFilterBtn" title="채상욱 리더 대화만 보기">👑</button>
-                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform?usp=dialog" target="_blank" rel="noopener" class="header-btn" title="문의/버그 제보">🐛</a>
                         <button type="button" class="header-btn" id="settingsBtn" title="설정">⚙️</button>
                     </div>
                 </div>
@@ -145,6 +142,7 @@
                     <div class="info" id="chatInfo"></div>
                 </div>
                 <button class="sidebar-toggle" id="sidebarToggle" aria-label="날짜 패널 열기">&gt;</button>
+                <button class="link-sidebar-toggle" id="linkSidebarToggle" aria-label="링크 패널 열기">&lt;</button>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <div class="empty-state">
@@ -153,30 +151,34 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 꿀팁 모달 -->
-    <div class="modal-overlay" id="tipsModal" role="dialog" aria-modal="true" aria-labelledby="tipsModalTitle" aria-hidden="true">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3 id="tipsModalTitle">💡 머니버스 꿀팁</h3>
-                <button class="modal-close-btn" data-modal="tipsModal" aria-label="꿀팁 모달 닫기">✕</button>
+        <aside class="link-sidebar" id="linkSidebar" aria-label="링크 모음">
+            <div class="link-sidebar-header">
+                <h2>링크</h2>
             </div>
-            <div class="tips-group">
-                <div class="tips-group-header">🐰 춤추는 토끼 171879</div>
-                <div class="tips-links">
-                    <a href="https://moneybus-labs.github.io/hidden-gems/" target="_blank" rel="noopener" class="tip-link-btn">머니버스 하지 마라 15계명</a>
-                    <a href="https://github.com/moneybus-labs/books/blob/main/머니버스톡.md" target="_blank" rel="noopener" class="tip-link-btn">머니버스 톡 추천 도서</a>
-                    <a href="https://github.com/moneybus-labs/books/blob/main/채부심북스.md" target="_blank" rel="noopener" class="tip-link-btn">채부심 북스 추천 도서</a>
-                </div>
+            <div class="link-sidebar-body">
+                <section class="link-group">
+                    <h3 class="link-group-header">춤추는 토끼 171879</h3>
+                    <div class="link-list">
+                        <a href="https://moneybus-labs.github.io/hidden-gems/" target="_blank" rel="noopener" class="link-item">머니버스 하지 마라 15계명</a>
+                        <a href="https://github.com/moneybus-labs/books/blob/main/머니버스톡.md" target="_blank" rel="noopener" class="link-item">머니버스 톡 추천 도서</a>
+                        <a href="https://github.com/moneybus-labs/books/blob/main/채부심북스.md" target="_blank" rel="noopener" class="link-item">채부심 북스 추천 도서</a>
+                    </div>
+                </section>
+                <section class="link-group">
+                    <h3 class="link-group-header">우드워커</h3>
+                    <div class="link-list">
+                        <a href="https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view" target="_blank" rel="noopener" class="link-item">액티브 ETF 구성 변화 앱</a>
+                    </div>
+                </section>
+                <section class="link-group">
+                    <h3 class="link-group-header">피드백</h3>
+                    <div class="link-list">
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform?usp=dialog" target="_blank" rel="noopener" class="link-item">문의/제보</a>
+                    </div>
+                </section>
             </div>
-            <div class="tips-group">
-                <div class="tips-group-header">🪵 우드워커</div>
-                <div class="tips-links">
-                    <a href="https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view" target="_blank" rel="noopener" class="tip-link-btn">액티브 ETF 구성 변화 앱</a>
-                </div>
-            </div>
-        </div>
+        </aside>
     </div>
 
     <!-- 설정 모달 -->

@@ -608,6 +608,80 @@ body {
     flex-direction: column;
     background: var(--chat-bg);
     position: relative;
+    min-width: 0;
+}
+
+/* 링크 사이드바 */
+.link-sidebar {
+    width: 280px;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.link-sidebar-header {
+    padding: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.link-sidebar-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.link-sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+}
+
+.link-group {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.link-group:first-child {
+    padding-top: 0;
+}
+
+.link-group:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.link-group-header {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.link-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.link-item {
+    display: block;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 13px;
+    line-height: 1.4;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.link-item:hover {
+    border-color: var(--button-primary);
+    background: var(--bg-secondary);
+    color: var(--button-primary);
 }
 
 /* 스크롤 마커 트랙 */
@@ -661,7 +735,8 @@ body {
     opacity: 0.8;
 }
 
-.sidebar-toggle {
+.sidebar-toggle,
+.link-sidebar-toggle {
     display: none;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
@@ -678,7 +753,8 @@ body {
     z-index: 950;
 }
 
-.sidebar-toggle:active {
+.sidebar-toggle:active,
+.link-sidebar-toggle:active {
     transform: none;
 }
 
@@ -892,14 +968,14 @@ body {
     pointer-events: none;
 }
 
-/* 꿀팁/제보 버튼 그룹 */
+/* 제보 버튼 그룹 */
 .setup-footer-btns {
     display: flex;
     gap: 10px;
     margin-top: 24px;
 }
 
-.tips-open-btn {
+.footer-link-btn {
     flex: 1;
     padding: 12px 24px;
     background: var(--bg-tertiary);
@@ -916,55 +992,8 @@ body {
     display: inline-block;
 }
 
-.tips-open-btn:hover {
+.footer-link-btn:hover {
     background: var(--bg-secondary);
-}
-
-/* 꿀팁 그룹 */
-.tips-group {
-    padding: 12px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    margin-bottom: 12px;
-}
-
-.tips-group:last-child {
-    margin-bottom: 0;
-}
-
-.tips-group-header {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.tips-links {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.tip-link-btn {
-    display: inline-block;
-    padding: 8px 14px;
-    background: #4a90d9;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    text-decoration: none;
-    text-align: center;
-    transition: background 0.2s;
-    font-family: inherit;
-}
-
-.tip-link-btn:hover {
-    background: #3a7bc8;
 }
 
 /* 헤더 버튼 공통 */
@@ -1053,20 +1082,6 @@ body {
 #settingsModal .modal-box {
     width: 300px;
     font-family: var(--font-family);
-}
-
-/* 꿀팁 모달 */
-#tipsModal .modal-box {
-    width: 400px;
-}
-
-#tipsModal .tips-group {
-    margin-top: 0;
-    margin-bottom: 16px;
-}
-
-#tipsModal .tips-group:last-child {
-    margin-bottom: 0;
 }
 
 .settings-group {
@@ -1213,6 +1228,21 @@ body {
         transform: translateX(0);
     }
 
+    .link-sidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(86vw, 320px);
+        transform: translateX(100%);
+        transition: transform var(--sidebar-transition-duration) ease;
+        z-index: 900;
+    }
+
+    .link-sidebar.open {
+        transform: translateX(0);
+    }
+
     .sidebar-overlay.active {
         display: block;
         pointer-events: auto;
@@ -1233,27 +1263,44 @@ body {
         padding-left: calc(52px + var(--marker-width));
     }
 
-    .sidebar-toggle {
+    .sidebar-toggle,
+    .link-sidebar-toggle {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         position: fixed;
-        left: 0;
         top: 50%;
-        transform: translateY(-50%);
-        border-radius: 0 10px 10px 0;
         padding: 10px 12px;
         box-shadow: none;
         z-index: 1001;
     }
 
-    .sidebar-toggle:active {
+    .sidebar-toggle {
+        left: 0;
+        transform: translateY(-50%);
+        border-radius: 0 10px 10px 0;
+    }
+
+    .link-sidebar-toggle {
+        right: 0;
+        transform: translateY(-50%);
+        border-radius: 10px 0 0 10px;
+    }
+
+    .sidebar-toggle:active,
+    .link-sidebar-toggle:active {
         transform: translateY(-50%);
     }
 
     .app.sidebar-open .sidebar-toggle {
         left: calc(min(86vw, 320px) - 1px);
         border-radius: 0 10px 10px 0;
+        box-shadow: none;
+    }
+
+    .app.link-sidebar-open .link-sidebar-toggle {
+        right: calc(min(86vw, 320px) - 1px);
+        border-radius: 10px 0 0 10px;
         box-shadow: none;
     }
 
@@ -1307,13 +1354,6 @@ body {
 
     .start-btn {
         font-size: 15px;
-    }
-
-    /* 모바일 꿀팁 */
-    .tip-link-btn {
-        padding: 8px 12px;
-        font-size: 12px;
-        width: 100%;
     }
 
     /* 모바일 모달 */

@@ -186,6 +186,8 @@ const dropZone = document.getElementById('dropZone');
 const capabilityWarning = document.getElementById('capabilityWarning');
 const sidebar = document.querySelector('.sidebar');
 const sidebarToggle = document.getElementById('sidebarToggle');
+const linkSidebar = document.getElementById('linkSidebar');
+const linkSidebarToggle = document.getElementById('linkSidebarToggle');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
 
 // ========== 브라우저 기능 제한 안내 ==========
@@ -316,7 +318,7 @@ async function clearAllCache() {
 
 // ========== 공통 모달 함수 ==========
 let lastModalTrigger = null;
-const modalIds = ['tipsModal', 'settingsModal', 'imageModal'];
+const modalIds = ['settingsModal', 'imageModal'];
 
 function rememberModalTrigger() {
     lastModalTrigger = document.activeElement;
@@ -411,13 +413,6 @@ document.querySelectorAll('.modal-overlay').forEach(modal => {
         }
     });
 });
-
-// ========== 꿀팁 모달 ==========
-const setupTipsBtn = document.getElementById('setupTipsBtn');
-const tipsBtn = document.getElementById('tipsBtn');
-
-setupTipsBtn.addEventListener('click', () => openModal('tipsModal'));
-tipsBtn.addEventListener('click', () => openModal('tipsModal'));
 
 // ========== 설정 (테마/폰트) ==========
 const settingsBtn = document.getElementById('settingsBtn');
@@ -2083,31 +2078,81 @@ function isMobileView() {
     return window.matchMedia('(max-width: 900px)').matches;
 }
 
+function setPanelOverlayActive(active) {
+    sidebarOverlay.classList.toggle('active', active);
+}
+
+function hasOpenMobilePanel() {
+    return sidebar.classList.contains('open') || linkSidebar.classList.contains('open');
+}
+
 function openSidebar() {
+    if (isMobileView()) {
+        closeLinkSidebar(false);
+    }
+
     sidebar.classList.add('open');
-    sidebarOverlay.classList.add('active');
+    setPanelOverlayActive(true);
     app.classList.add('sidebar-open');
     updateSidebarToggle();
 
     // 모바일에서만 백그라운드 스크롤 차단
-    if (window.innerWidth <= 900) {
+    if (isMobileView()) {
         document.body.style.overflow = 'hidden';
     }
 }
 
-function closeSidebar() {
+function closeSidebar(updateOverlay = true) {
     sidebar.classList.remove('open');
-    sidebarOverlay.classList.remove('active');
     app.classList.remove('sidebar-open');
     updateSidebarToggle();
 
-    // 스크롤 복원
+    if (updateOverlay) {
+        setPanelOverlayActive(hasOpenMobilePanel());
+        if (!hasOpenMobilePanel()) {
+            document.body.style.overflow = '';
+        }
+    }
+}
+
+function openLinkSidebar() {
+    if (isMobileView()) {
+        closeSidebar(false);
+    }
+
+    linkSidebar.classList.add('open');
+    setPanelOverlayActive(true);
+    app.classList.add('link-sidebar-open');
+    updateLinkSidebarToggle();
+
+    if (isMobileView()) {
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeLinkSidebar(updateOverlay = true) {
+    linkSidebar.classList.remove('open');
+    app.classList.remove('link-sidebar-open');
+    updateLinkSidebarToggle();
+
+    if (updateOverlay) {
+        setPanelOverlayActive(hasOpenMobilePanel());
+        if (!hasOpenMobilePanel()) {
+            document.body.style.overflow = '';
+        }
+    }
+}
+
+function closeMobilePanels() {
+    closeSidebar(false);
+    closeLinkSidebar(false);
+    setPanelOverlayActive(false);
     document.body.style.overflow = '';
 }
 
 function closeSidebarIfMobile() {
     if (isMobileView()) {
-        closeSidebar();
+        closeMobilePanels();
     }
 }
 
@@ -2121,6 +2166,16 @@ function updateSidebarToggle() {
     }
 }
 
+function updateLinkSidebarToggle() {
+    if (linkSidebar.classList.contains('open')) {
+        linkSidebarToggle.textContent = '>';
+        linkSidebarToggle.setAttribute('aria-label', '링크 패널 접기');
+    } else {
+        linkSidebarToggle.textContent = '<';
+        linkSidebarToggle.setAttribute('aria-label', '링크 패널 열기');
+    }
+}
+
 sidebarToggle.addEventListener('click', () => {
     if (sidebar.classList.contains('open')) {
         closeSidebar();
@@ -2129,15 +2184,24 @@ sidebarToggle.addEventListener('click', () => {
     }
 });
 
-sidebarOverlay.addEventListener('click', closeSidebar);
+linkSidebarToggle.addEventListener('click', () => {
+    if (linkSidebar.classList.contains('open')) {
+        closeLinkSidebar();
+    } else {
+        openLinkSidebar();
+    }
+});
+
+sidebarOverlay.addEventListener('click', closeMobilePanels);
 
 window.addEventListener('resize', () => {
     if (!isMobileView()) {
-        closeSidebar();
+        closeMobilePanels();
     }
 });
 
 updateSidebarToggle();
+updateLinkSidebarToggle();
 
 function buildParserTestSnapshot() {
     const typeCounts = {};
@@ -2181,7 +2245,9 @@ function buildUiTestSnapshot() {
         leaderFilterActive,
         settingsModalOpen: isModalOpen('settingsModal'),
         sidebarOpen: sidebar.classList.contains('open'),
+        linkSidebarOpen: linkSidebar.classList.contains('open'),
         sidebarOverlayActive: sidebarOverlay.classList.contains('active'),
+        linkCount: document.querySelectorAll('.link-sidebar .link-item').length,
         theme: document.documentElement.getAttribute('data-theme'),
         font: document.documentElement.getAttribute('data-font') || 'default',
         storedTheme: localStorage.getItem('theme'),
@@ -2243,6 +2309,9 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
         applyFont,
         openSidebar,
         closeSidebar,
+        openLinkSidebar,
+        closeLinkSidebar,
+        closeMobilePanels,
         applyBrowserCapabilityStatus,
         getBrowserCapabilityStatus,
         getCapabilitySnapshot: buildCapabilityTestSnapshot,

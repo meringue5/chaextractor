@@ -354,6 +354,26 @@
   * `npm run test:browser` 통과: 4 passed, 2 skipped
   * 기존 deterministic 하네스와 문서 검사 통과
 
+## 2-1-20단계: 꿀팁 모달을 오른쪽 링크 사이드바로 대체 (2026-05-17)
+* 결정:
+  * 꿀팁은 모달이 아니라 메인 화면 오른쪽 링크 사이드바에서 상시 제공
+  * 초기 화면에서는 꿀팁 모달 버튼을 제거하고 문의/제보 외부 링크만 유지
+  * 모바일에서는 대화 화면, 좌측 탐색 사이드바, 우측 링크 사이드바 중 하나만 화면을 점유하도록 좌우 패널을 상호 배제
+* 변경:
+  * [harness/REQUIREMENTS.md](harness/REQUIREMENTS.md)에 우측 링크 패널과 모바일 상호 배제 요구사항 반영
+  * [index.html](index.html)에서 `#setupTipsBtn`, `#tipsBtn`, `#tipsModal` 제거 및 `#linkSidebar`/`#linkSidebarToggle` 추가
+  * [assets/styles/app.css](assets/styles/app.css)에 데스크톱 우측 링크 패널과 모바일 우측 슬라이드 패널 스타일 추가
+  * [assets/scripts/app.js](assets/scripts/app.js)에 `openLinkSidebar`, `closeLinkSidebar`, `closeMobilePanels` 추가
+  * README/AGENTS/harness 문서와 Node/Playwright UI smoke를 새 화면 구조에 맞게 갱신
+* 검증:
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+  * Codex 인앱 브라우저에서 `#setupTipsBtn`/`#tipsModal` 제거와 `#linkSidebar .link-item` 5개 존재 확인
+  * `git diff --check` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

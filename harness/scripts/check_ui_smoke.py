@@ -59,6 +59,15 @@ def main() -> int:
     fail_if(not payload["afterSettingsModal"]["settingsModalOpen"], failures, "settings modal did not open")
     fail_if(not payload["afterSidebarOpen"]["sidebarOpen"], failures, "sidebar did not open")
     fail_if(payload["afterSidebarClose"]["sidebarOpen"], failures, "sidebar did not close")
+    fail_if(not payload["afterMobileSidebarOpen"]["sidebarOpen"], failures, "mobile left sidebar did not open")
+    fail_if(payload["afterMobileSidebarOpen"]["linkSidebarOpen"], failures, "mobile right sidebar was open while left opened")
+    fail_if(not payload["afterMobileLinkSidebarOpen"]["linkSidebarOpen"], failures, "mobile right sidebar did not open")
+    fail_if(payload["afterMobileLinkSidebarOpen"]["sidebarOpen"], failures, "mobile left sidebar stayed open while right opened")
+    fail_if(not payload["afterMobileSidebarReopen"]["sidebarOpen"], failures, "mobile left sidebar did not reopen")
+    fail_if(payload["afterMobileSidebarReopen"]["linkSidebarOpen"], failures, "mobile right sidebar stayed open while left reopened")
+    fail_if(payload["afterMobilePanelsClose"]["sidebarOpen"], failures, "mobile left sidebar did not close with shared close")
+    fail_if(payload["afterMobilePanelsClose"]["linkSidebarOpen"], failures, "mobile right sidebar did not close with shared close")
+    fail_if(payload["afterMobilePanelsClose"]["sidebarOverlayActive"], failures, "mobile overlay stayed active after panels closed")
 
     if failures:
         print("FAIL UI smoke")

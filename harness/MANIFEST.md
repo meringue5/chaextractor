@@ -37,7 +37,7 @@
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
 | 대화 원문, 첨부파일, 파싱 결과는 외부 서버로 자동 전송하지 않는다. | 구현은 클라이언트 로컬 처리 중심 | doc drift checker로 문구 일부 점검 |
-| 사용자가 명시적으로 클릭한 외부 링크는 허용하되, 대화 데이터가 URL/query/body로 포함되면 안 된다. | 꿀팁 링크와 문의/제보 링크가 있음 | 링크 목록 매니페스트와 회귀 체크 |
+| 사용자가 명시적으로 클릭한 외부 링크는 허용하되, 대화 데이터가 URL/query/body로 포함되면 안 된다. | 링크 사이드바와 문의/제보 링크가 있음 | 링크 목록 매니페스트와 회귀 체크 |
 | 자동 외부 요청은 문서화되어야 한다. | 폰트 CDN 요청이 자동 발생함 | doc drift checker로 문서화 여부 점검 |
 | IndexedDB 캐시는 로컬 캐시이며 민감 데이터로 취급한다. | 30일 정리 로직과 설정 모달 캐시 삭제 UX가 있음 | `check_cache_privacy.py`로 clear 경로 점검 |
 | localStorage에는 UI 설정만 저장한다. | theme/font/fontAutoSwitch만 사용 | 설정 키 allowlist 체크 |
@@ -49,7 +49,7 @@
 | 폰트 | `cdn.jsdelivr.net/gh/neodgm/...` | 예 | NeoDunggeunmo Pro |
 | 폰트 | `cdn.jsdelivr.net/gh/projectnoonnu/...` | 예 | RIDIBatang |
 | 공개 메타 | `meringue5.github.io/chaextractor/assets/og-image.png` | 아니오 | 소셜/크롤러용 메타 |
-| 꿀팁 링크 | `moneybus-labs.github.io`, `github.com`, `drive.google.com` | 아니오 | 사용자 클릭 |
+| 링크 사이드바 | `moneybus-labs.github.io`, `github.com`, `drive.google.com` | 아니오 | 사용자 클릭 |
 | 문의/제보 | `docs.google.com/forms/...` | 아니오 | 사용자 클릭 |
 
 ### 보안 표준
@@ -87,7 +87,7 @@
 | 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음 | parser golden: iOS PDF/사진, Android hash/일반 파일, 누락 첨부 검증 |
 | 검색 | 전체 메시지 대상, 날짜 목록/결과 반영 | Node UI smoke와 browser smoke에서 날짜 목록 필터 검증 |
 | 통계 | 날짜별 메시지 수, 참여자, 리더 발언 수, 사진 수 | parser golden이 타입/리더 수 일부 검증 |
-| UI | 꿀팁, 리더 필터, 설정, 테마/폰트 유지 | Node UI smoke와 browser smoke에서 주요 흐름 부분 검증 |
+| UI | 오른쪽 링크 사이드바, 리더 필터, 설정, 테마/폰트 유지 | Node UI smoke와 browser smoke에서 주요 흐름 부분 검증 |
 | 접근성 | 키보드 주요 기능, 포커스, 대비 | 모달 Escape 닫기는 `check_modal_escape.py`로 검증 |
 | 기능 제한 | `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 미지원 안내 | capability notice 검증 |
 | 성능 | 50만 메시지 10초 내 파싱 목표 | 합성 1만 자동 smoke, 50만 수동 측정 절차 |

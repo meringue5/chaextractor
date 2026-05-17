@@ -138,6 +138,7 @@ const localStorage = {
 function FakeFile() {}
 function FakeBlob() {}
 const revokedObjectUrls = [];
+let mobileMatches = false;
 
 function createSuccessRequest(resultValue) {
   const request = { result: resultValue };
@@ -196,9 +197,9 @@ const windowObject = {
   addEventListener() {},
   removeEventListener() {},
   scrollTo() {},
-  matchMedia() {
+  matchMedia(query) {
     return {
-      matches: false,
+      matches: mobileMatches && String(query).includes('max-width: 900px'),
       addEventListener() {},
       removeEventListener() {}
     };
@@ -273,7 +274,7 @@ if (!windowObject.__CHAEXTRACTOR_TEST__) {
 
 if (input.mode === 'modalEscape') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
-  const modalIds = ['tipsModal', 'settingsModal'];
+  const modalIds = ['settingsModal'];
   const results = [];
 
   for (const modalId of modalIds) {
@@ -349,6 +350,19 @@ if (input.mode === 'uiSmoke') {
   api.closeSidebar();
   const afterSidebarClose = api.getUiSnapshot();
 
+  mobileMatches = true;
+  api.openSidebar();
+  const afterMobileSidebarOpen = api.getUiSnapshot();
+
+  api.openLinkSidebar();
+  const afterMobileLinkSidebarOpen = api.getUiSnapshot();
+
+  api.openSidebar();
+  const afterMobileSidebarReopen = api.getUiSnapshot();
+
+  api.closeMobilePanels();
+  const afterMobilePanelsClose = api.getUiSnapshot();
+
   process.stdout.write(JSON.stringify({
     parseResult,
     afterInit,
@@ -358,7 +372,11 @@ if (input.mode === 'uiSmoke') {
     afterSettings,
     afterSettingsModal,
     afterSidebarOpen,
-    afterSidebarClose
+    afterSidebarClose,
+    afterMobileSidebarOpen,
+    afterMobileLinkSidebarOpen,
+    afterMobileSidebarReopen,
+    afterMobilePanelsClose
   }, null, 2));
   process.exit(0);
 }

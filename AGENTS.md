@@ -63,7 +63,7 @@
 
 - ZIP 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다.
 - iOS/Android/Windows 카카오톡 내보내기 파일을 공식 지원한다.
-- 날짜별 탐색, 검색, 통계, 리더 하이라이트/필터, 설정 유지, 꿀팁 모달을 제공한다.
+- 날짜별 탐색, 검색, 통계, 리더 하이라이트/필터, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
 - 시스템 메시지는 제외하고, 동일 사용자 연속 텍스트는 병합한다.
 - 사진/파일/이모티콘은 텍스트와 별도 타입으로 유지한다.
 - 누락 첨부파일은 앱 중단 없이 복구 가능한 상태로 표시한다.
@@ -112,12 +112,11 @@
     - `#zipName` — 파일 상태 메시지
     - `#progressContainer` > `#progressFill` + `.progress-text` — 진행률 바
   - `#startBtn` — 대화 보기 시작 버튼 (처리 완료 전 hidden)
-  - `#setupTipsBtn` — 꿀팁 모달 열기
   - `#heroImage` — 히어로 이미지 (`assets/og-image.png`, 처리 완료 후 표시)
+  - `.setup-footer-btns` — 문의/제보 외부 링크
 - `#app` — 메인 뷰어 (초기 hidden)
   - `.sidebar` — 좌측 패널 (320px, 모바일: 86vw 슬라이드)
     - `.sidebar-header` — 제목 + 헤더 버튼들
-      - `#tipsBtn` — 꿀팁 모달 (📌)
       - `#leaderFilterBtn` — 리더 필터 토글 (👑)
       - `#settingsBtn` — 설정 모달 (⚙️)
     - `#stats` — 통계 (메시지 수, 참여자)
@@ -128,6 +127,7 @@
       - `#calendarGrid` — 7열 그리드 (.day, .day.has-messages, .day.selected)
     - `#dateList` — 날짜 목록 (.date-item, .date-item.selected)
   - `#sidebarToggle` — 모바일 햄버거 버튼 (position: fixed)
+  - `#linkSidebarToggle` — 모바일 링크 패널 토글 버튼 (position: fixed)
   - `#sidebarOverlay` — 모바일 배경 오버레이
   - `#chatArea` — 우측 대화 영역
     - `#scrollMarkers` — 리더 발언 위치 마커 (금색 바)
@@ -135,8 +135,11 @@
       - `#chatTitle` — 날짜/요일
       - `#chatInfo` — 메시지 수, 참여자, 리더 발언 수, 사진 수
     - `#chatMessages` — 메시지 목록
+  - `.link-sidebar` — 우측 링크 패널 (데스크톱 상시 표시, 모바일: 86vw 슬라이드)
+    - `.link-sidebar-header` — 링크 패널 제목
+    - `.link-group` — 머니버스 꿀팁/문의 링크 그룹
+    - `.link-item` — 외부 링크 버튼
 - `#imageModal` — 이미지 확대 모달 (`#modalImage`, `#modalClose`)
-- `#tipsModal` — 꿀팁 모달 (`.tips-group` > `.tip-link-btn`)
 - `#settingsModal` — 설정 모달 (`.theme-btn`, `.font-btn`)
 
 ## CSS 주요 클래스
@@ -155,9 +158,9 @@
 - 스크롤마커: `.scroll-markers`, `.scroll-marker`
 - 모달: `.modal`, `.modal.active`, `.modal-overlay`, `.modal-overlay.open`, `.modal-box`, `.modal-header`, `.modal-close-btn`
 - 설정: `.settings-group`, `.settings-options`, `.theme-btn`, `.font-btn`, `.theme-btn.active`, `.font-btn.active`
-- 꿀팁: `.tips-group`, `.tips-group-header`, `.tips-links`, `.tip-link-btn`, `.tips-open-btn`
+- 링크 사이드바: `.link-sidebar`, `.link-sidebar.open`, `.link-sidebar-header`, `.link-group`, `.link-group-header`, `.link-list`, `.link-item`, `.footer-link-btn`, `.link-sidebar-toggle`
 - 상태: `.setup-step.completed` (녹색), `.setup-step.processing` (주황), `.setup-step.error` (적색)
-- 모바일: `@media (max-width: 900px)` — `.sidebar.open`, `.sidebar-overlay.active`, `.sidebar-toggle`
+- 모바일: `@media (max-width: 900px)` — `.sidebar.open`, `.link-sidebar.open`, `.sidebar-overlay.active`, `.sidebar-toggle`, `.link-sidebar-toggle`
 - 테마: `[data-theme="dark"]`, `[data-font="ridi"]` (RIDIBatang), `[data-font="neodgm"]` (NeoDunggeunmo Pro)
 
 ## JavaScript 주요 함수
@@ -227,6 +230,8 @@ UI 렌더링:
 - `formatSize(bytes)` — 파일 크기 포맷 (KB/MB/GB)
 - `isMobileView()` — 900px 미만 여부
 - `openSidebar()` / `closeSidebar()` — 모바일 사이드바 제어
+- `openLinkSidebar()` / `closeLinkSidebar()` — 모바일 링크 사이드바 제어
+- `closeMobilePanels()` — 모바일 좌우 사이드바 상호 배제 및 닫기
 - `parseDateTime(str)` — datetime 문자열 → Date 객체
 
 ## 전역 상태
@@ -241,6 +246,7 @@ UI 렌더링:
 - `selectedDate` — 선택된 날짜
 - `leaderFilterActive` — 리더 필터 상태
 - `detectedPlatform` — 'ios', 'android', 'windows'
+- `linkSidebar`/`linkSidebarToggle` — 오른쪽 링크 패널 DOM 상태 제어
 
 ## 정규식 패턴 (PATTERNS 객체)
 - `DATE_HEADER` — iOS 날짜 구분선 (`YYYY년 M월 D일 d요일`)

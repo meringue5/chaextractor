@@ -52,11 +52,11 @@ PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; p
 
 `check_doc_drift.py`는 Markdown 로컬 링크, 플랫폼 지원 범위, Windows 공식 지원 문서화, 앱 JS/JSZip 로컬 vendor 상태, 폰트 CDN 문서화, Python 도구 위치, Android 샘플 경로, parser golden 명령 문서화를 함께 검사한다.
 
-`check_modal_escape.py`는 Node VM에서 실제 앱 모달 함수를 호출해 이미지/꿀팁/설정 모달이 Escape 처리 후 닫히는지 검사한다.
+`check_modal_escape.py`는 Node VM에서 실제 앱 모달 함수를 호출해 이미지/설정 모달이 Escape 처리 후 닫히는지 검사한다.
 
 `check_cache_date_sort.py`는 캐시 hit 복원 시 날짜 목록이 항상 최신순으로 정규화되는지 검사한다.
 
-`check_ui_smoke.py`는 Node VM에서 실제 앱 UI 함수를 호출해 fixture 로드, 날짜 선택, 검색 날짜 필터, 리더 필터, 테마/폰트 설정, 설정 모달, 사이드바 열기/닫기를 검사한다. Playwright 같은 실제 브라우저 smoke는 의존성을 도입할 때 이 명령 위에 확장한다.
+`check_ui_smoke.py`는 Node VM에서 실제 앱 UI 함수를 호출해 fixture 로드, 날짜 선택, 검색 날짜 필터, 리더 필터, 테마/폰트 설정, 설정 모달, 좌우 사이드바 열기/닫기와 모바일 상호 배제를 검사한다. Playwright 같은 실제 브라우저 smoke는 의존성을 도입할 때 이 명령 위에 확장한다.
 
 `check_capability_notice.py`는 `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 지원 여부에 따라 안내 문구와 업로드 제한 상태가 올바른지 검사한다.
 
@@ -76,8 +76,8 @@ Playwright smoke는 정적 서버로 저장소 루트의 `index.html`을 열고 
 
 - CSS, JSZip vendor, 앱 JS, 가이드 이미지 정적 자산 로드
 - Windows TXT fixture 업로드와 시작 버튼 흐름
-- 날짜 목록, 날짜 선택, 검색 날짜 필터, 리더 필터, 설정 모달 Escape 닫기
-- 모바일 viewport의 사이드바 토글과 오버레이 닫기
+- 날짜 목록, 날짜 선택, 검색 날짜 필터, 리더 필터, 설정 모달 Escape 닫기, 데스크톱 링크 사이드바
+- 모바일 viewport의 좌우 사이드바 토글, 상호 배제, 오버레이 닫기
 
 초기 설치:
 
