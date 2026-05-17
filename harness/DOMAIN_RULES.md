@@ -12,10 +12,10 @@
 |---|---|---|
 | iOS | 공식 지원 | 요구사항 |
 | Android | 공식 지원 | 요구사항 |
-| Windows | 후보 구현 존재 | 구현-only, 정식 지원 아님 |
+| Windows | 공식 지원 | 요구사항 |
 | macOS | 규칙 미확인 | 미결정/TODO |
 
-Windows는 `index.html`에 일부 패턴이 존재하지만 fixture와 expected 결과가 없으므로 README에서 지원 플랫폼으로 홍보하지 않는다.
+Windows는 데스크톱 내보내기 텍스트 로그 파싱을 공식 지원한다. Windows 첨부파일 매핑은 실제 샘플과 규칙이 확인되기 전까지 공식 범위에 포함하지 않는다.
 
 ## 대화 파일명 규칙
 
@@ -23,7 +23,7 @@ Windows는 `index.html`에 일부 패턴이 존재하지만 fixture와 expected 
 |---|---|---|
 | iOS | `Talk_YYYY.M.D HH_mm-n.txt` | 요구사항 |
 | Android | `KakaoTalkChats.txt` | 요구사항 |
-| Windows | `KakaoTalk_YYYYMMDD_HHMM_SS_n_*.txt` 후보 | 구현-only |
+| Windows | `KakaoTalk_YYYYMMDD_HHMM_SS_n_*.txt` | 요구사항 |
 | macOS | 미확인 | TODO |
 
 iOS 월/일은 한 자리일 때 0 패딩이 없고, 날짜와 시간 사이에 공백이 있다.
@@ -35,7 +35,7 @@ iOS 월/일은 한 자리일 때 0 패딩이 없고, 날짜와 시간 사이에 
 | iOS | `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)` | 메시지 시간 기준 가까운 첨부파일 매핑, 기본 허용 범위 ±30분 | 요구사항 |
 | Android | `{64자리 hex}.(jpg|jpeg|png|gif|webp)` | 대화 내용의 파일명을 `attachment_ref`로 직접 매핑 | 요구사항 |
 | Android 일반 파일/PDF | 대화에 `파일: {파일명}`으로 등장 가능 | 구현 검증 부족 | 미결정 |
-| Windows | 미확정 | 미확정 | 구현-only/TODO |
+| Windows | 미확정 | 미확정 | 미결정/TODO |
 | macOS | 미확정 | 미확정 | TODO |
 
 공통 규칙:
@@ -60,7 +60,7 @@ iOS 월/일은 한 자리일 때 0 패딩이 없고, 날짜와 시간 사이에 
 |---|---|
 | iOS | `YYYY. M. D. HH:mm: 사용자님이 들어왔습니다.` |
 | Android | `YYYY년 M월 D일 오전/오후 H:mm, 사용자님이 들어왔습니다.` |
-| Windows | 후보 구현 존재, 공식 규칙 아님 |
+| Windows | `사용자님이 들어왔습니다.`, `사용자님이 나갔습니다.` |
 | macOS | 미확인 |
 
 ## 일반 메시지 규칙
@@ -106,15 +106,27 @@ YYYY년 M월 D일 오전/오후 H:mm, 사용자 : 발언 내용
 f92f6c1f66...jpg
 ```
 
-### Windows 후보
+### Windows
 
-현재 구현에는 아래 형태의 후보 패턴이 있다.
+기본 패턴:
 
 ```text
 [사용자] [오전/오후 H:MM] 내용
 ```
 
-이 규칙은 아직 공식 요구사항이 아니다. 정식화하려면 실제 fixture, expected 결과, README/AGENTS 문서 갱신이 필요하다.
+날짜 구분선:
+
+```text
+--------------- YYYY년 M월 D일 d요일 ---------------
+```
+
+지원해야 하는 내용:
+
+- 텍스트 메시지
+- `사진 N장`
+- `파일: {원본파일명}`. 단, Windows 첨부파일 실제 매핑은 아직 공식 범위 밖이다.
+- `이모티콘`
+- 오전/오후 표기
 
 ## 파싱 불변식
 
@@ -139,7 +151,7 @@ f92f6c1f66...jpg
 |---|---|
 | iOS | 날짜 헤더, 텍스트, 사진, PDF, 누락 첨부파일, 연속 텍스트 병합 |
 | Android | `KakaoTalkChats.txt`, 64자리 hash 이미지, 연속 사진, URL 인코딩 파일명 |
-| Windows | 실제 내보내기 txt, 날짜 헤더, 오전/오후 메시지, 시스템 메시지 |
+| Windows | 데스크톱 txt, 날짜 헤더, 오전/오후 메시지, 시스템 메시지, 연속 텍스트 병합 |
 | macOS | 실제 내보내기 txt와 첨부파일 구조 |
 
 각 fixture에는 메시지 수, 날짜 수, 참여자 수, 타입별 수, 첨부파일 매핑 수를 담은 expected JSON이 따라야 한다.

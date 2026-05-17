@@ -158,6 +158,21 @@
   * [harness/scripts/check_doc_drift.py](harness/scripts/check_doc_drift.py): Markdown 로컬 링크, 플랫폼 지원 범위, Windows 후보 구현-only 분류, JSZip 인라인, 폰트 CDN, Python 도구 위치, Android 샘플 경로, parser golden 명령 문서화 점검
   * `python3 harness/scripts/check_doc_drift.py` 통과
 
+## 2-1-5단계: Windows 텍스트 내보내기 정식 지원 승격 (2026-05-17)
+* 결정:
+  * Windows 데스크톱 텍스트 내보내기 파싱을 공식 지원으로 승격
+  * Windows 첨부파일 매핑은 실제 export 구조 확인 전까지 공식 범위 밖으로 유지
+  * GitHub Actions는 현재 필수 축으로 두지 않고, 로컬 하네스 명령을 표준 검증 경로로 유지
+* 변경:
+  * [test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt](test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt) fixture 추가
+  * [test/parser-golden/windows-minimal.json](test/parser-golden/windows-minimal.json) expected 추가
+  * README/AGENTS/harness 문서의 플랫폼 지원 범위를 iOS/Android/Windows로 갱신
+  * `index.html` 업로드 UI에서 Windows TXT 파일 선택 허용
+  * [harness/scripts/check_doc_drift.py](harness/scripts/check_doc_drift.py)를 Windows 공식 지원 기준으로 갱신
+* 검증:
+  * `python3 harness/scripts/run_parser_golden.py` 통과 (`android-sample`, `ios-minimal`, `windows-minimal`)
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

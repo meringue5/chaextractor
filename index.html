@@ -1336,16 +1336,16 @@
             <div class="setup-step" id="step1">
                 <label><span class="icon">📦</span> 내보내기 한 카카오톡 대화 선택</label>
                 <div class="drop-zone" id="dropZone">
-                    <div class="drop-message">📥 ZIP 파일 또는 폴더를 여기에 끌어다 놓으세요</div>
+                    <div class="drop-message">📥 ZIP/TXT 파일 또는 폴더를 여기에 끌어다 놓으세요</div>
                     <div class="drop-or">또는</div>
                     <div class="file-btn-group">
-                        <label class="file-btn" id="zipBtn">📁 ZIP 파일 🍏</label>
-                        <input type="file" id="zipInput" accept=".zip">
+                        <label class="file-btn" id="zipBtn">📁 ZIP/TXT 파일 🍏🪟</label>
+                        <input type="file" id="zipInput" accept=".zip,.txt">
                         <label class="file-btn" id="folderBtn">📂 폴더 🤖</label>
                         <input type="file" id="folderInput" webkitdirectory multiple accept="*/*">
                     </div>
                 </div>
-                <ul class="hint"><li><strong>iOS:</strong> ZIP 파일 선택</li><li><strong>Android:</strong> KakaoTalk &gt; Chats &gt; 대화폴더 진입 → <strong>폴더 안의 모든 파일 선택</strong> (우측 상단 메뉴 → 전체선택)</li></ul>
+                <ul class="hint"><li><strong>iOS:</strong> ZIP 파일 선택</li><li><strong>Android:</strong> KakaoTalk &gt; Chats &gt; 대화폴더 진입 → <strong>폴더 안의 모든 파일 선택</strong> (우측 상단 메뉴 → 전체선택)</li><li><strong>Windows:</strong> 데스크톱 내보내기 TXT 파일 선택</li></ul>
                 <div class="file-name" id="zipName"></div>
 
                 <div class="progress-container" id="progressContainer">
@@ -1824,18 +1824,20 @@
         // 페이지 로드시 설정 초기화
         initSettings();
 
-        // ========== ZIP 파일 선택 ==========
+        // ========== ZIP/TXT 파일 선택 ==========
         zipBtn.addEventListener('click', () => zipInput.click());
         zipInput.addEventListener('change', async (e) => {
             if (e.target.files.length > 0) {
-                const file = e.target.files[0];
+                const files = Array.from(e.target.files);
+                const file = files[0];
                 zipName.textContent = `${file.name} (${formatSize(file.size)})`;
                 zipBtn.disabled = true;
+                folderBtn.disabled = true;
                 step1.classList.add('processing');
                 progressContainer.classList.add('active');
 
                 try {
-                    await processZipFile(file);
+                    await processFilesOrFolder(files);
                     zipName.textContent = `✓ ${file.name} - 처리 완료!`;
                     zipName.classList.remove('error');
                     zipBtn.classList.add('selected');
@@ -1850,6 +1852,7 @@
                     step1.classList.remove('processing');
                     step1.classList.add('error');
                     zipBtn.disabled = false;
+                    folderBtn.disabled = false;
                 }
             }
         });

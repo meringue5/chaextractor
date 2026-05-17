@@ -66,19 +66,21 @@ def main() -> int:
 
     check_markdown_links(errors)
 
-    check("iOS / Android" in readme, "README must publicly support iOS / Android", errors)
+    check("iOS / Android / Windows" in readme, "README must publicly support iOS / Android / Windows", errors)
     check(
-        not re.search(r"(Windows|macOS)[^.\n]{0,30}지원", readme),
-        "README must not advertise Windows/macOS support before fixtures exist",
+        not re.search(r"macOS[^.\n]{0,30}지원", readme),
+        "README must not advertise macOS support before fixtures exist",
         errors,
     )
-    check("iOS / Android 카카오톡 내보내기 파일 모두 지원" in agents, "AGENTS must state iOS / Android support", errors)
+    check("iOS / Android / Windows 카카오톡 내보내기 파일 지원" in agents, "AGENTS must state iOS / Android / Windows support", errors)
 
     if "MESSAGE_WINDOWS" in index or "DATE_HEADER_WINDOWS" in index:
-        check("Windows 파서 후보" in agents, "AGENTS must classify Windows parser as candidate", errors)
-        check("Windows | 후보 구현 존재" in domain, "DOMAIN_RULES must classify Windows as implementation-only candidate", errors)
-        check("Windows는 구현 후보" in decisions, "DECISIONS must keep Windows support on hold", errors)
-        check("Windows 파서 후보" in manifest, "MANIFEST must list Windows parser as implementation-only", errors)
+        check("Windows 데스크톱 텍스트 내보내기는 공식 지원" in agents, "AGENTS must state Windows text export support", errors)
+        check("Windows | 공식 지원" in domain, "DOMAIN_RULES must classify Windows as official support", errors)
+        check("Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원" in decisions, "DECISIONS must adopt Windows text support", errors)
+        check("Windows 첨부파일 매핑" in manifest, "MANIFEST must keep Windows attachment mapping unresolved", errors)
+        check(exists("test/parser-golden/windows-minimal.json"), "Windows support requires parser golden expected", errors)
+        check(exists("test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt"), "Windows support requires fixture txt", errors)
 
     if "JSZip v3.10.1" in index:
         check("JSZip은 `index.html`에 인라인" in readme, "README must say JSZip is inlined", errors)

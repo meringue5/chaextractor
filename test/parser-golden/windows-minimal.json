@@ -1,0 +1,70 @@
+{
+  "id": "windows-minimal",
+  "description": "Windows 데스크톱 최소 fixture: 날짜 헤더, 오전/오후 메시지, 텍스트 병합, 시스템 메시지 제외",
+  "platform": "windows",
+  "input": {
+    "text": "test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt",
+    "attachments": []
+  },
+  "expected": {
+    "detectedPlatform": "windows",
+    "messageCount": 8,
+    "dateCount": 2,
+    "dates": ["2026-03-02", "2026-03-01"],
+    "typeCounts": {
+      "text": 5,
+      "photo": 1,
+      "emoticon": 1,
+      "file": 1
+    },
+    "attachmentRefCount": 3,
+    "attachmentMappedCount": 0,
+    "leaderCountByDate": {
+      "2026-03-01": 1,
+      "2026-03-02": 1
+    },
+    "messages": [
+      {
+        "index": 0,
+        "date": "2026-03-01",
+        "time": "09:05",
+        "user": "채상욱 리더",
+        "message_type": "text",
+        "content": "안녕하세요\n이어서 말합니다"
+      },
+      {
+        "index": 1,
+        "date": "2026-03-01",
+        "time": "09:07",
+        "user": "테스터",
+        "message_type": "text",
+        "content": "링크 https://example.com",
+        "has_link": true
+      },
+      {
+        "index": 2,
+        "date": "2026-03-01",
+        "time": "13:08",
+        "user": "테스터",
+        "message_type": "photo",
+        "content": "사진 2장"
+      },
+      {
+        "index": 5,
+        "date": "2026-03-02",
+        "time": "00:01",
+        "user": "다른사람",
+        "message_type": "text",
+        "content": "자정 메시지\n정오 메시지"
+      },
+      {
+        "index": 7,
+        "date": "2026-03-02",
+        "time": "23:59",
+        "user": "다른사람",
+        "message_type": "text",
+        "content": "끝\n이어짐"
+      }
+    ]
+  }
+}

@@ -69,9 +69,9 @@
 |---|---|---|
 | 앱은 서버 없이 실행 가능한 단일 HTML 앱이다. | `index.html` 중심 | 테스트/문서 도구는 별도 파일 허용 |
 | 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 인라인, 폰트 CDN | doc drift checker로 일부 점검 |
-| 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소 fixture parser golden 시작 | Windows/macOS 확장 시 fixture 추가 |
-| 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 코드가 숨은 상태로 존재 | Windows 결정 필요 |
-| 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | project skill과 parser golden 하네스 시작 | CI 게이트 필요 |
+| 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소/Windows 최소 fixture parser golden 시작 | macOS 확장 시 fixture 추가 |
+| 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 텍스트 파서는 공식 지원으로 승격, Windows 첨부파일/macOS는 미결정 | 미결정 항목은 README에 홍보하지 않음 |
+| 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | project skill과 parser golden/doc drift 하네스 시작 | 로컬 표준 명령 유지 |
 
 ## 요구사항으로 정의된 것
 
@@ -80,7 +80,7 @@
 | 영역 | 요구사항 | 현재 검증 수준 |
 |---|---|---|
 | 입력 | ZIP 또는 폴더 입력으로 대화 로그와 첨부파일 파싱 | 수동 구현 확인 |
-| 플랫폼 | iOS/Android 내보내기 지원 | Android 실제 ZIP/iOS 최소 fixture golden 검증 시작 |
+| 플랫폼 | iOS/Android/Windows 내보내기 지원 | Android 실제 ZIP/iOS 최소/Windows 최소 fixture golden 검증 |
 | 파싱 | 날짜 그룹화, 시스템 메시지 제외, 연속 텍스트 병합 | parser golden 부분 검증 |
 | 메시지 타입 | text/photo/file/emoticon 분리 | parser golden 부분 검증 |
 | 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음 | parser golden 부분 검증 |
@@ -96,7 +96,6 @@
 
 | 항목 | 구현 위치/근거 | 리스크 | 다음 결정 |
 |---|---|---|---|
-| Windows 파서 후보 | `PATTERNS.DATE_HEADER_WINDOWS`, `MESSAGE_WINDOWS`, `detectPlatform(... 'windows')` | 문서상 TODO와 충돌 | 정식/실험/제거 중 결정 |
 | JSZip 인라인 | `index.html` 하단 JSZip 3.10.1 | 런타임 의존성 설명이 드리프트될 수 있음 | doc drift checker로 점검 |
 | 폰트 CDN 자동 요청 | CSS `@font-face` | 개인정보 문구와 외부 요청 범위 혼선 | 외부 네트워크 표면으로 공식 등재 완료 |
 | Google Forms 문의 링크 | setup/footer/header 링크 | 사용자 클릭 외부 이동 | 개인정보 문구에 "클릭 시 외부 이동" 명시 |
@@ -106,13 +105,14 @@
 | 검색 결과 하이라이트 부재 | 검색은 `renderDateList`에만 연결 | AGENTS와 불일치 | 구현 또는 요구사항 수정 |
 | Escape 모달 닫기 부재 | click close만 구현 | 접근성 요구와 불일치 | 접근성 표준으로 구현 |
 | 파일명 raw HTML 삽입 가능성 | file link template의 ref 출력 | XSS 가능성 | escape 표준 적용 |
+| Windows 첨부파일 매핑 | 텍스트 파싱은 지원하나 첨부파일 패턴은 미확정 | Windows 사용자 기대 혼선 | 실제 샘플 확보 후 정식화 |
 
 ## 미결정 항목
 
 | 질문 | 왜 중요한가 | 권장 기본값 |
 |---|---|---|
-| Windows 지원을 공식화할 것인가? | 구현-only 기능이 사용자 기대를 만든다 | 실험으로 명시하고 fixture 추가 전까지 README에 홍보하지 않음 |
 | 외부 폰트 CDN을 허용할 것인가? | "외부 전송 없음" 문구와 충돌할 수 있다 | 허용하되 대화 데이터 외부 전송 없음으로 표현 정밀화 |
+| Windows 첨부파일 매핑을 공식화할 것인가? | 텍스트 지원과 첨부파일 지원을 혼동할 수 있다 | 실제 export 구조 확인 전까지 공식 범위 밖으로 둠 |
 | 캐시 삭제 UI를 제공할 것인가? | IndexedDB에 파싱 결과가 남는다 | 설정 모달에 캐시 삭제 추가 |
 | CSP 같은 브라우저 보안 정책을 둘 것인가? | 단일 HTML과 inline script 때문에 정책 설계가 필요하다 | 우선 위협 모델 문서화 후 적용 검토 |
 | Python CSV 파서를 유지할 것인가? | 브라우저 파서와 기능 차이가 커질 수 있다 | 보조 iOS-only 도구로 명시 |
@@ -133,7 +133,6 @@
 
 남은 실행 과제는 [BACKLOG.md](BACKLOG.md)를 기준으로 추적한다. 문서화 관점의 우선순위:
 
-1. Windows 후보 지원 상태를 실험 또는 정식으로 결정한다.
-2. XSS/파일명 escape 표준을 구현 요구사항으로 승격한다.
-3. cache retention과 삭제 정책을 요구사항으로 정의한다.
-4. parser golden과 doc drift checker를 CI 게이트로 연결한다.
+1. XSS/파일명 escape 표준을 구현 요구사항으로 승격한다.
+2. cache retention과 삭제 정책을 요구사항으로 정의한다.
+3. parser golden과 doc drift checker를 로컬 표준 명령으로 유지한다.

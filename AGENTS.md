@@ -11,8 +11,8 @@
 카카오톡 오픈채팅방 대화 내역 뷰어. 단일 HTML 파일, 서버 불필요, 클라이언트 사이드 처리.
 - 배포: https://meringue5.github.io/chaextractor/
 - 기술: HTML + CSS + JS (단일 파일), JSZip 인라인, IndexedDB (캐시), 폰트 CDN
-- 플랫폼: iOS / Android 카카오톡 내보내기 파일 모두 지원
-- TODO: macOS / Windows 카카오톡 데스크톱 내보내기 지원 예정
+- 플랫폼: iOS / Android / Windows 카카오톡 내보내기 파일 지원
+- TODO: macOS 카카오톡 데스크톱 내보내기 지원 예정
 
 # 하네스 문서
 
@@ -61,7 +61,7 @@
 세부 요구사항은 [harness/REQUIREMENTS.md](harness/REQUIREMENTS.md)를 우선한다.
 
 - ZIP 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다.
-- iOS/Android 카카오톡 내보내기 파일을 공식 지원한다.
+- iOS/Android/Windows 카카오톡 내보내기 파일을 공식 지원한다.
 - 날짜별 탐색, 검색, 통계, 리더 하이라이트/필터, 설정 유지, 꿀팁 모달을 제공한다.
 - 시스템 메시지는 제외하고, 동일 사용자 연속 텍스트는 병합한다.
 - 사진/파일/이모티콘은 텍스트와 별도 타입으로 유지한다.
@@ -76,8 +76,8 @@
 - Android 대화 파일명: `KakaoTalkChats.txt`
 - iOS 첨부파일: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
 - Android 이미지 첨부파일: `{64자리 hex}.(jpg|jpeg|png|gif|webp)`
-- Windows 파서 후보는 구현-only이며 정식 지원이 아니다.
-- macOS/Windows 공식 지원은 실제 export 규칙과 fixture가 확인되기 전까지 TODO다.
+- Windows 데스크톱 텍스트 내보내기는 공식 지원한다.
+- macOS 공식 지원은 실제 export 규칙과 fixture가 확인되기 전까지 TODO다.
 - 대화 내용, 사용자명, 파일명, 첨부파일 참조는 모두 신뢰하지 않는 입력으로 취급한다.
 
 # 앱 콘텐츠 데이터
@@ -99,7 +99,7 @@
 - `#setupScreen` — 초기 화면
   - `.guide-section` — 사용 가이드 (base64 스크린샷 6장)
   - `#step1` — 파일 업로드 영역
-    - `#zipBtn` / `#zipInput` — ZIP 파일 선택 (iOS)
+    - `#zipBtn` / `#zipInput` — ZIP/TXT 파일 선택 (iOS/Windows)
     - `#folderBtn` / `#folderInput` — 폴더 선택 (Android, webkitdirectory)
     - `#dropZone` — 드래그앤드롭 영역
     - `#zipName` — 파일 상태 메시지
@@ -161,10 +161,10 @@
 - `updateProgress(percent, text)` — 진행률 바 업데이트
 
 파싱:
-- `parseKakaoChat(content)` — 대화 파싱 (iOS/Android 정규식 분기)
+- `parseKakaoChat(content)` — 대화 파싱 (iOS/Android/Windows 정규식 분기)
 - `parseMergedChatFiles(chatContents)` — 다중 대화 파일 병합 + 정렬
 - `classifyContent(content)` — 메시지 유형 분류 (text/photo/emoticon/file)
-- `detectPlatform(txtFilenames, attachFilenames)` — iOS/Android 감지
+- `detectPlatform(txtFilenames, attachFilenames)` — iOS/Android/Windows 감지
 - `testPatternArray(line, patternArray)` — 정규식 배열 매칭 테스트
 - `execPatternArray(line, patternArray)` — 정규식 배열 실행 + 첫 매치 반환
 
@@ -222,22 +222,22 @@ UI 렌더링:
 - `currentMonth` — 현재 캘린더 월
 - `selectedDate` — 선택된 날짜
 - `leaderFilterActive` — 리더 필터 상태
-- `detectedPlatform` — 'ios' 또는 'android', Windows는 구현-only 후보
+- `detectedPlatform` — 'ios', 'android', 'windows'
 
 ## 정규식 패턴 (PATTERNS 객체)
 - `DATE_HEADER` — iOS 날짜 구분선 (`YYYY년 M월 D일 d요일`)
 - `DATE_HEADER_ANDROID` — Android 날짜 줄 (`YYYY년 M월 D일 오전/오후 H:mm`, 사용자 없음)
-- `DATE_HEADER_WINDOWS` — Windows 후보 날짜 구분선 (공식 지원 아님)
+- `DATE_HEADER_WINDOWS` — Windows 날짜 구분선
 - `MESSAGE_IOS` — iOS 메시지 (24시간 + 12시간 오전/오후 두 패턴)
 - `MESSAGE_ANDROID` — Android 메시지 (`YYYY년 M월 D일 오전/오후 H:mm, 사용자 : 내용`)
-- `MESSAGE_WINDOWS` — Windows 후보 메시지 (공식 지원 아님)
+- `MESSAGE_WINDOWS` — Windows 메시지
 - `ENTER_LEAVE` — iOS 입장/퇴장 (24시간 + 12시간 두 패턴)
 - `ENTER_LEAVE_ANDROID` — Android 입장/퇴장
-- `ENTER_LEAVE_WINDOWS` — Windows 후보 입장/퇴장 (공식 지원 아님)
+- `ENTER_LEAVE_WINDOWS` — Windows 입장/퇴장
 - `URL` — URL 감지
 - `ATTACHMENT_FILENAME_IOS` — iOS 첨부파일명 (`YYYYMMDD_HHMMSS[_n].ext`)
 - `ATTACHMENT_FILENAME_ANDROID` — Android 첨부파일명 (`[0-9a-f]{64}.ext`)
-- TODO: macOS 공식 패턴 확인 필요. Windows는 후보 구현을 fixture로 검증하기 전까지 공식 지원 아님
+- TODO: macOS 공식 패턴 확인 필요
 
 # 진행 이력
 **상세 진행 이력은 [HISTORY.md](HISTORY.md)를 참고하세요.**

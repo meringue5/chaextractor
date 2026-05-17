@@ -13,8 +13,8 @@
 | 앱 런타임은 서버 없는 단일 `index.html`을 유지한다. | 채택 | 배포와 사용 편의성 기준 |
 | 하네스, fixture, 문서, 테스트 도구는 단일 HTML 원칙 밖의 보조 파일로 둔다. | 채택 | 앱 런타임과 개발 검증 레이어 분리 |
 | 대화 원문과 첨부파일은 클라이언트 로컬에서 처리한다. | 채택 | 개인정보 표준 |
-| iOS와 Android는 공식 지원 플랫폼으로 유지한다. | 채택 | README/AGENTS 약속 |
-| Windows는 구현 후보가 있으나 공식 지원으로 보지 않는다. | 보류 | fixture/expected 부재 |
+| iOS, Android, Windows는 공식 지원 플랫폼으로 유지한다. | 채택 | README/AGENTS 약속, parser golden fixture |
+| Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원한다. | 채택 | `windows-minimal` fixture/expected 추가 |
 | macOS는 규칙 확인 전까지 지원 대상으로 홍보하지 않는다. | 보류 | 실제 내보내기 구조 미확인 |
 | `tools/parse_kakao_chat.py`는 보조 iOS CSV 파서로 취급한다. | 채택 | 브라우저 앱과 범위 분리 |
 | 첨부파일 로드는 순차 처리와 진행률 표시를 유지한다. | 채택 | 2026-02-05 성능 테스트에서 순차 처리가 병렬보다 빠름 |
@@ -31,14 +31,14 @@
 | JSZip | CDN 의존성으로 표현 | 현재 구현은 JSZip 3.10.1 인라인. README/AGENTS는 인라인 런타임 의존성으로 정리 |
 | 개인정보 | 외부 전송 없음 | 대화 데이터 자동 외부 전송 없음. 폰트 CDN 자동 요청과 사용자 클릭 외부 링크는 별도 표면으로 문서화 |
 | Android 샘플 | `tmp/android/` 확보 | tracked 샘플 기준은 `test/dataset/android/` |
-| Windows | TODO | 코드에는 후보 구현이 있으므로 구현-only로 분류 |
+| Windows | 구현-only | 데스크톱 텍스트 내보내기 파싱은 fixture/expected를 추가해 공식 지원으로 승격 |
 
 ## 미결정 결정
 
 | 질문 | 기본 입장 | 결정에 필요한 증거 |
 |---|---|---|
-| Windows 지원을 공식화할 것인가? | 아직 공식화하지 않음 | 실제 export fixture, expected JSON, 브라우저 smoke |
 | Android 일반 파일/PDF 매핑을 지원할 것인가? | 요구사항 후보 | 실제 샘플, 파일명 인코딩/디코딩 규칙 |
+| Windows 첨부파일 매핑을 지원할 것인가? | 보류 | 실제 첨부파일 export 구조와 fixture |
 | 캐시 삭제 UI를 제공할 것인가? | 제공 쪽 권장 | 설정 모달 UX, IndexedDB 삭제 검증 |
 | Blob URL 해제 정책을 둘 것인가? | 필요 | 새 업로드/모달 닫기/앱 종료 흐름 정의 |
 | CSP를 도입할 것인가? | 보류 | 단일 HTML inline script/style과 충돌 검토 |

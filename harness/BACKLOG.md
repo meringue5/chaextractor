@@ -38,6 +38,7 @@
 | iOS 최소 fixture와 expected 추가 | `test/fixtures/ios-minimal/`, `test/parser-golden/ios-minimal.json` | 반영 |
 | `index.html` parser test API 추가 | `window.__CHAEXTRACTOR_ENABLE_TEST_API__` guard 기반 test hook | 반영 |
 | Doc drift checker 추가 | `harness/scripts/check_doc_drift.py`, `harness/TESTING.md` | 반영 |
+| Windows 텍스트 내보내기 정식 지원 승격 | `README.md`, `AGENTS.md`, `harness/DOMAIN_RULES.md`, `test/parser-golden/windows-minimal.json` | 반영 |
 
 ## 우선순위 백로그
 
@@ -46,11 +47,11 @@
 | H-005 | P0 | Security | 파일명/첨부 ref HTML escape 보강 | XSS fixture가 실행되지 않고 텍스트로 렌더링 |
 | H-006 | P0 | Accessibility | Escape 모달 닫기와 키보드 접근성 보강 | 이미지/꿀팁/설정 모달이 Escape로 닫힘 |
 | H-007 | P0 | Cache | cache hit 날짜 정렬 회귀 고정 | 캐시 사용 시에도 날짜 목록이 최신순 유지 |
-| H-008 | P0 | Platform | Windows 후보 지원 상태 결정 | 실험/정식/제거 중 하나로 결정하고 문서와 fixture를 맞춤 |
 | H-009 | P1 | Browser smoke | 주요 UI 흐름 Playwright smoke 추가 | 업로드, 날짜 선택, 검색, 리더 필터, 설정, 모바일 사이드바 검증 |
 | H-010 | P1 | Capability | 브라우저 기능 제한 안내 구현 | `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 미지원 시 복구 가능한 메시지 표시 |
 | H-011 | P1 | Cache/privacy | 캐시 삭제 UX와 Blob URL 해제 정책 구현 | 설정에서 캐시 삭제 가능, 새 업로드 시 Blob URL 정리 |
 | H-012 | P1 | Attachment | Android 일반 파일/PDF 매핑 결정 및 구현 | URL 인코딩 파일명 fixture와 expected 추가 |
+| H-014 | P1 | Attachment | Windows 첨부파일 매핑 조사 및 결정 | 실제 Windows 첨부파일 export 구조와 fixture 확보 |
 | H-013 | P2 | Performance | 합성 대용량 성능 smoke 추가 | 1만 메시지 로컬 smoke와 50만 메시지 수동 측정 절차 문서화 |
 
 ## 다음 구현 묶음
@@ -60,4 +61,4 @@
 1. 파일명/첨부 ref HTML escape 보강과 XSS fixture 추가
 2. Escape 모달 닫기와 키보드 접근성 보강
 3. cache hit 날짜 정렬 회귀 고정
-4. Windows 후보 지원 상태 결정
+4. Android 일반 파일/PDF와 Windows 첨부파일 매핑 범위 결정
