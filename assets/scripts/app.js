@@ -1275,10 +1275,17 @@ function rememberModalTrigger() {
     lastModalTrigger = document.activeElement;
 }
 
-function restoreModalTrigger() {
-    if (lastModalTrigger && typeof lastModalTrigger.focus === 'function') {
-        lastModalTrigger.focus();
+function safeFocus(element) {
+    if (!element || typeof element.focus !== 'function') return;
+    try {
+        element.focus();
+    } catch (error) {
+        console.warn('focus-failed', error);
     }
+}
+
+function restoreModalTrigger() {
+    safeFocus(lastModalTrigger);
     lastModalTrigger = null;
 }
 
@@ -1433,9 +1440,7 @@ function play1995GhostBox(fromRect, toRect, onFinish) {
 
 function focusModalCloseButton(modal) {
     const closeButton = modal.querySelector('.modal-close-btn');
-    if (closeButton && typeof closeButton.focus === 'function') {
-        closeButton.focus();
-    }
+    safeFocus(closeButton);
 }
 
 function animate1995Panel(panel, className, fromRect, toRect) {
@@ -3409,7 +3414,7 @@ function initApp() {
     document.getElementById('stats').textContent =
         `${messages.length.toLocaleString()}개 메시지 · ${users.size}명 · ${dates.length}일`;
     if (captureBtn) {
-        captureBtn.disabled = messages.length === 0;
+        captureBtn.disabled = true;
     }
 
     if (dates.length > 0) {
@@ -3568,6 +3573,9 @@ function renderDateList(searchQuery = '') {
 // ========== 날짜 선택 ==========
 function selectDate(date) {
     selectedDate = date;
+    if (captureBtn) {
+        captureBtn.disabled = false;
+    }
 
     const dateObj = new Date(date);
     if (dateObj.getMonth() !== currentMonth.getMonth() ||
@@ -3796,7 +3804,7 @@ function showImage(url, triggerElement = null) {
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
 
-    const focusClose = () => document.getElementById('modalClose').focus();
+    const focusClose = () => safeFocus(document.getElementById('modalClose'));
     if (!is1995ThemeActive()) {
         focusClose();
         return;
