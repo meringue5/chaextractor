@@ -825,6 +825,22 @@
   * `python3 harness/scripts/check_ui_smoke.py` 통과
   * `npm run test:browser` 통과: 4 passed, 2 skipped
 
+## 2-1-51단계: 오류 감지 즉시 보고 모달 전환과 Form URL 축소 (2026-05-17)
+* 변경:
+  * JS 오류/파일 처리 실패를 감지하면 오른쪽 하단 진단 토스트를 표시하지 않고 오류 보고 모달을 즉시 열도록 변경
+  * Google Form 사전입력에는 전체 진단 리포트 대신 URL 길이 제한을 피한 오류 요약만 넣도록 변경
+  * 오류 보고 모달에 `TXT 다운로드` 버튼을 추가하고, 제보 열기 버튼은 Google Form을 열면서 전체 진단 리포트 TXT 다운로드도 시도
+  * 오류 보고 모달/README/AGENTS/harness 문서를 즉시 모달 전환과 요약 사전입력 기준으로 갱신
+  * `check_diagnostic_report.py`가 토스트 미표시, 모달 즉시 표시, 사전입력 URL 길이 제한, 진단 TXT 파일명을 검증하도록 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `git diff --cached --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

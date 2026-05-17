@@ -155,8 +155,8 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 - `#imageModal` — 이미지 확대 모달 (`#modalImage`, `#modalClose`)
 - `#captureModal` — 갈무리 TXT 모달 (`#captureText`, `#copyCaptureBtn`, `#downloadCaptureBtn`)
 - `#settingsModal` — 설정 모달 (`.theme-btn`, `.font-btn`)
-- `#reportIssueModal` — 오류 진단 리포트/오류 보고 모달 (`#diagnosticReportText`, `#copyDiagnosticBtn`, `#openIssueBtn`). 제보 열기는 진단 리포트를 Google Form 내용 칸에 사전 입력
-- `#diagnosticToast` — JS 오류/처리 실패 감지 시 표시되는 진단 리포트 토스트
+- `#reportIssueModal` — 오류 진단 리포트/오류 보고 모달 (`#diagnosticReportText`, `#copyDiagnosticBtn`, `#downloadDiagnosticBtn`, `#openIssueBtn`). JS 오류/처리 실패 감지 시 즉시 열리며, 제보 열기는 URL 길이 제한을 피한 오류 요약을 Google Form 내용 칸에 사전 입력하고 전체 리포트 TXT 첨부를 유도
+- `#diagnosticToast` — 과거 토스트 DOM. 현재 오류 감지 흐름에서는 표시하지 않고 오류 보고 모달을 즉시 연다.
 
 ## CSS 주요 클래스
 정본 스타일시트는 `assets/styles/app.css`다.
@@ -246,11 +246,12 @@ UI 렌더링:
 오류 보고/진단:
 - `recordDiagnosticInput(files, source)` — 파일명/경로/크기, 파일 수/총 크기/확장자 분포 기록
 - `setDiagnosticStage(stage)` — 현재 처리 단계 기록
-- `captureDiagnosticError(error, context)` — JS 오류/처리 실패를 안전 진단 이벤트로 기록하고 토스트 표시
+- `captureDiagnosticError(error, context)` — JS 오류/처리 실패를 안전 진단 이벤트로 기록하고 오류 보고 모달 즉시 표시
 - `buildDiagnosticReport(options)` — 오류 메시지, 처리 단계, 파일명/경로/크기, ZIP 내부 파일, 대화 파일 검증 결과와 샘플 라인이 포함된 마크다운 리포트 생성
 - `copyDiagnosticReport()` — 진단 리포트를 클립보드에 복사
-- `openIssueReportPage()` — 진단 리포트가 사전 입력된 Google Form 버그 제보 링크 열기
-- `openDiagnosticReportModal()` — 오류 보고 모달 열기
+- `downloadDiagnosticReport()` — 전체 진단 리포트를 TXT 파일로 다운로드
+- `openIssueReportPage()` — 오류 요약이 사전 입력된 Google Form 버그 제보 링크 열기. 전체 진단 리포트 TXT 다운로드도 함께 시도한다.
+- `openDiagnosticReportModal()` — 오류 보고 모달 즉시 열기
 
 모달:
 - `openModal(modalId)` / `closeModal(modalId)` — 모달 열기/닫기

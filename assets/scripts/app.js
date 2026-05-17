@@ -16,7 +16,7 @@ let leaderFilterTarget = DEFAULT_LEADER_FILTER_TARGET;
 const BUG_REPORT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform';
 const BUG_REPORT_FORM_TYPE_FIELD = 'entry.315233821';
 const BUG_REPORT_FORM_CONTENT_FIELD = 'entry.1161180918';
-const BUG_REPORT_FORM_PREFILL_LIMIT = 12000;
+const BUG_REPORT_FORM_PREFILL_LIMIT = 6500;
 const DIAGNOSTIC_EVENT_LIMIT = 8;
 const DIAGNOSTIC_FILE_SAMPLE_LIMIT = 20;
 const DIAGNOSTIC_CHAT_CANDIDATE_LIMIT = 20;
@@ -219,6 +219,7 @@ const reportIssueFooterBtn = document.getElementById('reportIssueFooterBtn');
 const reportIssueLinkBtn = document.getElementById('reportIssueLinkBtn');
 const reportIssueModal = document.getElementById('reportIssueModal');
 const copyDiagnosticBtn = document.getElementById('copyDiagnosticBtn');
+const downloadDiagnosticBtn = document.getElementById('downloadDiagnosticBtn');
 const openIssueBtn = document.getElementById('openIssueBtn');
 const diagnosticReportText = document.getElementById('diagnosticReportText');
 const diagnosticCopyStatus = document.getElementById('diagnosticCopyStatus');
@@ -522,12 +523,7 @@ function normalizeDiagnosticError(error, context = {}) {
 
 function showDiagnosticToast(event) {
     if (!diagnosticToast) return;
-
-    if (diagnosticToastMessage) {
-        diagnosticToastMessage.textContent = `${event.stage} 단계의 진단 리포트를 준비했습니다.`;
-    }
-
-    diagnosticToast.hidden = false;
+    diagnosticToast.hidden = true;
 }
 
 function captureDiagnosticError(error, context = {}) {
@@ -541,8 +537,9 @@ function captureDiagnosticError(error, context = {}) {
         diagnosticState.events = diagnosticState.events.slice(-DIAGNOSTIC_EVENT_LIMIT);
     }
 
-    showDiagnosticToast(event);
     updateDiagnosticReportText();
+    showDiagnosticToast(event);
+    openDiagnosticReportModal();
     return event;
 }
 
@@ -718,17 +715,90 @@ function buildGoogleFormPrefillUrl(report) {
     return `${BUG_REPORT_FORM_URL}?${query}`;
 }
 
+function buildDiagnosticFormSummary(options = {}) {
+    const latest = getLatestDiagnosticEvent();
+    const input = diagnosticState.input;
+    const processing = diagnosticState.processing;
+    const tiny = !!options.tiny;
+    const fileLimit = tiny ? 3 : 5;
+    const candidateLimit = tiny ? 2 : 4;
+    const sampleLineLimit = tiny ? 1 : 3;
+
+    const lines = [
+        '# chaextractor 오류 요약',
+        '',
+        '전체 진단 리포트 TXT 파일을 함께 첨부해 주세요. 앱 오류 보고 창에서 `TXT 다운로드`로 받을 수 있습니다.',
+        '',
+        '## 오류',
+        `- 시각: ${new Date().toISOString()}`,
+        `- 단계: ${diagnosticState.stage}`,
+        `- 진행률: ${diagnosticState.progress.percent}% / ${diagnosticState.progress.text}`,
+        `- 유형: ${latest ? latest.type : 'manual-report'}`,
+        `- 메시지: ${latest ? latest.message : '사용자가 직접 연 제보입니다.'}`,
+        '',
+        '## 입력/처리',
+        `- 입력 경로: ${input.source}`,
+        `- 파일 수/크기: ${input.fileCount}개 / ${formatSize(input.totalBytes)}`,
+        `- 확장자: ${input.extensions.length ? input.extensions.join(', ') : '없음'}`,
+        `- 처리 경로: ${processing.route}`,
+        `- ZIP 엔트리: ${processing.zipEntryCount || 0}`,
+        `- 대화 후보/유효: ${processing.chatCandidateCount || 0}/${processing.validChatFileCount || 0}`,
+        `- 첨부 후보: ${processing.attachmentCandidateCount || 0}`,
+        `- 감지 플랫폼: ${processing.detectedPlatform || detectedPlatform}`
+    ];
+
+    if (input.files.length > 0) {
+        lines.push('', `## 파일 샘플 최대 ${fileLimit}개`);
+        for (const file of input.files.slice(0, fileLimit)) {
+            lines.push(`- ${formatDiagnosticFileLine(file)}`);
+        }
+    }
+
+    if (processing.chatCandidates.length > 0) {
+        lines.push('', `## 대화 파일 검증 최대 ${candidateLimit}개`);
+        for (const candidate of processing.chatCandidates.slice(0, candidateLimit)) {
+            lines.push(
+                `- ${candidate.name || '(name-missing)'}: ${candidate.valid ? '유효' : '실패'} / ${candidate.format} / ${candidate.lineCount}줄 / ${candidate.reason}`,
+                `  - 패턴: ${formatDiagnosticPatternFlags(candidate.patternFlags)}`
+            );
+            for (const sample of (candidate.sampleLines || []).slice(0, sampleLineLimit)) {
+                lines.push(`  - L${sample.line}: ${sample.text || '(empty)'}`);
+            }
+        }
+    }
+
+    if (latest && latest.source) {
+        lines.push('', '## 위치', `- ${latest.source}:${latest.line || '?'}:${latest.column || '?'}`);
+    }
+
+    return lines.join('\n');
+}
+
 function buildDiagnosticIssueUrl() {
-    const compactReport = buildDiagnosticReport({ compact: true });
-    const fullUrl = buildGoogleFormPrefillUrl(compactReport);
+    const compactReport = buildDiagnosticFormSummary();
+    let fullUrl = buildGoogleFormPrefillUrl(compactReport);
 
     if (fullUrl.length <= BUG_REPORT_FORM_PREFILL_LIMIT) {
         return fullUrl;
     }
 
-    const fallbackReport = `${compactReport.slice(0, 6000)}
+    const tinyReport = buildDiagnosticFormSummary({ tiny: true });
+    fullUrl = buildGoogleFormPrefillUrl(tinyReport);
 
-(진단 리포트가 길어 일부만 자동 입력됐습니다. 전체 리포트가 필요하면 앱의 '진단 리포트 복사' 버튼으로 복사해 붙여넣어 주세요.)`;
+    if (fullUrl.length <= BUG_REPORT_FORM_PREFILL_LIMIT) {
+        return fullUrl;
+    }
+
+    let fallbackLength = 1200;
+    let fallbackReport = `${tinyReport.slice(0, fallbackLength)}
+
+(Google Form URL 길이 제한 때문에 요약을 줄였습니다. 전체 리포트는 앱 오류 보고 창의 'TXT 다운로드'로 받은 파일을 첨부해 주세요.)`;
+    while (buildGoogleFormPrefillUrl(fallbackReport).length > BUG_REPORT_FORM_PREFILL_LIMIT && fallbackLength > 300) {
+        fallbackLength -= 200;
+        fallbackReport = `${tinyReport.slice(0, fallbackLength)}
+
+(Google Form URL 길이 제한 때문에 요약을 줄였습니다. 전체 리포트는 앱 오류 보고 창의 'TXT 다운로드'로 받은 파일을 첨부해 주세요.)`;
+    }
     return buildGoogleFormPrefillUrl(fallbackReport);
 }
 
@@ -755,6 +825,32 @@ async function copyDiagnosticReport() {
     }
 }
 
+function buildDiagnosticFilename() {
+    const stamp = new Date().toISOString()
+        .replace(/\.\d{3}Z$/, '')
+        .replace(/[:T]/g, '-');
+    return `chaextractor-diagnostic-${stamp}.txt`;
+}
+
+function downloadDiagnosticReport() {
+    const report = updateDiagnosticReportText();
+    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = buildDiagnosticFilename();
+    document.body.appendChild(link);
+    link.click();
+    if (typeof link.remove === 'function') {
+        link.remove();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    if (diagnosticCopyStatus) {
+        diagnosticCopyStatus.textContent = `진단 리포트 TXT를 다운로드했습니다: ${link.download}`;
+    }
+    return { ok: true, filename: link.download };
+}
+
 function openIssueReportPage() {
     updateDiagnosticReportText();
     const url = buildDiagnosticIssueUrl();
@@ -762,6 +858,12 @@ function openIssueReportPage() {
     if (typeof window.open === 'function') {
         const opened = window.open(url, '_blank', 'noopener');
         if (opened) opened.opener = null;
+        const downloadResult = downloadDiagnosticReport();
+        if (diagnosticCopyStatus) {
+            diagnosticCopyStatus.textContent = downloadResult.ok
+                ? `Google Form에는 오류 요약을 넣었습니다. ${downloadResult.filename} 파일을 폼에 첨부해 주세요.`
+                : 'Google Form에는 오류 요약을 넣었습니다. 전체 리포트가 더 필요하면 TXT 다운로드 버튼으로 파일을 받아 첨부해 주세요.';
+        }
         return url;
     }
 
@@ -771,6 +873,9 @@ function openIssueReportPage() {
 function openDiagnosticReportModal() {
     if (diagnosticState.events.length === 0) {
         setDiagnosticStage('manual-report');
+    }
+    if (diagnosticToast) {
+        diagnosticToast.hidden = true;
     }
     updateDiagnosticReportText();
     if (diagnosticCopyStatus) {
@@ -788,6 +893,7 @@ function buildDiagnosticTestSnapshot() {
         latestEvent: getLatestDiagnosticEvent(),
         reportText: diagnosticReportText ? diagnosticReportText.value : '',
         issueUrl: buildDiagnosticIssueUrl(),
+        diagnosticFilename: buildDiagnosticFilename(),
         toastVisible: diagnosticToast ? !diagnosticToast.hidden : false,
         reportModalOpen: isModalOpen('reportIssueModal')
     };
@@ -1474,6 +1580,10 @@ document.querySelectorAll('.modal-overlay').forEach(modal => {
 
 if (copyDiagnosticBtn) {
     copyDiagnosticBtn.addEventListener('click', copyDiagnosticReport);
+}
+
+if (downloadDiagnosticBtn) {
+    downloadDiagnosticBtn.addEventListener('click', downloadDiagnosticReport);
 }
 
 if (openIssueBtn) {
@@ -3969,6 +4079,7 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
         captureDiagnosticError,
         buildDiagnosticReport,
         buildDiagnosticIssueUrl,
+        buildDiagnosticFilename,
         openDiagnosticReportModal,
         getDiagnosticSnapshot: buildDiagnosticTestSnapshot,
         openCaptureModal,

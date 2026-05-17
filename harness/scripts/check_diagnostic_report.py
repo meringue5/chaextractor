@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify privacy-preserving diagnostic report generation."""
+"""Verify useful diagnostic report generation."""
 
 from __future__ import annotations
 
@@ -35,10 +35,11 @@ def main() -> int:
     payload = json.loads(result.stdout)
     report = payload["reportText"]
     report_url = payload["issueUrl"]
+    diagnostic_filename = payload["diagnosticFilename"]
     failures: list[str] = []
 
     fail_if(payload["eventCount"] != 1, failures, "diagnostic event was not captured")
-    fail_if(not payload["toastVisible"], failures, "diagnostic toast was not shown")
+    fail_if(payload["toastVisible"], failures, "diagnostic toast should not be shown")
     fail_if(not payload["reportModalOpen"], failures, "diagnostic report modal did not open")
     fail_if("synthetic diagnostic failure" not in report, failures, "error message missing from report")
     fail_if("private-chat-name.txt" not in report, failures, "chat filename missing from report")
@@ -52,6 +53,9 @@ def main() -> int:
     fail_if("docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform" not in report_url, failures, "report URL does not open Google Form")
     fail_if("entry.315233821=" not in report_url, failures, "report URL does not prefill report type")
     fail_if("entry.1161180918=" not in report_url, failures, "report URL does not prefill diagnostic content")
+    fail_if(len(report_url) > 6500, failures, "prefilled Google Form URL is too long")
+    fail_if("TXT" not in report_url, failures, "prefilled report URL should ask for diagnostic TXT attachment")
+    fail_if(not diagnostic_filename.startswith("chaextractor-diagnostic-") or not diagnostic_filename.endswith(".txt"), failures, "diagnostic TXT filename is invalid")
 
     if failures:
         print("FAIL diagnostic report")

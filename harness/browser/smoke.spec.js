@@ -84,6 +84,7 @@ test('static shell loads local assets and vendor script', async ({ page }) => {
   await page.locator('#reportIssueFooterBtn').click();
   await expect(page.locator('#reportIssueModal')).toHaveClass(/open/);
   await expect(page.locator('#diagnosticReportText')).toHaveValue(/chaextractor 오류 진단 리포트/);
+  await expect(page.locator('#downloadDiagnosticBtn')).toHaveText(/TXT 다운로드/);
   await page.keyboard.press('Escape');
   await expect(page.locator('#reportIssueModal')).not.toHaveClass(/open/);
 

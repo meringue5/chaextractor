@@ -271,11 +271,12 @@
             </div>
             <p class="report-help">
                 진단 리포트에는 오류 메시지, 처리 단계, 파일명/확장자/크기, 대화 파일 검증 결과가 들어갑니다.
-                제출 전 내용을 확인하고 필요하면 보충해 주세요.
+                Google Form에는 오류 요약을 자동 입력하고, 전체 리포트는 아래에서 확인/복사하거나 TXT로 다운로드할 수 있습니다.
             </p>
             <div class="report-actions">
                 <button type="button" class="report-action-btn primary" id="copyDiagnosticBtn">진단 리포트 복사</button>
-                <button type="button" class="report-action-btn" id="openIssueBtn">리포트 포함 제보 열기</button>
+                <button type="button" class="report-action-btn" id="downloadDiagnosticBtn">TXT 다운로드</button>
+                <button type="button" class="report-action-btn" id="openIssueBtn">오류 요약으로 제보 열기</button>
             </div>
             <textarea id="diagnosticReportText" class="diagnostic-report-text" readonly spellcheck="false" aria-label="진단 리포트"></textarea>
             <div class="report-status" id="diagnosticCopyStatus" role="status" aria-live="polite"></div>
