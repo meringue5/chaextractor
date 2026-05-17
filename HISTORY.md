@@ -814,6 +814,17 @@
   * `git diff --check` 통과
   * `npm run test:browser` 통과: 4 passed, 2 skipped
 
+## 2-1-50단계: 1995 초기 화면 배경 청록색 적용 (2026-05-17)
+* 변경:
+  * 1995 테마의 초기 화면 바깥 배경을 Windows 3.1 데스크톱 느낌의 청록색(`#008080`)으로 변경
+  * 1995 진행률 바 fill 색상과 같은 색을 사용해 초기 화면의 PC통신/Windows 3.1 혼합 톤을 맞춤
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

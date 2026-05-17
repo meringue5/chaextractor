@@ -485,6 +485,10 @@ body {
     background: var(--bg-primary);
 }
 
+[data-theme="1995"] .setup-screen {
+    background: #008080;
+}
+
 [data-theme="1995"] .setup-box,
 [data-theme="1995"] .modal-box,
 [data-theme="1995"] .diagnostic-toast {
