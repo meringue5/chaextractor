@@ -37,7 +37,7 @@
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
 | 대화 원문, 첨부파일, 파싱 결과는 외부 서버로 자동 전송하지 않는다. | 구현은 클라이언트 로컬 처리 중심 | doc drift checker로 문구 일부 점검 |
-| 오류 진단 리포트는 대화 원문, 사용자명, 파일명, 첨부파일 내용을 자동 포함하지 않는다. | JS 오류/처리 실패 시 환경, 단계, 파일 확장자 분포, 스택만 요약 | `check_diagnostic_report.py`로 원본 파일명 미포함 점검 |
+| 오류 진단 리포트는 대화 원문, 사용자명, 파일명, 첨부파일 내용을 자동 포함하지 않는다. | JS 오류/처리 실패 시 환경, 단계, 파일 확장자 분포, 스택, 최근 `console.error` 요약만 자동 작성/복사 | `check_diagnostic_report.py`로 원본 파일명 미포함 점검 |
 | 사용자가 명시적으로 클릭한 외부 링크는 허용하되, 대화 데이터가 URL/query/body로 포함되면 안 된다. | 링크 사이드바와 버그 제보 링크가 있음 | 링크 목록 매니페스트와 회귀 체크 |
 | 자동 외부 요청은 문서화되어야 한다. | 폰트 CDN 요청이 자동 발생함 | doc drift checker로 문서화 여부 점검 |
 | IndexedDB 캐시는 로컬 캐시이며 민감 데이터로 취급한다. | 30일 정리 로직과 설정 모달 캐시 삭제 UX가 있음 | `check_cache_privacy.py`로 clear 경로 점검 |
@@ -62,7 +62,7 @@
 | `innerHTML` 사용 시 사용자 입력은 반드시 escape 후 삽입한다. | 파일명/첨부 ref raw 삽입 경로 보강 완료 | 새 `innerHTML` 경로 추가 시 security fixture 확장 |
 | `target="_blank"` 외부 링크는 `rel="noopener"`를 사용한다. | 현재 주요 외부 링크에 적용됨 | 링크 lint 가능 |
 | Blob URL은 새 업로드/정리 시 해제 가능해야 한다. | 새 업로드 전 런타임 첨부 Blob URL 해제 | `check_cache_privacy.py`로 revoke 경로 점검 |
-| 오류는 복구 가능하게 사용자에게 표시한다. | 업로드 오류 메시지, 진단 토스트, 오류 보고 모달 있음 | `check_diagnostic_report.py`와 오류 taxonomy fixture |
+| 오류는 복구 가능하게 사용자에게 표시한다. | 업로드 오류 메시지와 자동 작성/복사되는 오류 보고 모달 있음 | `check_diagnostic_report.py`와 오류 taxonomy fixture |
 
 ### 아키텍처 표준
 

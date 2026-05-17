@@ -16,6 +16,7 @@ let leaderFilterTarget = DEFAULT_LEADER_FILTER_TARGET;
 const ISSUE_REPORT_URL = 'https://github.com/meringue5/chaextractor/issues/new';
 const ISSUE_REPORT_TEMPLATE = 'bug_report.yml';
 const DIAGNOSTIC_EVENT_LIMIT = 8;
+const DIAGNOSTIC_CONSOLE_LIMIT = 6;
 const DIAGNOSTIC_REPORT_URL_LIMIT = 12000;
 
 // ========== 정규식 패턴 (AGENTS.md 기반) ==========
@@ -212,6 +213,7 @@ const diagnosticToastIssue = document.getElementById('diagnosticToastIssue');
 const diagnosticState = {
     stage: 'app-loaded',
     progress: { percent: 0, text: '앱 로드' },
+    reportTime: '',
     input: {
         source: 'none',
         fileCount: 0,
@@ -221,9 +223,11 @@ const diagnosticState = {
         zipFileCount: 0,
         attachmentFileCount: 0
     },
+    consoleErrors: [],
     events: []
 };
 let diagnosticRedactions = [];
+let diagnosticConsoleCaptureInstalled = false;
 
 function sanitizeDiagnosticText(value, maxLength = 1200) {
     if (value === undefined || value === null) return '';
@@ -232,7 +236,10 @@ function sanitizeDiagnosticText(value, maxLength = 1200) {
         .replace(/\u0000/g, '')
         .replace(/\r\n/g, '\n')
         .replace(/\r/g, '\n')
-        .replace(/blob:[^\s)]+/g, 'blob:[redacted]');
+        .replace(/blob:[^\s)]+/g, 'blob:[redacted]')
+        .replace(/\b\d{8}_\d{6}(?:_\d+)?\.(?:jpeg|jpg|png|webp|pdf)\b/gi, '[redacted-attachment]')
+        .replace(/\b[0-9a-f]{64}\.(?:jpg|jpeg|png|gif|webp)\b/gi, '[redacted-attachment]')
+        .replace(/\bKakaoTalk(?:_Chat)?[^\s`'"<>)]*\.(?:txt|csv|zip)\b/gi, '[redacted-filename]');
 
     for (const token of diagnosticRedactions) {
         if (token.length < 3) continue;
@@ -314,10 +321,12 @@ function recordDiagnosticInput(files, source) {
         zipFileCount,
         attachmentFileCount
     };
+    diagnosticState.reportTime = '';
 }
 
 function setDiagnosticStage(stage) {
     diagnosticState.stage = sanitizeDiagnosticText(stage, 160) || 'unknown';
+    diagnosticState.reportTime = '';
 }
 
 function getLatestDiagnosticEvent() {
@@ -345,11 +354,68 @@ function normalizeDiagnosticError(error, context = {}) {
     };
 }
 
+function formatDiagnosticConsoleArg(arg) {
+    if (arg && (arg.stack || arg.message)) {
+        const name = arg.name ? `${arg.name}: ` : '';
+        const message = arg.message || String(arg);
+        const stack = arg.stack ? `
+${arg.stack}` : '';
+        return sanitizeDiagnosticText(`${name}${message}${stack}`, 1600);
+    }
+
+    if (typeof arg === 'object' && arg !== null) {
+        try {
+            return sanitizeDiagnosticText(JSON.stringify(arg), 800);
+        } catch (error) {
+            return sanitizeDiagnosticText(Object.prototype.toString.call(arg), 200);
+        }
+    }
+
+    return sanitizeDiagnosticText(arg, 800);
+}
+
+function recordDiagnosticConsoleError(args) {
+    const message = Array.from(args || [])
+        .map(formatDiagnosticConsoleArg)
+        .filter(Boolean)
+        .join(' ');
+
+    if (!message) return;
+
+    diagnosticState.consoleErrors.push({
+        time: new Date().toISOString(),
+        message: sanitizeDiagnosticText(message, 1800)
+    });
+    diagnosticState.reportTime = '';
+
+    if (diagnosticState.consoleErrors.length > DIAGNOSTIC_CONSOLE_LIMIT) {
+        diagnosticState.consoleErrors = diagnosticState.consoleErrors.slice(-DIAGNOSTIC_CONSOLE_LIMIT);
+    }
+}
+
+function installDiagnosticConsoleCapture() {
+    if (diagnosticConsoleCaptureInstalled || typeof console === 'undefined' || typeof console.error !== 'function') {
+        return;
+    }
+
+    diagnosticConsoleCaptureInstalled = true;
+    const originalError = console.error.bind(console);
+
+    console.error = (...args) => {
+        try {
+            recordDiagnosticConsoleError(args);
+        } catch (error) {
+            // Console capture must never break the app's normal error path.
+        }
+        originalError(...args);
+    };
+}
+
 function showDiagnosticToast(event) {
     if (!diagnosticToast) return;
 
     if (diagnosticToastMessage) {
-        diagnosticToastMessage.textContent = `${event.stage} 단계의 진단 리포트를 준비했습니다.`;
+        diagnosticToastMessage.textContent = `${event.stage} 단계의 오류 리포트 초안을 만들었습니다.`;
     }
 
     diagnosticToast.hidden = false;
@@ -362,12 +428,18 @@ function captureDiagnosticError(error, context = {}) {
 
     const event = normalizeDiagnosticError(error, context);
     diagnosticState.events.push(event);
+    diagnosticState.reportTime = '';
     if (diagnosticState.events.length > DIAGNOSTIC_EVENT_LIMIT) {
         diagnosticState.events = diagnosticState.events.slice(-DIAGNOSTIC_EVENT_LIMIT);
     }
 
-    showDiagnosticToast(event);
     updateDiagnosticReportText();
+    openDiagnosticReportModal({
+        autoCopy: true,
+        statusMessage: '오류 리포트 초안을 만들고 클립보드에 복사하고 있습니다.',
+        successMessage: '오류 리포트를 클립보드에 복사했습니다. 제보하기를 누르면 GitHub 제보 창이 열립니다.',
+        failureMessage: '브라우저가 자동 복사를 막았습니다. 리포트는 아래에 작성되어 있으니 리포트 다시 복사를 눌러주세요.'
+    });
     return event;
 }
 
@@ -379,6 +451,9 @@ function buildDiagnosticReport(options = {}) {
     const viewport = getViewportSnapshot();
     const compact = !!options.compact;
     const events = compact ? (latest ? [latest] : []) : diagnosticState.events;
+    if (!diagnosticState.reportTime) {
+        diagnosticState.reportTime = new Date().toISOString();
+    }
 
     const lines = [
         '# chaextractor 오류 진단 리포트',
@@ -386,7 +461,7 @@ function buildDiagnosticReport(options = {}) {
         '> 대화 원문, 사용자명, 파일명, 첨부파일 내용은 자동 수집하지 않습니다.',
         '',
         '## 오류',
-        `- 리포트 생성 시각: ${new Date().toISOString()}`,
+        `- 리포트 생성 시각: ${diagnosticState.reportTime}`,
         `- 마지막 단계: ${diagnosticState.stage}`,
         `- 진행률: ${diagnosticState.progress.percent}% / ${diagnosticState.progress.text}`,
         `- 오류 유형: ${latest ? latest.type : 'manual-report'}`,
@@ -439,6 +514,22 @@ function buildDiagnosticReport(options = {}) {
         }
     }
 
+    if (diagnosticState.consoleErrors.length > 0) {
+        lines.push('', '## 최근 콘솔 오류');
+        const consoleErrors = compact
+            ? diagnosticState.consoleErrors.slice(-3)
+            : diagnosticState.consoleErrors;
+        for (const entry of consoleErrors) {
+            lines.push(
+                '',
+                `### ${entry.time}`,
+                '```text',
+                entry.message,
+                '```'
+            );
+        }
+    }
+
     lines.push(
         '',
         '## 재현 절차',
@@ -484,25 +575,29 @@ function buildDiagnosticIssueUrl() {
     return `${ISSUE_REPORT_URL}?${query}`;
 }
 
-async function copyDiagnosticReport() {
+function setDiagnosticCopyStatus(message) {
+    if (diagnosticCopyStatus) {
+        diagnosticCopyStatus.textContent = message;
+    }
+}
+
+async function copyDiagnosticReport(options = {}) {
     const report = updateDiagnosticReportText();
     const nav = typeof navigator !== 'undefined'
         ? navigator
         : (window && window.navigator ? window.navigator : {});
+    const successMessage = options.successMessage || '오류 리포트를 클립보드에 복사했습니다.';
+    const failureMessage = options.failureMessage || '자동 복사가 안 되면 아래 리포트를 직접 선택해 복사해주세요.';
 
     try {
         if (!nav.clipboard || typeof nav.clipboard.writeText !== 'function') {
             throw new Error('clipboard-unavailable');
         }
         await nav.clipboard.writeText(report);
-        if (diagnosticCopyStatus) {
-            diagnosticCopyStatus.textContent = '진단 리포트를 복사했습니다.';
-        }
+        setDiagnosticCopyStatus(successMessage);
         return { ok: true };
     } catch (error) {
-        if (diagnosticCopyStatus) {
-            diagnosticCopyStatus.textContent = '자동 복사가 안 되면 아래 리포트를 직접 선택해 복사해주세요.';
-        }
+        setDiagnosticCopyStatus(failureMessage);
         return { ok: false, reason: error.message || 'copy-failed' };
     }
 }
@@ -520,15 +615,31 @@ function openIssueReportPage() {
     return url;
 }
 
-function openDiagnosticReportModal() {
+function openDiagnosticIssueFlow() {
+    copyDiagnosticReport({
+        successMessage: '오류 리포트를 클립보드에 다시 복사했습니다. 열린 GitHub 창의 진단 리포트 칸에 붙여넣을 수 있습니다.',
+        failureMessage: 'GitHub 제보 창을 열었습니다. 복사가 막혔다면 아래 리포트를 직접 선택해 붙여넣어 주세요.'
+    });
+    return openIssueReportPage();
+}
+
+function openDiagnosticReportModal(options = {}) {
     if (diagnosticState.events.length === 0) {
         setDiagnosticStage('manual-report');
     }
     updateDiagnosticReportText();
-    if (diagnosticCopyStatus) {
-        diagnosticCopyStatus.textContent = '';
+    setDiagnosticCopyStatus(options.statusMessage || '오류 리포트 초안을 작성했습니다.');
+    if (diagnosticToast) {
+        diagnosticToast.hidden = true;
     }
     openModal('reportIssueModal');
+
+    if (options.autoCopy !== false) {
+        copyDiagnosticReport({
+            successMessage: options.successMessage || '오류 리포트를 클립보드에 복사했습니다.',
+            failureMessage: options.failureMessage || '브라우저가 자동 복사를 막았습니다. 리포트 다시 복사를 눌러주세요.'
+        });
+    }
 }
 
 function buildDiagnosticTestSnapshot() {
@@ -540,6 +651,8 @@ function buildDiagnosticTestSnapshot() {
         latestEvent: getLatestDiagnosticEvent(),
         reportText: diagnosticReportText ? diagnosticReportText.value : '',
         issueUrl: buildDiagnosticIssueUrl(),
+        consoleErrorCount: diagnosticState.consoleErrors.length,
+        copyStatus: diagnosticCopyStatus ? diagnosticCopyStatus.textContent : '',
         toastVisible: diagnosticToast ? !diagnosticToast.hidden : false,
         reportModalOpen: isModalOpen('reportIssueModal')
     };
@@ -779,12 +892,14 @@ if (copyDiagnosticBtn) {
 }
 
 if (openIssueBtn) {
-    openIssueBtn.addEventListener('click', openIssueReportPage);
+    openIssueBtn.addEventListener('click', openDiagnosticIssueFlow);
 }
 
 if (diagnosticToastIssue) {
-    diagnosticToastIssue.addEventListener('click', openIssueReportPage);
+    diagnosticToastIssue.addEventListener('click', openDiagnosticIssueFlow);
 }
+
+installDiagnosticConsoleCapture();
 
 window.addEventListener('error', (event) => {
     captureDiagnosticError(event.error || event.message, {
@@ -2885,6 +3000,7 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
         captureDiagnosticError,
         buildDiagnosticReport,
         buildDiagnosticIssueUrl,
+        openDiagnosticIssueFlow,
         openDiagnosticReportModal,
         getDiagnosticSnapshot: buildDiagnosticTestSnapshot
     };

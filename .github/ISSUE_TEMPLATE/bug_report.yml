@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         제보 감사합니다. 대화 원문, 사용자명, 전화번호, 파일명, 첨부파일 내용처럼 민감할 수 있는 정보는 올리지 말아주세요.
-        앱의 "오류 보고" 창에서 만든 진단 리포트는 대화 원문과 파일명을 자동 수집하지 않습니다.
+        앱의 "오류 리포트 준비됨" 창에서 만든 진단 리포트는 대화 원문과 파일명을 자동 수집하지 않습니다.
   - type: textarea
     id: summary
     attributes:
@@ -69,7 +69,7 @@ body:
     id: diagnostic_report
     attributes:
       label: 진단 리포트
-      description: 앱에서 "진단 리포트 복사"를 눌러 붙여넣어 주세요. 대화 원문/사용자명/파일명은 자동 수집하지 않습니다.
+      description: 앱에서 "제보하기"를 누르기 전 리포트가 이미 복사됩니다. 비어 있으면 "리포트 다시 복사"를 눌러 붙여넣어 주세요. 대화 원문/사용자명/파일명은 자동 수집하지 않습니다.
     validations:
       required: false
   - type: textarea

@@ -232,16 +232,16 @@
     <div class="modal-overlay" id="reportIssueModal" role="dialog" aria-modal="true" aria-labelledby="reportIssueModalTitle" aria-hidden="true">
         <div class="modal-box report-modal-box">
             <div class="modal-header">
-                <h3 id="reportIssueModalTitle">오류 보고</h3>
-                <button class="modal-close-btn" data-modal="reportIssueModal" aria-label="오류 보고 모달 닫기">✕</button>
+                <h3 id="reportIssueModalTitle">오류 리포트 준비됨</h3>
+                <button class="modal-close-btn" data-modal="reportIssueModal" aria-label="오류 리포트 모달 닫기">✕</button>
             </div>
             <p class="report-help">
-                진단 리포트에는 대화 원문, 사용자명, 파일명, 첨부파일 내용이 자동으로 들어가지 않습니다.
-                캡처를 첨부할 때는 이름과 대화 내용을 가려주세요.
+                리포트 초안을 작성했고 가능한 경우 클립보드에도 복사했습니다.
+                대화 원문, 사용자명, 파일명, 첨부파일 내용은 자동으로 들어가지 않습니다.
             </p>
             <div class="report-actions">
-                <button type="button" class="report-action-btn primary" id="copyDiagnosticBtn">진단 리포트 복사</button>
-                <button type="button" class="report-action-btn" id="openIssueBtn">GitHub 제보 열기</button>
+                <button type="button" class="report-action-btn primary" id="openIssueBtn">제보하기</button>
+                <button type="button" class="report-action-btn" id="copyDiagnosticBtn">리포트 다시 복사</button>
             </div>
             <textarea id="diagnosticReportText" class="diagnostic-report-text" readonly spellcheck="false" aria-label="진단 리포트"></textarea>
             <div class="report-status" id="diagnosticCopyStatus" role="status" aria-live="polite"></div>
@@ -255,12 +255,12 @@
     </div>
     <div class="diagnostic-toast" id="diagnosticToast" role="status" aria-live="polite" hidden>
         <div class="diagnostic-toast-copy">
-            <strong>문제가 감지됐습니다</strong>
-            <span id="diagnosticToastMessage">진단 리포트를 준비했습니다.</span>
+            <strong>리포트가 준비됐습니다</strong>
+            <span id="diagnosticToastMessage">오류 리포트 초안을 만들었습니다.</span>
         </div>
         <div class="diagnostic-toast-actions">
-            <button type="button" id="diagnosticToastDetails">리포트 보기</button>
-            <button type="button" id="diagnosticToastIssue">오류 보고</button>
+            <button type="button" id="diagnosticToastDetails">보기</button>
+            <button type="button" id="diagnosticToastIssue">제보하기</button>
         </div>
     </div>
     <script src="assets/vendor/jszip-3.10.1.min.js"></script>

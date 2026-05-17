@@ -113,6 +113,17 @@ const documentElement = createElement('html');
 const body = createElement('body');
 let documentActiveElement = body;
 const documentListeners = new Map();
+const fakeNavigator = {
+  userAgent: 'chaextractor-test',
+  language: 'ko-KR',
+  platform: 'test',
+  clipboard: {
+    lastText: '',
+    async writeText(value) {
+      this.lastText = String(value);
+    }
+  }
+};
 
 function getElementById(id) {
   if (!elementsById.has(id)) {
@@ -198,6 +209,7 @@ const windowObject = {
   __CHAEXTRACTOR_ENABLE_TEST_API__: true,
   File: FakeFile,
   Blob: FakeBlob,
+  navigator: fakeNavigator,
   addEventListener() {},
   removeEventListener() {},
   scrollTo() {},
@@ -249,6 +261,7 @@ const context = {
   Blob: FakeBlob,
   indexedDB: fakeIndexedDB,
   localStorage,
+  navigator: fakeNavigator,
   performance: { now: () => 0 },
   URL: {
     createObjectURL: () => 'blob:test',
@@ -268,6 +281,7 @@ windowObject.document = context.document;
 windowObject.localStorage = localStorage;
 windowObject.indexedDB = context.indexedDB;
 windowObject.URL = context.URL;
+windowObject.navigator = fakeNavigator;
 
 vm.createContext(context);
 vm.runInContext(appScript, context, { filename: 'assets/scripts/app.js' });
@@ -321,6 +335,7 @@ if (input.mode === 'diagnosticReport') {
     { name: '20260517_120000.jpeg', size: 4096 }
   ], 'testInput');
   api.setDiagnosticStage('test-processing');
+  context.console.error('synthetic console error for private-chat-name.txt');
   api.captureDiagnosticError(new Error('synthetic diagnostic failure in private-chat-name.txt'), {
     type: 'test-error',
     stage: 'test-processing',
@@ -328,8 +343,11 @@ if (input.mode === 'diagnosticReport') {
     line: 123,
     column: 4
   });
-  api.openDiagnosticReportModal();
-  process.stdout.write(JSON.stringify(api.getDiagnosticSnapshot(), null, 2));
+  await new Promise(resolve => setTimeout(resolve, 0));
+  process.stdout.write(JSON.stringify({
+    ...api.getDiagnosticSnapshot(),
+    clipboardText: fakeNavigator.clipboard.lastText
+  }, null, 2));
   process.exit(0);
 }
 

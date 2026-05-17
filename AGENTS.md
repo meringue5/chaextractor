@@ -149,8 +149,8 @@ GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=
     - `.link-item` — 외부 링크/제보 버튼
 - `#imageModal` — 이미지 확대 모달 (`#modalImage`, `#modalClose`)
 - `#settingsModal` — 설정 모달 (`.theme-btn`, `.font-btn`)
-- `#reportIssueModal` — 오류 진단 리포트/오류 보고 모달 (`#diagnosticReportText`, `#copyDiagnosticBtn`, `#openIssueBtn`)
-- `#diagnosticToast` — JS 오류/처리 실패 감지 시 표시되는 진단 리포트 토스트
+- `#reportIssueModal` — 자동 작성/복사되는 오류 진단 리포트 모달 (`#diagnosticReportText`, `#copyDiagnosticBtn`, `#openIssueBtn`)
+- `#diagnosticToast` — 과거 토스트 호환 DOM. JS 오류/처리 실패 감지는 모달을 직접 연다.
 
 ## CSS 주요 클래스
 정본 스타일시트는 `assets/styles/app.css`다.
@@ -235,10 +235,10 @@ UI 렌더링:
 오류 보고/진단:
 - `recordDiagnosticInput(files, source)` — 파일명 원문 없이 파일 수/총 크기/확장자 분포만 기록
 - `setDiagnosticStage(stage)` — 현재 처리 단계 기록
-- `captureDiagnosticError(error, context)` — JS 오류/처리 실패를 안전 진단 이벤트로 기록하고 토스트 표시
-- `buildDiagnosticReport(options)` — 대화 원문, 사용자명, 파일명, 첨부파일 내용 없이 마크다운 리포트 생성
+- `captureDiagnosticError(error, context)` — JS 오류/처리 실패를 안전 진단 이벤트로 기록하고 모달 자동 표시/클립보드 복사 시도
+- `buildDiagnosticReport(options)` — 대화 원문, 사용자명, 파일명, 첨부파일 내용 없이 마크다운 리포트 생성. 최근 `console.error` 요약만 포함한다.
 - `copyDiagnosticReport()` — 진단 리포트를 클립보드에 복사
-- `openIssueReportPage()` — GitHub Issue Form 버그 제보 링크 열기
+- `openDiagnosticIssueFlow()` — 리포트를 다시 복사하고 GitHub Issue Form 버그 제보 링크 열기
 - `openDiagnosticReportModal()` — 오류 보고 모달 열기
 
 모달:

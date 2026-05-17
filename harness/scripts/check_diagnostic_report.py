@@ -35,14 +35,19 @@ def main() -> int:
     payload = json.loads(result.stdout)
     report = payload["reportText"]
     issue_url = payload["issueUrl"]
+    clipboard_text = payload["clipboardText"]
     failures: list[str] = []
 
     fail_if(payload["eventCount"] != 1, failures, "diagnostic event was not captured")
-    fail_if(not payload["toastVisible"], failures, "diagnostic toast was not shown")
-    fail_if(not payload["reportModalOpen"], failures, "diagnostic report modal did not open")
+    fail_if(payload["toastVisible"], failures, "diagnostic toast should stay hidden when modal opens automatically")
+    fail_if(not payload["reportModalOpen"], failures, "diagnostic report modal did not open automatically")
+    fail_if("클립보드에 복사" not in payload["copyStatus"], failures, "diagnostic report was not auto-copied")
+    fail_if(clipboard_text != report, failures, "clipboard text did not match diagnostic report")
     fail_if("synthetic diagnostic failure" not in report, failures, "error message missing from report")
+    fail_if("synthetic console error" not in report, failures, "console error summary missing from report")
     fail_if("private-chat-name.txt" in report, failures, "raw chat filename leaked into report")
     fail_if("20260517_120000.jpeg" in report, failures, "raw attachment filename leaked into report")
+    fail_if("private-chat-name.txt" in clipboard_text, failures, "raw chat filename leaked into clipboard text")
     fail_if("private-chat-name" in issue_url, failures, "raw chat filename leaked into issue URL")
     fail_if("20260517_120000" in issue_url, failures, "raw attachment filename leaked into issue URL")
     fail_if("txt:1" not in report or "jpeg:1" not in report, failures, "extension-only input summary missing")
