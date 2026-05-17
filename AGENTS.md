@@ -63,11 +63,11 @@
 
 - ZIP/TXT/CSV 파일 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다.
 - iOS/Android/Windows/macOS 카카오톡 내보내기 파일을 공식 지원한다.
-- 날짜별 탐색, 검색, 통계, 기본값 `채상욱 리더`인 사용자 하이라이트/필터, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
+- 날짜별 탐색, 검색, 통계, 기본값 `채상욱 리더`인 사용자 하이라이트/필터, 기본값 1995 테마, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
 - 선택 날짜 또는 전체 대화를 LLM 요약에 붙여넣기 좋은 TXT로 정리하는 갈무리 복사/다운로드를 제공한다.
 - 시스템 메시지는 제외하고, 동일 사용자 연속 텍스트는 병합한다.
 - 사진/파일/이모티콘은 텍스트와 별도 타입으로 유지한다.
-- 누락 첨부파일은 앱 중단 없이 복구 가능한 상태로 표시한다.
+- 누락 첨부파일은 앱 중단 없이 복구 가능한 상태로 표시하며, 사진 파일 누락은 원본 대화에서 사진을 열어 내려받은 뒤 다시 내보내도록 안내한다.
 - 브라우저 호환, 성능, 접근성, 안정성, 개인정보 기준은 하네스의 비기능 요구사항과 매니페스트를 따른다.
 
 # 도메인 지식 요약
@@ -100,13 +100,16 @@
 ETF Checker https://www.etfcheck.co.kr
 
 ## 버그 제보
-GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=bug_report.yml
+Google Form https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform
+응답 스프레드시트 https://docs.google.com/spreadsheets/d/1WZ1aLchiTDKcwKf6kDZt2CH_dv5oS8gWKds_oYOIbPI/edit
+Google Form prefill fields: `entry.315233821` = 제보 유형, `entry.1161180918` = 내용, `emailAddress` = 이메일
+GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaextractor/issues/new?template=bug_report.yml
 
 # 코드 구조: index.html + 정적 자산
 
 현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` 로드 → `assets/scripts/app.js` 로드
 
-빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 로직은 `assets/scripts/app.js`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph/hero 이미지는 `assets/og-image.png`에 둔다.
+빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 로직은 `assets/scripts/app.js`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph 이미지는 `assets/og-image.png`에 둔다.
 
 브라우저 회귀 검증은 `harness/browser/`의 Playwright smoke를 선택 실행한다. 이 하네스는 정적 서버로 저장소 루트의 `index.html`을 열고, 앱 배포 파일을 빌드 없이 그대로 검증한다.
 
@@ -120,8 +123,7 @@ GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=
     - `#zipName` — 파일 상태 메시지
     - `#progressContainer` > `#progressFill` + `.progress-text` — 진행률 바
   - `#startBtn` — 대화 보기 시작 버튼 (처리 완료 전 hidden)
-  - `#heroImage` — 히어로 이미지 (`assets/og-image.png`, 처리 완료 후 표시)
-  - `.setup-footer-btns` — 버그 제보 버튼
+- `.setup-footer-btns` — Google Form 버그 제보 버튼
 - `#app` — 메인 뷰어 (초기 hidden)
   - `.sidebar` — 좌측 패널 (320px, 모바일: 86vw 슬라이드)
     - `.sidebar-header` — 제목 + 헤더 버튼들
@@ -148,13 +150,13 @@ GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=
     - `#chatMessages` — 메시지 목록
   - `.link-sidebar` — 우측 링크 패널 (데스크톱 상시 표시, 모바일: 86vw 슬라이드)
     - `.link-sidebar-header` — 링크 패널 제목
-    - `.link-group` — 머니버스 꿀팁/버그 제보 링크 그룹
+    - `.link-group` — 머니버스 꿀팁/Google Form 버그 제보 링크 그룹
     - `.link-item` — 외부 링크/제보 버튼
 - `#imageModal` — 이미지 확대 모달 (`#modalImage`, `#modalClose`)
 - `#captureModal` — 갈무리 TXT 모달 (`#captureText`, `#copyCaptureBtn`, `#downloadCaptureBtn`)
 - `#settingsModal` — 설정 모달 (`.theme-btn`, `.font-btn`)
-- `#reportIssueModal` — 자동 작성/복사되는 오류 진단 리포트 모달 (`#diagnosticReportText`, `#copyDiagnosticBtn`, `#openIssueBtn`)
-- `#diagnosticToast` — 과거 토스트 호환 DOM. JS 오류/처리 실패 감지는 모달을 직접 연다.
+- `#reportIssueModal` — 오류 진단 리포트/오류 보고 모달 (`#diagnosticReportText`, `#copyDiagnosticBtn`, `#openIssueBtn`). 제보 열기는 진단 리포트를 Google Form 내용 칸에 사전 입력
+- `#diagnosticToast` — JS 오류/처리 실패 감지 시 표시되는 진단 리포트 토스트
 
 ## CSS 주요 클래스
 정본 스타일시트는 `assets/styles/app.css`다.
@@ -169,7 +171,7 @@ GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=
 - 메시지: `.message`, `.message-bubble`, `.user-name`, `.content`, `.time`
 - 갈무리: `.capture-btn`, `.capture-modal-box`, `.capture-controls`, `.capture-filter-option`, `.capture-output-text`
 - 사용자 필터: `.leader-filter-panel`, `.leader-filter-controls`, `.message.leader` (황금색 그라데이션), `#leaderFilterBtn.active` (금색 배경)
-- 첨부파일: `.attachment`, `.attachment img`, `.file-link`, `.emoticon`, `.no-file`, `.loading-placeholder`
+- 첨부파일: `.attachment`, `.attachment img`, `.file-link`, `.emoticon`, `.no-file`, `.missing-attachment`, `.missing-attachment-tooltip`, `.missing-attachment-help`, `.loading-placeholder`
 - 스크롤마커: `.scroll-markers`, `.scroll-marker`
 - 모달: `.modal`, `.modal.active`, `.modal-overlay`, `.modal-overlay.open`, `.modal-box`, `.modal-header`, `.modal-close-btn`
 - 오류 보고: `.report-modal-box`, `.report-help`, `.report-actions`, `.report-action-btn`, `.diagnostic-report-text`, `.report-status`, `.diagnostic-toast`, `.diagnostic-toast-actions`
@@ -177,7 +179,7 @@ GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=
 - 링크 사이드바: `.link-sidebar`, `.link-sidebar.open`, `.link-sidebar-header`, `.link-group`, `.link-group-header`, `.link-list`, `.link-item`, `.link-button`, `.footer-link-btn`, `.link-sidebar-toggle`
 - 상태: `.setup-step.completed` (녹색), `.setup-step.processing` (주황), `.setup-step.error` (적색)
 - 모바일: `@media (max-width: 900px)` — `.sidebar.open`, `.link-sidebar.open`, `.sidebar-overlay.active`, `.sidebar-toggle`, `.link-sidebar-toggle`
-- 테마: `[data-theme="dark"]`, `[data-font="ridi"]` (RIDIBatang), `[data-font="neodgm"]` (NeoDunggeunmo Pro)
+- 테마: `[data-theme="dark"]`, `[data-theme="1995"]`, `[data-font="ridi"]` (RIDIBatang), `[data-font="neodgm"]` (NeoDunggeunmo Pro), `[data-font="iyagi"]` (IyagiGGC)
 
 ## JavaScript 주요 함수
 정본 앱 스크립트는 `assets/scripts/app.js`다.
@@ -204,6 +206,7 @@ GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=
 - `mapAttachments()` — 메시지-첨부파일 연결
 - `loadAttachment(filename)` — ZIP에서 지연 로딩 + Blob URL 생성
 - `loadAndRenderAttachment(elementId, filename, type, ref)` — 첨부파일 로딩 + DOM 업데이트
+- `renderMissingPhotoAttachment(reason)` — 사진 파일 누락/로드 실패 안내 렌더링
 
 캐시 (IndexedDB):
 - `initDB()` — IndexedDB 초기화
@@ -230,7 +233,7 @@ UI 렌더링:
 - `copyCaptureText()` / `downloadCaptureText()` — 갈무리 TXT 복사/다운로드
 
 설정/테마:
-- `applyTheme(theme)` — light/dark/system 테마 적용
+- `applyTheme(theme)` — light/dark/1995/system 테마 적용
 - `applyFont(font, isAutoSwitch)` — 폰트 적용, 자동 전환 관리
 - `initSettings()` — 저장된 테마/폰트 로드 (localStorage)
 - `updateSettingsUI()` — 설정 모달 활성 버튼 표시
@@ -241,12 +244,12 @@ UI 렌더링:
 - `applyBrowserCapabilityStatus(status)` — 미지원 기능 안내와 업로드 제한 상태 반영
 
 오류 보고/진단:
-- `recordDiagnosticInput(files, source)` — 파일명 원문 없이 파일 수/총 크기/확장자 분포만 기록
+- `recordDiagnosticInput(files, source)` — 파일명/경로/크기, 파일 수/총 크기/확장자 분포 기록
 - `setDiagnosticStage(stage)` — 현재 처리 단계 기록
-- `captureDiagnosticError(error, context)` — JS 오류/처리 실패를 안전 진단 이벤트로 기록하고 모달 자동 표시/클립보드 복사 시도
-- `buildDiagnosticReport(options)` — 대화 원문, 사용자명, 파일명, 첨부파일 내용 없이 마크다운 리포트 생성. 최근 `console.error` 요약만 포함한다.
+- `captureDiagnosticError(error, context)` — JS 오류/처리 실패를 안전 진단 이벤트로 기록하고 토스트 표시
+- `buildDiagnosticReport(options)` — 오류 메시지, 처리 단계, 파일명/경로/크기, ZIP 내부 파일, 대화 파일 검증 결과와 샘플 라인이 포함된 마크다운 리포트 생성
 - `copyDiagnosticReport()` — 진단 리포트를 클립보드에 복사
-- `openDiagnosticIssueFlow()` — 리포트를 다시 복사하고 GitHub Issue Form 버그 제보 링크 열기
+- `openIssueReportPage()` — 진단 리포트가 사전 입력된 Google Form 버그 제보 링크 열기
 - `openDiagnosticReportModal()` — 오류 보고 모달 열기
 
 모달:

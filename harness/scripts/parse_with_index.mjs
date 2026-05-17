@@ -115,17 +115,6 @@ const documentElement = createElement('html');
 const body = createElement('body');
 let documentActiveElement = body;
 const documentListeners = new Map();
-const fakeNavigator = {
-  userAgent: 'chaextractor-test',
-  language: 'ko-KR',
-  platform: 'test',
-  clipboard: {
-    lastText: '',
-    async writeText(value) {
-      this.lastText = String(value);
-    }
-  }
-};
 
 function getElementById(id) {
   if (!elementsById.has(id)) {
@@ -211,7 +200,6 @@ const windowObject = {
   __CHAEXTRACTOR_ENABLE_TEST_API__: true,
   File: FakeFile,
   Blob: FakeBlob,
-  navigator: fakeNavigator,
   addEventListener() {},
   removeEventListener() {},
   scrollTo() {},
@@ -263,7 +251,6 @@ const context = {
   Blob: FakeBlob,
   indexedDB: fakeIndexedDB,
   localStorage,
-  navigator: fakeNavigator,
   performance: { now: () => 0 },
   URL: {
     createObjectURL: () => 'blob:test',
@@ -283,7 +270,6 @@ windowObject.document = context.document;
 windowObject.localStorage = localStorage;
 windowObject.indexedDB = context.indexedDB;
 windowObject.URL = context.URL;
-windowObject.navigator = fakeNavigator;
 
 vm.createContext(context);
 vm.runInContext(appScript, context, { filename: 'assets/scripts/app.js' });
@@ -332,12 +318,31 @@ if (input.mode === 'modalEscape') {
 
 if (input.mode === 'diagnosticReport') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
+  const invalidChatContent = [
+    'KakaoTalk Export',
+    '채팅방 이름: 머니버스',
+    '내보내기 시각: 2026-05-17',
+    '이 줄은 지원하는 날짜/메시지 패턴이 아닙니다.',
+    '사진',
+    '오류 재현용 짧은 파일'
+  ].join('\n');
   api.recordDiagnosticInput([
     { name: 'private-chat-name.txt', size: 2048 },
     { name: '20260517_120000.jpeg', size: 4096 }
   ], 'testInput');
+  api.updateDiagnosticProcessing({
+    route: 'folder',
+    chatCandidateCount: 1,
+    attachmentCandidateCount: 1,
+    attachmentExtensions: ['jpeg:1']
+  });
+  api.recordDiagnosticChatCandidate(api.buildDiagnosticChatCandidate(
+    'private-chat-name.txt',
+    'testInput',
+    api.analyzeChatFileContent(invalidChatContent),
+    { size: 2048, entryPath: 'Talk/private-chat-name.txt' }
+  ));
   api.setDiagnosticStage('test-processing');
-  context.console.error('synthetic console error for private-chat-name.txt');
   api.captureDiagnosticError(new Error('synthetic diagnostic failure in private-chat-name.txt'), {
     type: 'test-error',
     stage: 'test-processing',
@@ -345,11 +350,8 @@ if (input.mode === 'diagnosticReport') {
     line: 123,
     column: 4
   });
-  await new Promise(resolve => setTimeout(resolve, 0));
-  process.stdout.write(JSON.stringify({
-    ...api.getDiagnosticSnapshot(),
-    clipboardText: fakeNavigator.clipboard.lastText
-  }, null, 2));
+  api.openDiagnosticReportModal();
+  process.stdout.write(JSON.stringify(api.getDiagnosticSnapshot(), null, 2));
   process.exit(0);
 }
 
@@ -385,6 +387,9 @@ if (input.mode === 'uiSmoke') {
   api.openCaptureModal();
   const afterFilteredCaptureModal = api.getCaptureSnapshot();
 
+  api.applyTheme('1995');
+  const afterTheme1995 = api.getUiSnapshot();
+
   api.applyTheme('dark');
   api.applyFont('ridi');
   const afterSettings = api.getUiSnapshot();
@@ -419,6 +424,7 @@ if (input.mode === 'uiSmoke') {
     afterSearch,
     afterLeaderFilter,
     afterFilteredCaptureModal,
+    afterTheme1995,
     afterSettings,
     afterSettingsModal,
     afterSidebarOpen,

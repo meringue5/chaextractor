@@ -47,6 +47,9 @@ def main() -> int:
     failures: list[str] = []
 
     fail_if(payload["parseResult"]["messageCount"] != 8, failures, "fixture upload/parse did not produce 8 messages")
+    fail_if(payload["afterInit"]["theme"] != "1995", failures, "default theme was not 1995")
+    fail_if(payload["afterInit"]["font"] != "iyagi", failures, "default theme did not use Iyagi font")
+    fail_if(payload["afterInit"]["storedTheme"] != "1995", failures, "default theme was not persisted as 1995")
     fail_if(payload["afterInit"]["dateListCount"] != 2, failures, "date list did not render both dates")
     fail_if(payload["afterInit"]["calendarCellCount"] < 35, failures, "calendar grid did not render")
     fail_if(payload["afterSelect"]["selectedDate"] != "2026-03-01", failures, "selected date was not applied")
@@ -66,6 +69,9 @@ def main() -> int:
     fail_if(payload["afterLeaderFilter"]["hiddenChatMessageCount"] != 1, failures, "custom leader filter did not hide non-matching messages")
     fail_if(not payload["afterFilteredCaptureModal"]["useLeaderFilter"], failures, "capture did not inherit active user filter")
     fail_if("사용자 필터: 테스터" not in payload["afterFilteredCaptureModal"]["text"], failures, "capture text did not include user filter metadata")
+    fail_if(payload["afterTheme1995"]["theme"] != "1995", failures, "1995 theme did not apply")
+    fail_if(payload["afterTheme1995"]["font"] != "iyagi", failures, "1995 theme did not auto-apply Iyagi font")
+    fail_if(payload["afterTheme1995"]["storedTheme"] != "1995", failures, "1995 theme choice was not persisted")
     fail_if(payload["afterSettings"]["theme"] != "dark", failures, "theme setting did not apply")
     fail_if(payload["afterSettings"]["font"] != "ridi", failures, "font setting did not apply")
     fail_if(not payload["afterSettingsModal"]["settingsModalOpen"], failures, "settings modal did not open")

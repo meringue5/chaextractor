@@ -13,12 +13,19 @@ let selectedDate = null;
 let leaderFilterActive = false;
 let leaderFilterTarget = DEFAULT_LEADER_FILTER_TARGET;
 
-const ISSUE_REPORT_URL = 'https://github.com/meringue5/chaextractor/issues/new';
-const ISSUE_REPORT_TEMPLATE = 'bug_report.yml';
+const BUG_REPORT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform';
+const BUG_REPORT_FORM_TYPE_FIELD = 'entry.315233821';
+const BUG_REPORT_FORM_CONTENT_FIELD = 'entry.1161180918';
+const BUG_REPORT_FORM_PREFILL_LIMIT = 12000;
 const DIAGNOSTIC_EVENT_LIMIT = 8;
-const DIAGNOSTIC_CONSOLE_LIMIT = 6;
-const DIAGNOSTIC_REPORT_URL_LIMIT = 12000;
+const DIAGNOSTIC_FILE_SAMPLE_LIMIT = 20;
+const DIAGNOSTIC_CHAT_CANDIDATE_LIMIT = 20;
+const DIAGNOSTIC_ZIP_ENTRY_SAMPLE_LIMIT = 40;
+const DIAGNOSTIC_TEXT_SAMPLE_LINE_LIMIT = 12;
 const CHAT_FILE_PATTERN = /\.(txt|csv)$/i;
+const THEME_1995_WINDOW_ANIMATION_MS = 240;
+const THEME_1995_GHOST_SIZE = 12;
+const THEME_1995_GHOST_FRAME_COUNT = 9;
 
 // ========== 정규식 패턴 (AGENTS.md 기반) ==========
 // 여러 언어/버전을 지원하기 위한 패턴 배열
@@ -220,6 +227,7 @@ const diagnosticToastMessage = document.getElementById('diagnosticToastMessage')
 const diagnosticToastDetails = document.getElementById('diagnosticToastDetails');
 const diagnosticToastIssue = document.getElementById('diagnosticToastIssue');
 const captureBtn = document.getElementById('captureBtn');
+const captureModal = document.getElementById('captureModal');
 const captureScopeCurrent = document.getElementById('captureScopeCurrent');
 const captureScopeAll = document.getElementById('captureScopeAll');
 const captureUseLeaderFilter = document.getElementById('captureUseLeaderFilter');
@@ -232,22 +240,35 @@ const captureStatus = document.getElementById('captureStatus');
 const diagnosticState = {
     stage: 'app-loaded',
     progress: { percent: 0, text: '앱 로드' },
-    reportTime: '',
     input: {
         source: 'none',
         fileCount: 0,
         totalBytes: 0,
         extensions: [],
+        files: [],
+        omittedFileCount: 0,
         txtFileCount: 0,
         csvFileCount: 0,
         zipFileCount: 0,
         attachmentFileCount: 0
     },
-    consoleErrors: [],
+    processing: {
+        route: 'none',
+        detectedPlatform: 'unknown',
+        zipEntryCount: 0,
+        zipEntries: [],
+        omittedZipEntryCount: 0,
+        zipFile: null,
+        chatCandidateCount: 0,
+        validChatFileCount: 0,
+        attachmentCandidateCount: 0,
+        attachmentExtensions: [],
+        chatCandidates: [],
+        parseResult: null
+    },
     events: []
 };
 let diagnosticRedactions = [];
-let diagnosticConsoleCaptureInstalled = false;
 
 function sanitizeDiagnosticText(value, maxLength = 1200) {
     if (value === undefined || value === null) return '';
@@ -257,14 +278,8 @@ function sanitizeDiagnosticText(value, maxLength = 1200) {
         .replace(/\r\n/g, '\n')
         .replace(/\r/g, '\n')
         .replace(/blob:[^\s)]+/g, 'blob:[redacted]')
-        .replace(/\b\d{8}_\d{6}(?:_\d+)?\.(?:jpeg|jpg|png|webp|pdf)\b/gi, '[redacted-attachment]')
-        .replace(/\b[0-9a-f]{64}\.(?:jpg|jpeg|png|gif|webp)\b/gi, '[redacted-attachment]')
-        .replace(/\bKakaoTalk(?:_Chat)?[^\s`'"<>)]*\.(?:txt|csv|zip)\b/gi, '[redacted-filename]');
-
-    for (const token of diagnosticRedactions) {
-        if (token.length < 3) continue;
-        text = text.split(token).join('[redacted-filename]');
-    }
+        .replace(/file:\/\/\/(?:Users|home)\/[^)\s]+\/([^/\s)]+(?::\d+:\d+)?)/g, 'file:///[local]/$1')
+        .replace(/\/(?:Users|home)\/[^)\s]+\/([^/\s)]+(?::\d+:\d+)?)/g, '[local]/$1');
 
     if (text.length <= maxLength) return text;
     return `${text.slice(0, maxLength)}... [truncated]`;
@@ -301,14 +316,140 @@ function summarizeFileExtensions(files) {
     const counts = {};
 
     for (const file of files) {
-        const name = String(file.name || '').toLowerCase();
-        const ext = name.includes('.') ? name.split('.').pop() : '(none)';
+        const ext = getFileExtension(file.name);
         counts[ext] = (counts[ext] || 0) + 1;
     }
 
     return Object.keys(counts)
         .sort()
         .map(ext => `${ext}:${counts[ext]}`);
+}
+
+function getFileExtension(name) {
+    const filename = String(name || '').toLowerCase();
+    if (!filename.includes('.')) return '(none)';
+    return filename.split('.').pop() || '(none)';
+}
+
+function getZipEntrySize(entry) {
+    if (!entry || !entry._data) return 0;
+    return Number(entry._data.uncompressedSize || entry._data.compressedSize || 0) || 0;
+}
+
+function buildDiagnosticFileInfo(file, options = {}) {
+    const name = String(options.name || (file && file.name) || '');
+    const relativePath = String(options.relativePath || (file && file.webkitRelativePath) || '');
+    const info = {
+        name: sanitizeDiagnosticText(name, 260),
+        ext: getFileExtension(name),
+        size: Number(options.size !== undefined ? options.size : (file && file.size)) || 0
+    };
+
+    if (relativePath && relativePath !== name) {
+        info.relativePath = sanitizeDiagnosticText(relativePath, 420);
+    }
+
+    if (options.entryPath && options.entryPath !== name) {
+        info.entryPath = sanitizeDiagnosticText(options.entryPath, 420);
+    }
+
+    if (file && file.lastModified) {
+        info.lastModified = new Date(file.lastModified).toISOString();
+    }
+
+    return info;
+}
+
+function buildDiagnosticZipEntryInfo(entryPath, entry) {
+    return buildDiagnosticFileInfo(null, {
+        name: String(entryPath || '').split('/').pop(),
+        entryPath,
+        size: getZipEntrySize(entry)
+    });
+}
+
+function summarizeAttachmentExtensions(names) {
+    const counts = {};
+    for (const name of names) {
+        const ext = getFileExtension(name);
+        counts[ext] = (counts[ext] || 0) + 1;
+    }
+    return Object.keys(counts)
+        .sort()
+        .map(ext => `${ext}:${counts[ext]}`);
+}
+
+function getDiagnosticTextSampleLines(content, limit = DIAGNOSTIC_TEXT_SAMPLE_LINE_LIMIT) {
+    return String(content || '')
+        .split('\n')
+        .slice(0, limit)
+        .map((line, index) => ({
+            line: index + 1,
+            text: sanitizeDiagnosticText(line.replace(/\r$/, ''), 500)
+        }));
+}
+
+function resetDiagnosticProcessing(route = 'none') {
+    diagnosticState.processing = {
+        route,
+        detectedPlatform: detectedPlatform || 'unknown',
+        zipEntryCount: 0,
+        zipEntries: [],
+        omittedZipEntryCount: 0,
+        zipFile: null,
+        chatCandidateCount: 0,
+        validChatFileCount: 0,
+        attachmentCandidateCount: 0,
+        attachmentExtensions: [],
+        chatCandidates: [],
+        parseResult: null
+    };
+}
+
+function updateDiagnosticProcessing(patch) {
+    diagnosticState.processing = {
+        ...diagnosticState.processing,
+        ...patch
+    };
+}
+
+function recordDiagnosticChatCandidate(info) {
+    const candidates = diagnosticState.processing.chatCandidates.slice();
+    candidates.push(info);
+    diagnosticState.processing.chatCandidates = candidates.slice(-DIAGNOSTIC_CHAT_CANDIDATE_LIMIT);
+    diagnosticState.processing.chatCandidateCount = Math.max(
+        diagnosticState.processing.chatCandidateCount,
+        candidates.length
+    );
+}
+
+function buildDiagnosticChatCandidate(name, source, analysis, options = {}) {
+    const fileInfo = buildDiagnosticFileInfo(null, {
+        name,
+        size: options.size,
+        entryPath: options.entryPath
+    });
+
+    return {
+        source,
+        ...fileInfo,
+        valid: !!analysis.valid,
+        format: analysis.format,
+        reason: sanitizeDiagnosticText(analysis.reason, 260),
+        lineCount: analysis.lineCount,
+        checkedLines: analysis.checkedLines,
+        hasBom: analysis.hasBom,
+        sampleLines: analysis.sampleLines || [],
+        patternFlags: {
+            macOSCsvHeader: analysis.hasMacOSCsvHeader,
+            macOSCsvValidRows: analysis.hasValidMacOSCsv,
+            iosDateHeader: analysis.hasDateHeader,
+            iosMessage: analysis.hasMessage,
+            androidMessage: analysis.hasAndroidMessage,
+            windowsDateHeader: analysis.hasWindowsDateHeader,
+            windowsMessage: analysis.hasWindowsMessage
+        }
+    };
 }
 
 function recordDiagnosticInput(files, source) {
@@ -318,38 +459,40 @@ function recordDiagnosticInput(files, source) {
     let csvFileCount = 0;
     let zipFileCount = 0;
     let attachmentFileCount = 0;
-    const redactions = [];
+    const fileSamples = [];
 
     for (const file of list) {
         const name = String(file.name || '');
-        const relativePath = String(file.webkitRelativePath || '');
         totalBytes += Number(file.size) || 0;
         if (/\.txt$/i.test(name)) txtFileCount++;
         if (/\.csv$/i.test(name)) csvFileCount++;
         if (/\.zip$/i.test(name)) zipFileCount++;
         if (isAttachmentFile(name)) attachmentFileCount++;
-        if (name) redactions.push(name);
-        if (relativePath) redactions.push(relativePath);
+        if (fileSamples.length < DIAGNOSTIC_FILE_SAMPLE_LIMIT) {
+            fileSamples.push(buildDiagnosticFileInfo(file));
+        }
     }
 
-    diagnosticRedactions = [...new Set(redactions)].slice(0, 200);
+    diagnosticRedactions = [];
 
     diagnosticState.input = {
         source,
         fileCount: list.length,
         totalBytes,
         extensions: summarizeFileExtensions(list),
+        files: fileSamples,
+        omittedFileCount: Math.max(0, list.length - fileSamples.length),
         txtFileCount,
         csvFileCount,
         zipFileCount,
         attachmentFileCount
     };
-    diagnosticState.reportTime = '';
+
+    resetDiagnosticProcessing(source);
 }
 
 function setDiagnosticStage(stage) {
     diagnosticState.stage = sanitizeDiagnosticText(stage, 160) || 'unknown';
-    diagnosticState.reportTime = '';
 }
 
 function getLatestDiagnosticEvent() {
@@ -377,68 +520,11 @@ function normalizeDiagnosticError(error, context = {}) {
     };
 }
 
-function formatDiagnosticConsoleArg(arg) {
-    if (arg && (arg.stack || arg.message)) {
-        const name = arg.name ? `${arg.name}: ` : '';
-        const message = arg.message || String(arg);
-        const stack = arg.stack ? `
-${arg.stack}` : '';
-        return sanitizeDiagnosticText(`${name}${message}${stack}`, 1600);
-    }
-
-    if (typeof arg === 'object' && arg !== null) {
-        try {
-            return sanitizeDiagnosticText(JSON.stringify(arg), 800);
-        } catch (error) {
-            return sanitizeDiagnosticText(Object.prototype.toString.call(arg), 200);
-        }
-    }
-
-    return sanitizeDiagnosticText(arg, 800);
-}
-
-function recordDiagnosticConsoleError(args) {
-    const message = Array.from(args || [])
-        .map(formatDiagnosticConsoleArg)
-        .filter(Boolean)
-        .join(' ');
-
-    if (!message) return;
-
-    diagnosticState.consoleErrors.push({
-        time: new Date().toISOString(),
-        message: sanitizeDiagnosticText(message, 1800)
-    });
-    diagnosticState.reportTime = '';
-
-    if (diagnosticState.consoleErrors.length > DIAGNOSTIC_CONSOLE_LIMIT) {
-        diagnosticState.consoleErrors = diagnosticState.consoleErrors.slice(-DIAGNOSTIC_CONSOLE_LIMIT);
-    }
-}
-
-function installDiagnosticConsoleCapture() {
-    if (diagnosticConsoleCaptureInstalled || typeof console === 'undefined' || typeof console.error !== 'function') {
-        return;
-    }
-
-    diagnosticConsoleCaptureInstalled = true;
-    const originalError = console.error.bind(console);
-
-    console.error = (...args) => {
-        try {
-            recordDiagnosticConsoleError(args);
-        } catch (error) {
-            // Console capture must never break the app's normal error path.
-        }
-        originalError(...args);
-    };
-}
-
 function showDiagnosticToast(event) {
     if (!diagnosticToast) return;
 
     if (diagnosticToastMessage) {
-        diagnosticToastMessage.textContent = `${event.stage} 단계의 오류 리포트 초안을 만들었습니다.`;
+        diagnosticToastMessage.textContent = `${event.stage} 단계의 진단 리포트를 준비했습니다.`;
     }
 
     diagnosticToast.hidden = false;
@@ -451,40 +537,66 @@ function captureDiagnosticError(error, context = {}) {
 
     const event = normalizeDiagnosticError(error, context);
     diagnosticState.events.push(event);
-    diagnosticState.reportTime = '';
     if (diagnosticState.events.length > DIAGNOSTIC_EVENT_LIMIT) {
         diagnosticState.events = diagnosticState.events.slice(-DIAGNOSTIC_EVENT_LIMIT);
     }
 
+    showDiagnosticToast(event);
     updateDiagnosticReportText();
-    openDiagnosticReportModal({
-        autoCopy: true,
-        statusMessage: '오류 리포트 초안을 만들고 클립보드에 복사하고 있습니다.',
-        successMessage: '오류 리포트를 클립보드에 복사했습니다. 제보하기를 누르면 GitHub 제보 창이 열립니다.',
-        failureMessage: '브라우저가 자동 복사를 막았습니다. 리포트는 아래에 작성되어 있으니 리포트 다시 복사를 눌러주세요.'
-    });
     return event;
+}
+
+function formatDiagnosticFileLine(file) {
+    const parts = [
+        file.name || '(name-missing)',
+        file.ext ? `.${file.ext}` : '확장자 없음',
+        formatSize(file.size || 0)
+    ];
+
+    if (file.relativePath) parts.push(`상대경로: ${file.relativePath}`);
+    if (file.entryPath) parts.push(`ZIP 경로: ${file.entryPath}`);
+    if (file.lastModified) parts.push(`수정시각: ${file.lastModified}`);
+
+    return parts.join(' / ');
+}
+
+function formatDiagnosticPatternFlags(flags) {
+    if (!flags) return '없음';
+    return [
+        `macOS헤더:${flags.macOSCsvHeader ? 'Y' : 'N'}`,
+        `macOS행:${flags.macOSCsvValidRows ? 'Y' : 'N'}`,
+        `iOS날짜:${flags.iosDateHeader ? 'Y' : 'N'}`,
+        `iOS메시지:${flags.iosMessage ? 'Y' : 'N'}`,
+        `Android메시지:${flags.androidMessage ? 'Y' : 'N'}`,
+        `Windows날짜:${flags.windowsDateHeader ? 'Y' : 'N'}`,
+        `Windows메시지:${flags.windowsMessage ? 'Y' : 'N'}`
+    ].join(', ');
+}
+
+function formatDiagnosticSampleLines(sampleLines) {
+    if (!sampleLines || sampleLines.length === 0) return '  - 샘플 라인: 없음';
+    return sampleLines
+        .map(line => `  - L${line.line}: ${line.text || '(empty)'}`)
+        .join('\n');
 }
 
 function buildDiagnosticReport(options = {}) {
     const latest = getLatestDiagnosticEvent();
     const input = diagnosticState.input;
+    const processing = diagnosticState.processing;
     const capabilities = getBrowserCapabilityStatus();
     const navigatorSnapshot = getNavigatorSnapshot();
     const viewport = getViewportSnapshot();
     const compact = !!options.compact;
     const events = compact ? (latest ? [latest] : []) : diagnosticState.events;
-    if (!diagnosticState.reportTime) {
-        diagnosticState.reportTime = new Date().toISOString();
-    }
 
     const lines = [
         '# chaextractor 오류 진단 리포트',
         '',
-        '> 대화 원문, 사용자명, 파일명, 첨부파일 내용은 자동 수집하지 않습니다.',
+        '> 오류 분석을 위해 오류 메시지, 파일명, 경로, 크기, 후보 대화 파일 샘플 라인, 검증 결과를 포함합니다.',
         '',
         '## 오류',
-        `- 리포트 생성 시각: ${diagnosticState.reportTime}`,
+        `- 리포트 생성 시각: ${new Date().toISOString()}`,
         `- 마지막 단계: ${diagnosticState.stage}`,
         `- 진행률: ${diagnosticState.progress.percent}% / ${diagnosticState.progress.text}`,
         `- 오류 유형: ${latest ? latest.type : 'manual-report'}`,
@@ -499,6 +611,38 @@ function buildDiagnosticReport(options = {}) {
         `- CSV 후보: ${input.csvFileCount}`,
         `- ZIP 후보: ${input.zipFileCount}`,
         `- 첨부파일 후보: ${input.attachmentFileCount}`,
+        `- 파일명 샘플 수: ${input.files.length}${input.omittedFileCount ? ` (외 ${input.omittedFileCount}개 생략)` : ''}`,
+        '',
+        '## 입력 파일 샘플',
+        ...(input.files.length
+            ? input.files.map(file => `- ${formatDiagnosticFileLine(file)}`)
+            : ['- 없음']),
+        '',
+        '## 처리 정황',
+        `- 처리 경로: ${processing.route}`,
+        `- ZIP 엔트리 수: ${processing.zipEntryCount || 0}`,
+        `- ZIP 파일 샘플 수: ${processing.zipEntries.length}${processing.omittedZipEntryCount ? ` (외 ${processing.omittedZipEntryCount}개 생략)` : ''}`,
+        `- 대화 파일 후보: ${processing.chatCandidateCount || 0}`,
+        `- 유효 대화 파일: ${processing.validChatFileCount || 0}`,
+        `- 첨부파일 후보: ${processing.attachmentCandidateCount || 0}`,
+        `- 첨부 확장자 분포: ${processing.attachmentExtensions.length ? processing.attachmentExtensions.join(', ') : '없음'}`,
+        `- 처리 중 감지 플랫폼: ${processing.detectedPlatform || detectedPlatform}`,
+        `- 파싱 결과: ${processing.parseResult ? `${processing.parseResult.messageCount}개 메시지 / ${processing.parseResult.dateCount}개 날짜 / ${processing.parseResult.attachmentMappedCount}개 첨부 매핑` : '없음'}`,
+        '',
+        '## 대화 파일 검증',
+        ...(processing.chatCandidates.length
+            ? processing.chatCandidates.map((candidate) => [
+                `- ${candidate.name || '(name-missing)'}: ${candidate.valid ? '유효' : '실패'} / ${candidate.format} / ${candidate.lineCount}줄 / ${candidate.reason}`,
+                `  - 크기/경로: ${formatSize(candidate.size || 0)}${candidate.entryPath ? ` / ${candidate.entryPath}` : ''}`,
+                `  - 패턴: ${formatDiagnosticPatternFlags(candidate.patternFlags)}`,
+                formatDiagnosticSampleLines(candidate.sampleLines)
+            ].join('\n'))
+            : ['- 검증된 후보 없음']),
+        '',
+        '## ZIP 내부 파일 샘플',
+        ...(processing.zipEntries.length
+            ? processing.zipEntries.map(file => `- ${formatDiagnosticFileLine(file)}`)
+            : ['- ZIP 입력 아님 또는 샘플 없음']),
         '',
         '## 앱 상태',
         `- 앱 URL: ${getSafeAppUrl()}`,
@@ -538,22 +682,6 @@ function buildDiagnosticReport(options = {}) {
         }
     }
 
-    if (diagnosticState.consoleErrors.length > 0) {
-        lines.push('', '## 최근 콘솔 오류');
-        const consoleErrors = compact
-            ? diagnosticState.consoleErrors.slice(-3)
-            : diagnosticState.consoleErrors;
-        for (const entry of consoleErrors) {
-            lines.push(
-                '',
-                `### ${entry.time}`,
-                '```text',
-                entry.message,
-                '```'
-            );
-        }
-    }
-
     lines.push(
         '',
         '## 재현 절차',
@@ -577,51 +705,52 @@ function updateDiagnosticReportText() {
     return report;
 }
 
-function buildDiagnosticIssueTitle() {
-    const latest = getLatestDiagnosticEvent();
-    const message = latest ? latest.message.split('\n')[0] : '오류 제보';
-    return `[Bug] ${sanitizeDiagnosticText(message, 70)}`;
+function buildGoogleFormPrefillUrl(report) {
+    const params = {
+        usp: 'pp_url',
+        [BUG_REPORT_FORM_TYPE_FIELD]: '버그 제보',
+        [BUG_REPORT_FORM_CONTENT_FIELD]: report
+    };
+    const query = Object.keys(params)
+        .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+        .join('&');
+
+    return `${BUG_REPORT_FORM_URL}?${query}`;
 }
 
 function buildDiagnosticIssueUrl() {
-    const params = {
-        template: ISSUE_REPORT_TEMPLATE,
-        title: buildDiagnosticIssueTitle()
-    };
     const compactReport = buildDiagnosticReport({ compact: true });
-    if (encodeURIComponent(compactReport).length <= DIAGNOSTIC_REPORT_URL_LIMIT) {
-        params.diagnostic_report = compactReport;
+    const fullUrl = buildGoogleFormPrefillUrl(compactReport);
+
+    if (fullUrl.length <= BUG_REPORT_FORM_PREFILL_LIMIT) {
+        return fullUrl;
     }
 
-    const query = Object.keys(params)
-        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-        .join('&');
-    return `${ISSUE_REPORT_URL}?${query}`;
+    const fallbackReport = `${compactReport.slice(0, 6000)}
+
+(진단 리포트가 길어 일부만 자동 입력됐습니다. 전체 리포트가 필요하면 앱의 '진단 리포트 복사' 버튼으로 복사해 붙여넣어 주세요.)`;
+    return buildGoogleFormPrefillUrl(fallbackReport);
 }
 
-function setDiagnosticCopyStatus(message) {
-    if (diagnosticCopyStatus) {
-        diagnosticCopyStatus.textContent = message;
-    }
-}
-
-async function copyDiagnosticReport(options = {}) {
+async function copyDiagnosticReport() {
     const report = updateDiagnosticReportText();
     const nav = typeof navigator !== 'undefined'
         ? navigator
         : (window && window.navigator ? window.navigator : {});
-    const successMessage = options.successMessage || '오류 리포트를 클립보드에 복사했습니다.';
-    const failureMessage = options.failureMessage || '자동 복사가 안 되면 아래 리포트를 직접 선택해 복사해주세요.';
 
     try {
         if (!nav.clipboard || typeof nav.clipboard.writeText !== 'function') {
             throw new Error('clipboard-unavailable');
         }
         await nav.clipboard.writeText(report);
-        setDiagnosticCopyStatus(successMessage);
+        if (diagnosticCopyStatus) {
+            diagnosticCopyStatus.textContent = '진단 리포트를 복사했습니다.';
+        }
         return { ok: true };
     } catch (error) {
-        setDiagnosticCopyStatus(failureMessage);
+        if (diagnosticCopyStatus) {
+            diagnosticCopyStatus.textContent = '자동 복사가 안 되면 아래 리포트를 직접 선택해 복사해주세요.';
+        }
         return { ok: false, reason: error.message || 'copy-failed' };
     }
 }
@@ -639,31 +768,15 @@ function openIssueReportPage() {
     return url;
 }
 
-function openDiagnosticIssueFlow() {
-    copyDiagnosticReport({
-        successMessage: '오류 리포트를 클립보드에 다시 복사했습니다. 열린 GitHub 창의 진단 리포트 칸에 붙여넣을 수 있습니다.',
-        failureMessage: 'GitHub 제보 창을 열었습니다. 복사가 막혔다면 아래 리포트를 직접 선택해 붙여넣어 주세요.'
-    });
-    return openIssueReportPage();
-}
-
-function openDiagnosticReportModal(options = {}) {
+function openDiagnosticReportModal() {
     if (diagnosticState.events.length === 0) {
         setDiagnosticStage('manual-report');
     }
     updateDiagnosticReportText();
-    setDiagnosticCopyStatus(options.statusMessage || '오류 리포트 초안을 작성했습니다.');
-    if (diagnosticToast) {
-        diagnosticToast.hidden = true;
+    if (diagnosticCopyStatus) {
+        diagnosticCopyStatus.textContent = '';
     }
     openModal('reportIssueModal');
-
-    if (options.autoCopy !== false) {
-        copyDiagnosticReport({
-            successMessage: options.successMessage || '오류 리포트를 클립보드에 복사했습니다.',
-            failureMessage: options.failureMessage || '브라우저가 자동 복사를 막았습니다. 리포트 다시 복사를 눌러주세요.'
-        });
-    }
 }
 
 function buildDiagnosticTestSnapshot() {
@@ -675,8 +788,6 @@ function buildDiagnosticTestSnapshot() {
         latestEvent: getLatestDiagnosticEvent(),
         reportText: diagnosticReportText ? diagnosticReportText.value : '',
         issueUrl: buildDiagnosticIssueUrl(),
-        consoleErrorCount: diagnosticState.consoleErrors.length,
-        copyStatus: diagnosticCopyStatus ? diagnosticCopyStatus.textContent : '',
         toastVisible: diagnosticToast ? !diagnosticToast.hidden : false,
         reportModalOpen: isModalOpen('reportIssueModal')
     };
@@ -1060,25 +1171,216 @@ function restoreModalTrigger() {
     lastModalTrigger = null;
 }
 
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) return;
+function is1995ThemeActive() {
+    return document.documentElement.getAttribute('data-theme') === '1995';
+}
 
-    rememberModalTrigger();
-    modal.classList.add('open');
-    modal.setAttribute('aria-hidden', 'false');
+function normalize1995GhostRect(rect) {
+    if (!rect) return null;
 
+    const left = Number(rect.left);
+    const top = Number(rect.top);
+    const width = Math.max(Number(rect.width) || 0, THEME_1995_GHOST_SIZE);
+    const height = Math.max(Number(rect.height) || 0, THEME_1995_GHOST_SIZE);
+
+    if (!Number.isFinite(left) || !Number.isFinite(top)) {
+        return null;
+    }
+
+    return { left, top, width, height };
+}
+
+function viewportCenterGhostRect() {
+    const viewportWidth = window.innerWidth
+        || document.documentElement.clientWidth
+        || THEME_1995_GHOST_SIZE;
+    const viewportHeight = window.innerHeight
+        || document.documentElement.clientHeight
+        || THEME_1995_GHOST_SIZE;
+
+    return {
+        left: (viewportWidth - THEME_1995_GHOST_SIZE) / 2,
+        top: (viewportHeight - THEME_1995_GHOST_SIZE) / 2,
+        width: THEME_1995_GHOST_SIZE,
+        height: THEME_1995_GHOST_SIZE
+    };
+}
+
+function elementGhostRect(element) {
+    if (!element || typeof element.getBoundingClientRect !== 'function') {
+        return null;
+    }
+
+    return normalize1995GhostRect(element.getBoundingClientRect());
+}
+
+function pointGhostRectFromElement(element) {
+    const rect = elementGhostRect(element);
+    if (!rect) {
+        return viewportCenterGhostRect();
+    }
+
+    return {
+        left: rect.left + (rect.width / 2) - (THEME_1995_GHOST_SIZE / 2),
+        top: rect.top + (rect.height / 2) - (THEME_1995_GHOST_SIZE / 2),
+        width: THEME_1995_GHOST_SIZE,
+        height: THEME_1995_GHOST_SIZE
+    };
+}
+
+function setGhostStyleProperty(element, property, value) {
+    if (!element || !element.style) return;
+
+    if (typeof element.style.setProperty === 'function') {
+        element.style.setProperty(property, value);
+    } else {
+        element.style[property] = value;
+    }
+}
+
+function interpolate1995GhostRect(from, to, ratio) {
+    return {
+        left: from.left + ((to.left - from.left) * ratio),
+        top: from.top + ((to.top - from.top) * ratio),
+        width: from.width + ((to.width - from.width) * ratio),
+        height: from.height + ((to.height - from.height) * ratio)
+    };
+}
+
+function append1995GhostFrame(container, rect, index, delayMs) {
+    const frame = document.createElement('div');
+    frame.className = 'win31-ghost-frame';
+    frame.setAttribute('aria-hidden', 'true');
+    frame.dataset.frameIndex = String(index);
+
+    setGhostStyleProperty(frame, '--frame-left', `${rect.left}px`);
+    setGhostStyleProperty(frame, '--frame-top', `${rect.top}px`);
+    setGhostStyleProperty(frame, '--frame-width', `${rect.width}px`);
+    setGhostStyleProperty(frame, '--frame-height', `${rect.height}px`);
+    setGhostStyleProperty(frame, '--frame-delay', `${delayMs}ms`);
+
+    container.appendChild(frame);
+}
+
+function play1995GhostBox(fromRect, toRect, onFinish) {
+    const finish = () => {
+        if (typeof onFinish === 'function') {
+            onFinish();
+        }
+    };
+
+    if (!is1995ThemeActive() || !document.body || typeof document.createElement !== 'function') {
+        finish();
+        return;
+    }
+
+    const from = normalize1995GhostRect(fromRect);
+    const to = normalize1995GhostRect(toRect);
+
+    if (!from || !to) {
+        finish();
+        return;
+    }
+
+    const ghost = document.createElement('div');
+    ghost.className = 'win31-ghost-box';
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.dataset.frameCount = String(THEME_1995_GHOST_FRAME_COUNT);
+
+    const frameDelay = THEME_1995_WINDOW_ANIMATION_MS / Math.max(THEME_1995_GHOST_FRAME_COUNT - 1, 1);
+    for (let index = 0; index < THEME_1995_GHOST_FRAME_COUNT; index++) {
+        const ratio = index / Math.max(THEME_1995_GHOST_FRAME_COUNT - 1, 1);
+        const rect = interpolate1995GhostRect(from, to, ratio);
+        append1995GhostFrame(ghost, rect, index, Math.round(index * frameDelay));
+    }
+
+    document.body.appendChild(ghost);
+
+    let finished = false;
+    const cleanup = () => {
+        if (finished) return;
+        finished = true;
+        if (ghost.parentNode) {
+            ghost.parentNode.removeChild(ghost);
+        }
+        finish();
+    };
+
+    setTimeout(cleanup, THEME_1995_WINDOW_ANIMATION_MS + 80);
+}
+
+function focusModalCloseButton(modal) {
     const closeButton = modal.querySelector('.modal-close-btn');
     if (closeButton && typeof closeButton.focus === 'function') {
         closeButton.focus();
     }
 }
 
+function animate1995Panel(panel, className, fromRect, toRect) {
+    if (!panel || !is1995ThemeActive() || !isMobileView()) return;
+
+    panel.classList.remove('panel-opening', 'panel-closing');
+    panel.classList.add(className);
+    play1995GhostBox(fromRect, toRect, () => {
+        panel.classList.remove(className);
+    });
+}
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    rememberModalTrigger();
+    const fromRect = pointGhostRectFromElement(lastModalTrigger);
+    if (modal.dataset.closeTimer) {
+        clearTimeout(Number(modal.dataset.closeTimer));
+        delete modal.dataset.closeTimer;
+    }
+    modal.classList.remove('closing', 'win31-window-hidden');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+
+    if (!is1995ThemeActive()) {
+        focusModalCloseButton(modal);
+        return;
+    }
+
+    modal.classList.add('win31-window-hidden');
+    play1995GhostBox(fromRect, elementGhostRect(modal.querySelector('.modal-box')), () => {
+        modal.classList.remove('win31-window-hidden');
+        if (modal.classList.contains('open') && !modal.classList.contains('closing')) {
+            focusModalCloseButton(modal);
+        }
+    });
+}
+
 function closeModal(modalId, restoreFocus = true) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
 
+    const shouldAnimateClose = is1995ThemeActive()
+        && modal.classList.contains('open')
+        && !modal.classList.contains('closing');
+
+    if (shouldAnimateClose) {
+        const fromRect = elementGhostRect(modal.querySelector('.modal-box'));
+        const toRect = pointGhostRectFromElement(lastModalTrigger);
+
+        modal.classList.add('closing', 'win31-window-hidden');
+        modal.setAttribute('aria-hidden', 'true');
+        play1995GhostBox(fromRect, toRect);
+        modal.dataset.closeTimer = String(setTimeout(() => {
+            modal.classList.remove('open', 'closing', 'win31-window-hidden');
+            delete modal.dataset.closeTimer;
+            if (restoreFocus) {
+                restoreModalTrigger();
+            }
+        }, THEME_1995_WINDOW_ANIMATION_MS + 80));
+        return;
+    }
+
     modal.classList.remove('open');
+    modal.classList.remove('closing', 'win31-window-hidden');
     modal.setAttribute('aria-hidden', 'true');
 
     if (restoreFocus) {
@@ -1090,7 +1392,28 @@ function closeImageModal(restoreFocus = true) {
     const modal = document.getElementById('imageModal');
     if (!modal) return;
 
+    const shouldAnimateClose = is1995ThemeActive()
+        && modal.classList.contains('active')
+        && !modal.classList.contains('closing');
+
+    if (shouldAnimateClose) {
+        const fromRect = elementGhostRect(document.getElementById('modalImage'));
+        const toRect = pointGhostRectFromElement(lastModalTrigger);
+
+        modal.classList.add('closing', 'win31-window-hidden');
+        modal.setAttribute('aria-hidden', 'true');
+        play1995GhostBox(fromRect, toRect);
+        setTimeout(() => {
+            modal.classList.remove('active', 'closing', 'win31-window-hidden');
+            if (restoreFocus) {
+                restoreModalTrigger();
+            }
+        }, THEME_1995_WINDOW_ANIMATION_MS + 80);
+        return;
+    }
+
     modal.classList.remove('active');
+    modal.classList.remove('closing', 'win31-window-hidden');
     modal.setAttribute('aria-hidden', 'true');
 
     if (restoreFocus) {
@@ -1101,7 +1424,8 @@ function closeImageModal(restoreFocus = true) {
 function isModalOpen(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return false;
-    return modal.classList.contains('open') || modal.classList.contains('active');
+    return !modal.classList.contains('closing')
+        && (modal.classList.contains('open') || modal.classList.contains('active'));
 }
 
 function closeActiveModal() {
@@ -1153,14 +1477,12 @@ if (copyDiagnosticBtn) {
 }
 
 if (openIssueBtn) {
-    openIssueBtn.addEventListener('click', openDiagnosticIssueFlow);
+    openIssueBtn.addEventListener('click', openIssueReportPage);
 }
 
 if (diagnosticToastIssue) {
-    diagnosticToastIssue.addEventListener('click', openDiagnosticIssueFlow);
+    diagnosticToastIssue.addEventListener('click', openIssueReportPage);
 }
-
-installDiagnosticConsoleCapture();
 
 if (captureBtn) {
     captureBtn.addEventListener('click', openCaptureModal);
@@ -1213,7 +1535,12 @@ function applyTheme(theme) {
     // 폰트 자동 전환이 활성화된 경우에만
     const fontAutoSwitch = localStorage.getItem('fontAutoSwitch');
     if (fontAutoSwitch === null || fontAutoSwitch === 'true') {
-        const autoFont = actualTheme === 'dark' ? 'neodgm' : 'ridi';
+        let autoFont = 'ridi';
+        if (actualTheme === 'dark') {
+            autoFont = 'neodgm';
+        } else if (actualTheme === '1995') {
+            autoFont = 'iyagi';
+        }
         applyFont(autoFont, true);
     }
 }
@@ -1232,8 +1559,12 @@ function applyFont(font, isAutoSwitch = false) {
 }
 
 function updateSettingsUI() {
-    const currentTheme = localStorage.getItem('theme') || 'system';
-    const currentFont = localStorage.getItem('font') || 'neodgm';
+    const currentTheme = localStorage.getItem('theme') || '1995';
+    const storedFont = localStorage.getItem('font');
+    const appliedFont = document.documentElement.getAttribute('data-font') || 'default';
+    const currentFont = localStorage.getItem('fontAutoSwitch') === 'false'
+        ? (storedFont || 'iyagi')
+        : (appliedFont || storedFont || 'iyagi');
 
     document.querySelectorAll('.theme-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.theme === currentTheme);
@@ -1244,8 +1575,8 @@ function updateSettingsUI() {
 }
 
 function initSettings() {
-    const savedTheme = localStorage.getItem('theme') || 'system';
-    let savedFont = localStorage.getItem('font') || 'neodgm';
+    const savedTheme = localStorage.getItem('theme') || '1995';
+    let savedFont = localStorage.getItem('font') || 'iyagi';
     const fontAutoSwitch = localStorage.getItem('fontAutoSwitch');
 
     // 'default' 값을 'neodgm'으로 마이그레이션
@@ -1497,7 +1828,6 @@ zipInput.addEventListener('change', async (e) => {
             step1.classList.add('completed');
             startBtn.disabled = false;
             startBtn.style.display = 'inline-block';
-            document.getElementById('heroImage').style.display = 'block';
         } catch (error) {
             captureDiagnosticError(error, {
                 type: 'upload-processing',
@@ -1586,7 +1916,6 @@ dropZone.addEventListener('drop', async (e) => {
         step1.classList.add('completed');
         startBtn.disabled = false;
         startBtn.style.display = 'inline-block';
-        document.getElementById('heroImage').style.display = 'block';
     } catch (error) {
         captureDiagnosticError(error, {
             type: 'drop-processing',
@@ -1631,7 +1960,6 @@ folderInput.addEventListener('change', async (e) => {
             step1.classList.add('completed');
             startBtn.disabled = false;
             startBtn.style.display = 'inline-block';
-            document.getElementById('heroImage').style.display = 'block';
         } catch (error) {
             captureDiagnosticError(error, {
                 type: 'folder-processing',
@@ -1651,6 +1979,10 @@ folderInput.addEventListener('change', async (e) => {
 async function processZipFile(file) {
     const startTime = performance.now();
     setDiagnosticStage('zip-processing-start');
+    resetDiagnosticProcessing('zip');
+    updateDiagnosticProcessing({
+        zipFile: buildDiagnosticFileInfo(file)
+    });
     console.log('⏱️ ZIP 처리 시작');
     resetRuntimeAttachmentState();
 
@@ -1687,6 +2019,14 @@ async function processZipFile(file) {
     const zip = await JSZip.loadAsync(file);
     zipInstance = zip;  // 지연 로딩용으로 저장
     const entries = Object.keys(zip.files);
+    updateDiagnosticProcessing({
+        zipEntryCount: entries.length,
+        zipEntries: entries
+            .filter(name => !zip.files[name].dir)
+            .slice(0, DIAGNOSTIC_ZIP_ENTRY_SAMPLE_LIMIT)
+            .map(name => buildDiagnosticZipEntryInfo(name, zip.files[name])),
+        omittedZipEntryCount: Math.max(0, entries.filter(name => !zip.files[name].dir).length - DIAGNOSTIC_ZIP_ENTRY_SAMPLE_LIMIT)
+    });
 
     updateProgress(10, `${entries.length}개 파일 발견`);
 
@@ -1694,9 +2034,12 @@ async function processZipFile(file) {
     const allChatFiles = entries.filter(name =>
         name.match(CHAT_FILE_PATTERN) && !zip.files[name].dir
     );
+    updateDiagnosticProcessing({
+        chatCandidateCount: allChatFiles.length
+    });
 
     if (allChatFiles.length === 0) {
-        throw new Error('대화 파일(.txt/.csv)을 찾을 수 없습니다');
+        throw new Error(`대화 파일(.txt/.csv)을 찾을 수 없습니다. ZIP 내부 파일 ${entries.length}개 중 TXT/CSV 후보가 없습니다.`);
     }
 
     updateProgress(15, `${allChatFiles.length}개 대화 파일 검증 중...`);
@@ -1705,13 +2048,22 @@ async function processZipFile(file) {
     const validChatFiles = [];
     for (const chatFile of allChatFiles) {
         const content = await zip.files[chatFile].async('string');
-        if (validateChatFile(content)) {
+        const validation = analyzeChatFileContent(content);
+        logChatValidationAnalysis(validation, content);
+        recordDiagnosticChatCandidate(buildDiagnosticChatCandidate(chatFile.split('/').pop(), 'zip', validation, {
+            size: getZipEntrySize(zip.files[chatFile]),
+            entryPath: chatFile
+        }));
+        if (validation.valid) {
             validChatFiles.push({ name: chatFile, content });
         }
     }
+    updateDiagnosticProcessing({
+        validChatFileCount: validChatFiles.length
+    });
 
     if (validChatFiles.length === 0) {
-        throw new Error('유효한 대화 파일을 찾을 수 없습니다. 카카오톡 대화 내용 폴더를 선택하셨는지 확인해주세요');
+        throw new Error(`유효한 대화 파일을 찾을 수 없습니다. TXT/CSV 후보 ${allChatFiles.length}개를 검사했지만 지원 형식과 맞지 않았습니다.`);
     }
 
     console.log(`⏱️ ${validChatFiles.length}개 유효한 대화 파일 발견`);
@@ -1724,6 +2076,10 @@ async function processZipFile(file) {
         const filename = name.split('/').pop();
         return isAttachmentFile(filename);
     });
+    updateDiagnosticProcessing({
+        attachmentCandidateCount: attachEntryList.length,
+        attachmentExtensions: summarizeAttachmentExtensions(attachEntryList.map(e => e.split('/').pop()))
+    });
 
     // 파일명 -> ZIP 엔트리 경로 매핑
     for (const entry of attachEntryList) {
@@ -1735,6 +2091,9 @@ async function processZipFile(file) {
     // 플랫폼 감지 (대화 파일명 + 첨부파일명 기반)
     const attachFilenames = attachEntryList.map(e => e.split('/').pop());
     detectedPlatform = detectPlatform(allChatFiles, attachFilenames);
+    updateDiagnosticProcessing({
+        detectedPlatform
+    });
     setDiagnosticStage(`platform-detected-${detectedPlatform}`);
     console.log(`플랫폼 감지: ${detectedPlatform}`);
 
@@ -1753,6 +2112,13 @@ async function processZipFile(file) {
 
     // 첨부파일 매핑
     mapAttachments();
+    updateDiagnosticProcessing({
+        parseResult: {
+            messageCount: messages.length,
+            dateCount: dates.length,
+            attachmentMappedCount: messages.filter(msg => msg.attachment_path).length
+        }
+    });
 
     updateProgress(95, '캐시 저장 중...');
 
@@ -1777,6 +2143,7 @@ async function processZipFile(file) {
 async function processFolderFiles(files) {
     const startTime = performance.now();
     setDiagnosticStage('folder-processing-start');
+    resetDiagnosticProcessing('folder');
     console.log('⏱️ 폴더 처리 시작');
     resetRuntimeAttachmentState();
 
@@ -1784,9 +2151,12 @@ async function processFolderFiles(files) {
 
     // 대화 파일 찾기 (모든 .txt/.csv 파일 검증)
     const allChatFiles = files.filter(f => f.name.match(CHAT_FILE_PATTERN));
+    updateDiagnosticProcessing({
+        chatCandidateCount: allChatFiles.length
+    });
 
     if (allChatFiles.length === 0) {
-        throw new Error('대화 파일(.txt/.csv)을 찾을 수 없습니다');
+        throw new Error(`대화 파일(.txt/.csv)을 찾을 수 없습니다. 선택한 파일 ${files.length}개 중 TXT/CSV 후보가 없습니다.`);
     }
 
     updateProgress(7, `${allChatFiles.length}개 대화 파일 검증 중...`);
@@ -1795,13 +2165,22 @@ async function processFolderFiles(files) {
     const validChatFiles = [];
     for (const chatFile of allChatFiles) {
         const content = await chatFile.text();
-        if (validateChatFile(content)) {
+        const validation = analyzeChatFileContent(content);
+        logChatValidationAnalysis(validation, content);
+        recordDiagnosticChatCandidate(buildDiagnosticChatCandidate(chatFile.name, 'folder', validation, {
+            size: chatFile.size,
+            entryPath: chatFile.webkitRelativePath || ''
+        }));
+        if (validation.valid) {
             validChatFiles.push({ file: chatFile, content });
         }
     }
+    updateDiagnosticProcessing({
+        validChatFileCount: validChatFiles.length
+    });
 
     if (validChatFiles.length === 0) {
-        throw new Error('유효한 대화 파일을 찾을 수 없습니다. 카카오톡 대화 내용 폴더를 선택하셨는지 확인해주세요');
+        throw new Error(`유효한 대화 파일을 찾을 수 없습니다. TXT/CSV 후보 ${allChatFiles.length}개를 검사했지만 지원 형식과 맞지 않았습니다.`);
     }
 
     console.log(`⏱️ ${validChatFiles.length}개 유효한 대화 파일 발견`);
@@ -1809,6 +2188,11 @@ async function processFolderFiles(files) {
     // 플랫폼 감지 (대화 파일명 + 첨부파일명 기반)
     const attachFilenames = files.filter(f => isAttachmentFile(f.name)).map(f => f.name);
     detectedPlatform = detectPlatform(allChatFiles.map(f => f.name), attachFilenames);
+    updateDiagnosticProcessing({
+        detectedPlatform,
+        attachmentCandidateCount: attachFilenames.length,
+        attachmentExtensions: summarizeAttachmentExtensions(attachFilenames)
+    });
     setDiagnosticStage(`platform-detected-${detectedPlatform}`);
     console.log(`플랫폼 감지: ${detectedPlatform}`);
 
@@ -1903,6 +2287,13 @@ async function processFolderFiles(files) {
 
     // 첨부파일 매핑
     mapAttachments();
+    updateDiagnosticProcessing({
+        parseResult: {
+            messageCount: messages.length,
+            dateCount: dates.length,
+            attachmentMappedCount: messages.filter(msg => msg.attachment_path).length
+        }
+    });
 
     updateProgress(95, '캐시 저장 중...');
 
@@ -1920,7 +2311,6 @@ async function processFolderFiles(files) {
 
     cleanOldCache();
 }
-
 
 function parseCsvRecords(content, maxRecords = Infinity) {
     const records = [];
@@ -2054,87 +2444,122 @@ function addMessageToCollections(msg) {
     }
 }
 
-// ========== 대화 파일 검증 (카카오톡 패턴 확인) ==========
-function validateChatFile(content) {
-    if (validateMacOSCsvFile(content)) {
-        console.log('✅ 유효한 macOS CSV 대화 파일로 확인됨');
-        return true;
-    }
-
+function analyzeChatFileContent(content) {
     const lines = content.split('\n');
+    const analysis = {
+        valid: false,
+        format: 'unknown',
+        reason: '',
+        lineCount: lines.length,
+        checkedLines: Math.min(lines.length, 100),
+        hasBom: content.charCodeAt(0) === 0xFEFF,
+        hasMacOSCsvHeader: false,
+        hasValidMacOSCsv: false,
+        hasDateHeader: false,
+        hasMessage: false,
+        hasAndroidMessage: false,
+        hasWindowsDateHeader: false,
+        hasWindowsMessage: false,
+        sampleLines: getDiagnosticTextSampleLines(content)
+    };
+
+    const csvHeader = parseCsvRecords(content, 1)[0];
+    analysis.hasMacOSCsvHeader = isMacOSCsvHeader(csvHeader);
+    analysis.hasValidMacOSCsv = analysis.hasMacOSCsvHeader && validateMacOSCsvFile(content);
+
+    if (analysis.hasValidMacOSCsv) {
+        analysis.valid = true;
+        analysis.format = 'macos-csv';
+        analysis.reason = 'Date,User,Message 헤더와 유효한 날짜/사용자 행을 찾았습니다.';
+        return analysis;
+    }
 
     // 최소 20줄 이상이어야 함
     if (lines.length < 20) {
-        console.log('⚠️ 파일 검증 실패: 20줄 미만 (실제: ' + lines.length + '줄)');
-        return false;
+        analysis.reason = `20줄 미만입니다. 실제 ${lines.length}줄입니다.`;
+        return analysis;
     }
 
-    let hasDateHeader = false;
-    let hasMessage = false;
-    let hasAndroidMessage = false;
-    let hasWindowsDateHeader = false;
-    let hasWindowsMessage = false;
-
     // 처음 100줄만 검사 (성능 최적화)
-    const checkLines = Math.min(lines.length, 100);
-    for (let i = 0; i < checkLines; i++) {
+    for (let i = 0; i < analysis.checkedLines; i++) {
         const line = lines[i].trim();
 
         // 날짜 헤더 체크 (iOS 전용) - 배열의 모든 패턴 시도
         if (testPatternArray(line, PATTERNS.DATE_HEADER)) {
-            hasDateHeader = true;
-            console.log('✅ iOS 날짜 헤더 발견:', line);
+            analysis.hasDateHeader = true;
         }
 
         // Windows 날짜 헤더 체크
         if (testPatternArray(line, PATTERNS.DATE_HEADER_WINDOWS)) {
-            hasWindowsDateHeader = true;
-            console.log('✅ Windows 날짜 헤더 발견:', line);
+            analysis.hasWindowsDateHeader = true;
         }
 
         // 메시지 패턴 체크 (iOS 또는 Android) - 배열의 모든 패턴 시도
         if (testPatternArray(line, PATTERNS.MESSAGE_IOS)) {
-            hasMessage = true;
-            console.log('✅ iOS 메시지 패턴 발견:', line.substring(0, 100));
+            analysis.hasMessage = true;
         }
         if (testPatternArray(line, PATTERNS.MESSAGE_ANDROID)) {
-            hasAndroidMessage = true;
-            console.log('✅ Android 메시지 패턴 발견:', line.substring(0, 100));
+            analysis.hasAndroidMessage = true;
         }
         if (testPatternArray(line, PATTERNS.MESSAGE_WINDOWS)) {
-            hasWindowsMessage = true;
-            console.log('✅ Windows 메시지 패턴 발견:', line.substring(0, 100));
+            analysis.hasWindowsMessage = true;
         }
 
         // Android: 메시지만 있어도 유효 (날짜 헤더 없음)
-        if (hasAndroidMessage) {
-            console.log('✅ 유효한 Android 대화 파일로 확인됨');
-            return true;
+        if (analysis.hasAndroidMessage) {
+            analysis.valid = true;
+            analysis.format = 'android-txt';
+            analysis.reason = 'Android 메시지 패턴을 찾았습니다.';
+            return analysis;
         }
 
         // iOS: 날짜 헤더 + 메시지 둘 다 발견되면 유효한 파일
-        if (hasDateHeader && hasMessage) {
-            console.log('✅ 유효한 iOS 대화 파일로 확인됨');
-            return true;
+        if (analysis.hasDateHeader && analysis.hasMessage) {
+            analysis.valid = true;
+            analysis.format = 'ios-txt';
+            analysis.reason = 'iOS 날짜 헤더와 메시지 패턴을 찾았습니다.';
+            return analysis;
         }
 
         // Windows: 날짜 헤더 + 메시지 둘 다 발견되면 유효한 파일
-        if (hasWindowsDateHeader && hasWindowsMessage) {
-            console.log('✅ 유효한 Windows 대화 파일로 확인됨');
-            return true;
+        if (analysis.hasWindowsDateHeader && analysis.hasWindowsMessage) {
+            analysis.valid = true;
+            analysis.format = 'windows-txt';
+            analysis.reason = 'Windows 날짜 헤더와 메시지 패턴을 찾았습니다.';
+            return analysis;
         }
     }
 
+    analysis.reason = `처음 ${analysis.checkedLines}줄에서 지원 형식의 날짜/메시지 패턴을 찾지 못했습니다.`;
+    return analysis;
+}
+
+function logChatValidationAnalysis(analysis, content) {
+    if (analysis.valid) {
+        console.log(`✅ 유효한 ${analysis.format} 대화 파일로 확인됨`);
+        return;
+    }
+
+    if (analysis.lineCount < 20) {
+        console.log('⚠️ 파일 검증 실패: 20줄 미만 (실제: ' + analysis.lineCount + '줄)');
+        return;
+    }
+
+    const lines = content.split('\n');
     // 디버그: 파일의 처음 5줄 출력
     console.log('⚠️ 파일 검증 실패 - 처음 5줄:');
     for (let i = 0; i < Math.min(5, lines.length); i++) {
         console.log(`  줄 ${i + 1}: ${lines[i]}`);
     }
-    console.log(`hasDateHeader: ${hasDateHeader}, hasMessage: ${hasMessage}, hasAndroidMessage: ${hasAndroidMessage}, hasWindowsDateHeader: ${hasWindowsDateHeader}, hasWindowsMessage: ${hasWindowsMessage}`);
-
-    return false;
+    console.log(`hasDateHeader: ${analysis.hasDateHeader}, hasMessage: ${analysis.hasMessage}, hasAndroidMessage: ${analysis.hasAndroidMessage}, hasWindowsDateHeader: ${analysis.hasWindowsDateHeader}, hasWindowsMessage: ${analysis.hasWindowsMessage}`);
 }
 
+// ========== 대화 파일 검증 (카카오톡 패턴 확인) ==========
+function validateChatFile(content) {
+    const analysis = analyzeChatFileContent(content);
+    logChatValidationAnalysis(analysis, content);
+    return analysis.valid;
+}
 
 function parseMacOSCsvChat(content) {
     const records = parseCsvRecords(content);
@@ -2319,7 +2744,7 @@ function parseKakaoChat(content) {
                     }
                     messagesByDate[dateStr].push(msg);
 
-                    // 리더 메시지 카운트 (사전 계산)
+                    // 필터 대상 사용자 메시지 카운트 (사전 계산)
                     if (isLeader(user)) {
                         leaderCountByDate[dateStr]++;
                     }
@@ -2429,7 +2854,7 @@ function parseKakaoChat(content) {
                         }
                         messagesByDate[dateStr].push(msg);
 
-                        // 리더 메시지 카운트 (사전 계산)
+                        // 필터 대상 사용자 메시지 카운트 (사전 계산)
                         if (isLeader(user)) {
                             leaderCountByDate[dateStr]++;
                         }
@@ -2596,13 +3021,14 @@ async function loadAndRenderAttachment(elementId, filename, type, ref) {
 
     if (url) {
         if (type === 'photo') {
-            el.innerHTML = `<img src="${url}" onclick="showImage('${url}')" alt="사진">`;
+            el.innerHTML = `<img src="${url}" onclick="showImage('${url}', this)" alt="사진">`;
         } else {
             el.innerHTML = `<a class="file-link" href="${url}" target="_blank" rel="noopener">📎 ${escapeHtml(ref || filename)}</a>`;
         }
     } else {
         if (type === 'photo') {
-            el.innerHTML = `<span class="no-file">📷 사진 (로드 실패)</span>`;
+            el.className = 'attachment missing-attachment';
+            el.innerHTML = renderMissingPhotoAttachmentContent('로드 실패');
         } else {
             el.innerHTML = `<span class="no-file">📎 ${escapeHtml(ref || '파일')} (로드 실패)</span>`;
         }
@@ -3066,6 +3492,22 @@ function isLeader(username) {
     return username === leaderFilterTarget;
 }
 
+function renderMissingPhotoAttachmentContent(reason) {
+    const helpText = '카카오톡 원본 대화에서 해당 사진을 한 번 열어 기기에 내려받은 뒤, 첨부파일을 포함해 다시 내보내면 표시될 수 있습니다.';
+    return `
+        <span class="no-file">📷 사진 (${reason})</span>
+        <span class="missing-attachment-tooltip" role="tooltip">${helpText}</span>
+        <details class="missing-attachment-help">
+            <summary>도움말</summary>
+            <p>${helpText}</p>
+        </details>
+    `;
+}
+
+function renderMissingPhotoAttachment(reason) {
+    return `<div class="attachment missing-attachment">${renderMissingPhotoAttachmentContent(reason)}</div>`;
+}
+
 // ========== 대화 렌더링 ==========
 function renderChat(date) {
     const msgs = messagesByDate[date];
@@ -3114,7 +3556,7 @@ function renderChat(date) {
                 const url = attachmentFiles[msg.attachment_path];
                 attachmentHtml = `
                     <div class="attachment">
-                        <img src="${url}" onclick="showImage('${url}')" alt="사진">
+                        <img src="${url}" onclick="showImage('${url}', this)" alt="사진">
                     </div>
                 `;
             } else if (msg.attachment_path && attachmentEntries[msg.attachment_path]) {
@@ -3127,7 +3569,7 @@ function renderChat(date) {
                 // 비동기 로드
                 setTimeout(() => loadAndRenderAttachment(attachId, msg.attachment_path, 'photo'), 0);
             } else {
-                attachmentHtml = `<div class="attachment"><span class="no-file">📷 사진 (파일 없음)</span></div>`;
+                attachmentHtml = renderMissingPhotoAttachment('파일 없음');
             }
         } else if (msg.message_type === 'file') {
             if (msg.attachment_path && attachmentFiles[msg.attachment_path]) {
@@ -3203,13 +3645,28 @@ function renderScrollMarkers(positions) {
 }
 
 // ========== 유틸리티 ==========
-function showImage(url) {
+function showImage(url, triggerElement = null) {
     rememberModalTrigger();
+    const fromRect = pointGhostRectFromElement(triggerElement || lastModalTrigger);
     document.getElementById('modalImage').src = url;
     const modal = document.getElementById('imageModal');
+    modal.classList.remove('closing', 'win31-window-hidden');
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
-    document.getElementById('modalClose').focus();
+
+    const focusClose = () => document.getElementById('modalClose').focus();
+    if (!is1995ThemeActive()) {
+        focusClose();
+        return;
+    }
+
+    modal.classList.add('win31-window-hidden');
+    play1995GhostBox(fromRect, elementGhostRect(document.getElementById('modalImage')), () => {
+        modal.classList.remove('win31-window-hidden');
+        if (modal.classList.contains('active') && !modal.classList.contains('closing')) {
+            focusClose();
+        }
+    });
 }
 
 function escapeHtml(text) {
@@ -3241,10 +3698,12 @@ function openSidebar() {
         closeLinkSidebar(false);
     }
 
+    const fromRect = pointGhostRectFromElement(sidebarToggle);
     sidebar.classList.add('open');
     setPanelOverlayActive(true);
     app.classList.add('sidebar-open');
     updateSidebarToggle();
+    animate1995Panel(sidebar, 'panel-opening', fromRect, elementGhostRect(sidebar));
 
     // 모바일에서만 백그라운드 스크롤 차단
     if (isMobileView()) {
@@ -3253,6 +3712,12 @@ function openSidebar() {
 }
 
 function closeSidebar(updateOverlay = true) {
+    const fromRect = elementGhostRect(sidebar);
+    const toRect = pointGhostRectFromElement(sidebarToggle);
+
+    if (sidebar.classList.contains('open')) {
+        animate1995Panel(sidebar, 'panel-closing', fromRect, toRect);
+    }
     sidebar.classList.remove('open');
     app.classList.remove('sidebar-open');
     updateSidebarToggle();
@@ -3270,10 +3735,12 @@ function openLinkSidebar() {
         closeSidebar(false);
     }
 
+    const fromRect = pointGhostRectFromElement(linkSidebarToggle);
     linkSidebar.classList.add('open');
     setPanelOverlayActive(true);
     app.classList.add('link-sidebar-open');
     updateLinkSidebarToggle();
+    animate1995Panel(linkSidebar, 'panel-opening', fromRect, elementGhostRect(linkSidebar));
 
     if (isMobileView()) {
         document.body.style.overflow = 'hidden';
@@ -3281,6 +3748,12 @@ function openLinkSidebar() {
 }
 
 function closeLinkSidebar(updateOverlay = true) {
+    const fromRect = elementGhostRect(linkSidebar);
+    const toRect = pointGhostRectFromElement(linkSidebarToggle);
+
+    if (linkSidebar.classList.contains('open')) {
+        animate1995Panel(linkSidebar, 'panel-closing', fromRect, toRect);
+    }
     linkSidebar.classList.remove('open');
     app.classList.remove('link-sidebar-open');
     updateLinkSidebarToggle();
@@ -3489,10 +3962,13 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
         restoreCachedChatData,
         recordDiagnosticInput,
         setDiagnosticStage,
+        updateDiagnosticProcessing,
+        recordDiagnosticChatCandidate,
+        analyzeChatFileContent,
+        buildDiagnosticChatCandidate,
         captureDiagnosticError,
         buildDiagnosticReport,
         buildDiagnosticIssueUrl,
-        openDiagnosticIssueFlow,
         openDiagnosticReportModal,
         getDiagnosticSnapshot: buildDiagnosticTestSnapshot,
         openCaptureModal,

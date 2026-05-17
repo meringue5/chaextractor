@@ -49,7 +49,7 @@
 | H-013 합성 대용량 성능 smoke 추가 | `harness/scripts/check_performance_smoke.py`, `harness/TESTING.md` | 반영 |
 | 가이드 이미지 정적 자산 분리 | `assets/guide/*.png`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
 | 앱 CSS 정적 자산 분리 | `assets/styles/app.css`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
-| Open Graph/hero 이미지 정적 자산 위치 정리 | `assets/og-image.png`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
+| Open Graph 이미지 정적 자산 위치 정리 | `assets/og-image.png`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
 | 앱 JS와 JSZip vendor 정적 자산 분리 | `assets/scripts/app.js`, `assets/vendor/jszip-3.10.1.min.js`, `index.html`, `harness/scripts/parse_with_index.mjs` | 반영 |
 | 선택 실행 Playwright browser smoke 추가 | `package.json`, `harness/browser/playwright.config.js`, `harness/browser/smoke.spec.js`, `harness/TESTING.md` | 반영 |
 | macOS 데스크톱 CSV 텍스트 내보내기 정식 지원 승격 | `README.md`, `AGENTS.md`, `harness/DOMAIN_RULES.md`, `test/parser-golden/macos-csv.json` | 반영 |

@@ -136,17 +136,21 @@ def main() -> int:
         check("폰트 CDN" in agents, "AGENTS must mention font CDN", errors)
         check("cdn.jsdelivr.net/gh/neodgm" in manifest, "MANIFEST must list NeoDunggeunmo CDN surface", errors)
         check("cdn.jsdelivr.net/gh/projectnoonnu" in manifest, "MANIFEST must list RIDIBatang CDN surface", errors)
+        check("cdn.jsdelivr.net/gh/JuwanPark/IyagiGGC" in manifest, "MANIFEST must list IyagiGGC CDN surface", errors)
 
     if "reportIssueModal" in runtime or "diagnosticState" in runtime:
         check("오류 진단 리포트" in readme, "README must document diagnostic report behavior", errors)
         check("오류 진단 리포트" in agents, "AGENTS must document diagnostic report UI", errors)
-        check("진단 리포트는 대화 원문" in manifest, "MANIFEST must classify diagnostic privacy boundary", errors)
+        check("진단 리포트는 오류 재현" in manifest, "MANIFEST must classify diagnostic report debugging boundary", errors)
         check("오류 보고" in read("harness/REQUIREMENTS.md"), "REQUIREMENTS must include diagnostic issue reporting", errors)
-        check(exists(".github/ISSUE_TEMPLATE/bug_report.yml"), "diagnostic reporting requires GitHub issue form", errors)
-        check(exists(".github/ISSUE_TEMPLATE/config.yml"), "diagnostic reporting requires issue template config", errors)
+        check("대화 파일 검증 결과" in read("harness/REQUIREMENTS.md"), "REQUIREMENTS must require diagnostic validation details", errors)
+        check("Google Form 내용 칸에 자동 입력" in readme, "README must document prefilled Google Form reporting", errors)
+        check("docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform" in runtime, "runtime must open Google Form for ordinary bug reporting", errors)
+        check("entry.315233821" in runtime and "entry.1161180918" in runtime, "runtime must prefill Google Form report fields", errors)
+        check("진단 리포트 사전입력 Google Form" in manifest, "MANIFEST must list prefilled Google Form surface", errors)
         check("python3 harness/scripts/check_diagnostic_report.py" in testing, "TESTING must document diagnostic report check", errors)
         check("python3 harness/scripts/check_diagnostic_report.py" in tester_skill, "tester skill must include diagnostic report check", errors)
-        check("github.com/meringue5/chaextractor/issues/new" in manifest, "MANIFEST must list GitHub issue form surface", errors)
+        check("GitHub Issue Form은 개발자용 보조 채널" in read("harness/DECISIONS.md"), "DECISIONS must keep GitHub as a developer fallback, not primary reporting", errors)
 
     if "captureModal" in runtime or "buildCaptureText" in runtime:
         requirements = read("harness/REQUIREMENTS.md")

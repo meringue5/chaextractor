@@ -34,25 +34,24 @@ def main() -> int:
 
     payload = json.loads(result.stdout)
     report = payload["reportText"]
-    issue_url = payload["issueUrl"]
-    clipboard_text = payload["clipboardText"]
+    report_url = payload["issueUrl"]
     failures: list[str] = []
 
     fail_if(payload["eventCount"] != 1, failures, "diagnostic event was not captured")
-    fail_if(payload["toastVisible"], failures, "diagnostic toast should stay hidden when modal opens automatically")
-    fail_if(not payload["reportModalOpen"], failures, "diagnostic report modal did not open automatically")
-    fail_if("클립보드에 복사" not in payload["copyStatus"], failures, "diagnostic report was not auto-copied")
-    fail_if(clipboard_text != report, failures, "clipboard text did not match diagnostic report")
+    fail_if(not payload["toastVisible"], failures, "diagnostic toast was not shown")
+    fail_if(not payload["reportModalOpen"], failures, "diagnostic report modal did not open")
     fail_if("synthetic diagnostic failure" not in report, failures, "error message missing from report")
-    fail_if("synthetic console error" not in report, failures, "console error summary missing from report")
-    fail_if("private-chat-name.txt" in report, failures, "raw chat filename leaked into report")
-    fail_if("20260517_120000.jpeg" in report, failures, "raw attachment filename leaked into report")
-    fail_if("private-chat-name.txt" in clipboard_text, failures, "raw chat filename leaked into clipboard text")
-    fail_if("private-chat-name" in issue_url, failures, "raw chat filename leaked into issue URL")
-    fail_if("20260517_120000" in issue_url, failures, "raw attachment filename leaked into issue URL")
+    fail_if("private-chat-name.txt" not in report, failures, "chat filename missing from report")
+    fail_if("20260517_120000.jpeg" not in report, failures, "attachment filename missing from report")
+    fail_if("private-chat-name" not in report_url, failures, "chat filename missing from prefilled report URL")
+    fail_if("20260517_120000" not in report_url, failures, "attachment filename missing from prefilled report URL")
     fail_if("txt:1" not in report or "jpeg:1" not in report, failures, "extension-only input summary missing")
-    fail_if("template=bug_report.yml" not in issue_url, failures, "issue URL does not select bug report template")
-    fail_if("diagnostic_report=" not in issue_url, failures, "issue URL does not prefill diagnostic field")
+    fail_if("## 대화 파일 검증" not in report, failures, "chat validation section missing")
+    fail_if("지원하는 날짜/메시지 패턴" not in report, failures, "chat validation sample lines missing")
+    fail_if("20줄 미만" not in report, failures, "chat validation failure reason missing")
+    fail_if("docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform" not in report_url, failures, "report URL does not open Google Form")
+    fail_if("entry.315233821=" not in report_url, failures, "report URL does not prefill report type")
+    fail_if("entry.1161180918=" not in report_url, failures, "report URL does not prefill diagnostic content")
 
     if failures:
         print("FAIL diagnostic report")
