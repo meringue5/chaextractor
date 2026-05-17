@@ -374,6 +374,19 @@
   * Codex 인앱 브라우저에서 `#setupTipsBtn`/`#tipsModal` 제거와 `#linkSidebar .link-item` 5개 존재 확인
   * `git diff --check` 통과
 
+## 2-1-21단계: 링크 사이드바 유용한 팁 추가 (2026-05-17)
+* 결정:
+  * 현재 링크 수와 사용처에서는 HTML 정적 목록을 유지
+  * 링크가 크게 늘거나 여러 화면에서 재사용될 때 `LINK_GROUPS` 같은 JS 데이터 목록 렌더링을 검토
+* 변경:
+  * 오른쪽 링크 사이드바에 `유용한 팁` 그룹 추가
+  * `ETF Checker` 링크(`https://www.etfcheck.co.kr`) 추가
+  * AGENTS/README/harness 문서와 browser smoke 링크 개수 기대값 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

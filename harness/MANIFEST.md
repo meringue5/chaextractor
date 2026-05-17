@@ -49,7 +49,7 @@
 | 폰트 | `cdn.jsdelivr.net/gh/neodgm/...` | 예 | NeoDunggeunmo Pro |
 | 폰트 | `cdn.jsdelivr.net/gh/projectnoonnu/...` | 예 | RIDIBatang |
 | 공개 메타 | `meringue5.github.io/chaextractor/assets/og-image.png` | 아니오 | 소셜/크롤러용 메타 |
-| 링크 사이드바 | `moneybus-labs.github.io`, `github.com`, `drive.google.com` | 아니오 | 사용자 클릭 |
+| 링크 사이드바 | `moneybus-labs.github.io`, `github.com`, `drive.google.com`, `www.etfcheck.co.kr` | 아니오 | 사용자 클릭 |
 | 문의/제보 | `docs.google.com/forms/...` | 아니오 | 사용자 클릭 |
 
 ### 보안 표준

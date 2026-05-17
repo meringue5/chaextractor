@@ -94,6 +94,9 @@
 ### 개발자: 우드워커
 액티브 ETF 구성 변화 시각화 앱 https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view
 
+## 유용한 팁
+ETF Checker https://www.etfcheck.co.kr
+
 # 코드 구조: index.html + 정적 자산
 
 현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` 로드 → `assets/scripts/app.js` 로드
