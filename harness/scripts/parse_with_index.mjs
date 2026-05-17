@@ -334,7 +334,7 @@ if (input.mode === 'uiSmoke') {
   api.renderDateList(input.searchQuery || '');
   const afterSearch = api.getUiSnapshot();
 
-  api.setLeaderFilterForTest(true);
+  api.setLeaderFilterForTest(true, '테스터');
   const afterLeaderFilter = api.getUiSnapshot();
 
   api.applyTheme('dark');

@@ -478,6 +478,68 @@ body {
     color: var(--text-secondary);
 }
 
+.leader-filter-panel {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid var(--leader-border);
+    border-radius: 8px;
+    background: var(--leader-bg);
+}
+
+.leader-filter-panel[hidden] {
+    display: none;
+}
+
+.leader-filter-panel label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--leader-text);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.leader-filter-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 6px;
+    align-items: center;
+}
+
+.leader-filter-controls input {
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+    padding: 7px 9px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 13px;
+}
+
+.leader-filter-controls input:focus {
+    outline: 2px solid var(--button-primary);
+    outline-offset: 1px;
+}
+
+.leader-filter-controls button {
+    min-height: 34px;
+    padding: 7px 9px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.leader-filter-controls button:hover {
+    background: var(--border-color);
+}
+
 /* 캘린더 */
 .calendar {
     padding: 16px;
@@ -820,7 +882,7 @@ body {
     display: none;
 }
 
-/* 채상욱 리더 메시지 */
+/* 필터 대상 사용자 메시지 */
 .message.leader .user-name {
     color: #5c4a00;
 }
@@ -1021,7 +1083,7 @@ body {
     flex-shrink: 0;
 }
 
-/* 리더 필터 버튼 활성화 */
+/* 사용자 필터 버튼 활성화 */
 #leaderFilterBtn.active {
     background: #ffd54f;
     border-color: #ffb300;

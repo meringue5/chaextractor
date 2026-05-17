@@ -109,8 +109,16 @@
                 <div class="sidebar-header-top">
                     <h2>대화 뷰어</h2>
                     <div class="header-btns">
-                        <button type="button" class="header-btn" id="leaderFilterBtn" title="채상욱 리더 대화만 보기">👑</button>
+                        <button type="button" class="header-btn" id="leaderFilterBtn" title="필터 사용자 대화만 보기" aria-controls="leaderFilterPanel" aria-expanded="false" aria-pressed="false">👑</button>
                         <button type="button" class="header-btn" id="settingsBtn" title="설정">⚙️</button>
+                    </div>
+                </div>
+                <div class="leader-filter-panel" id="leaderFilterPanel" role="group" aria-label="사용자 필터" hidden>
+                    <label for="leaderFilterInput">필터 사용자</label>
+                    <div class="leader-filter-controls">
+                        <input type="text" id="leaderFilterInput" value="채상욱 리더" autocomplete="off" spellcheck="false">
+                        <button type="button" id="leaderFilterApplyBtn">적용</button>
+                        <button type="button" id="leaderFilterClearBtn">전체</button>
                     </div>
                 </div>
                 <div class="stats" id="stats"></div>

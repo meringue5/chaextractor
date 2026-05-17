@@ -63,7 +63,7 @@
 
 - ZIP 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다.
 - iOS/Android/Windows 카카오톡 내보내기 파일을 공식 지원한다.
-- 날짜별 탐색, 검색, 통계, 리더 하이라이트/필터, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
+- 날짜별 탐색, 검색, 통계, 기본값 `채상욱 리더`인 사용자 하이라이트/필터, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
 - 시스템 메시지는 제외하고, 동일 사용자 연속 텍스트는 병합한다.
 - 사진/파일/이모티콘은 텍스트와 별도 타입으로 유지한다.
 - 누락 첨부파일은 앱 중단 없이 복구 가능한 상태로 표시한다.
@@ -120,7 +120,9 @@ ETF Checker https://www.etfcheck.co.kr
 - `#app` — 메인 뷰어 (초기 hidden)
   - `.sidebar` — 좌측 패널 (320px, 모바일: 86vw 슬라이드)
     - `.sidebar-header` — 제목 + 헤더 버튼들
-      - `#leaderFilterBtn` — 리더 필터 토글 (👑)
+      - `#leaderFilterBtn` — 사용자 필터 패널 토글 및 필터 활성화 (👑)
+      - `#leaderFilterPanel` / `#leaderFilterInput` — 필터 대상 사용자 입력 (기본값: `채상욱 리더`)
+      - `#leaderFilterApplyBtn` / `#leaderFilterClearBtn` — 사용자 필터 적용/해제
       - `#settingsBtn` — 설정 모달 (⚙️)
     - `#stats` — 통계 (메시지 수, 참여자)
     - `#searchInput` — 메시지 검색
@@ -133,10 +135,10 @@ ETF Checker https://www.etfcheck.co.kr
   - `#linkSidebarToggle` — 모바일 링크 패널 토글 버튼 (position: fixed)
   - `#sidebarOverlay` — 모바일 배경 오버레이
   - `#chatArea` — 우측 대화 영역
-    - `#scrollMarkers` — 리더 발언 위치 마커 (금색 바)
+    - `#scrollMarkers` — 필터 대상 사용자 발언 위치 마커 (금색 바)
     - `.chat-header` — 날짜 제목 + 통계
       - `#chatTitle` — 날짜/요일
-      - `#chatInfo` — 메시지 수, 참여자, 리더 발언 수, 사진 수
+      - `#chatInfo` — 메시지 수, 참여자, 필터 대상 발언 수, 사진 수
     - `#chatMessages` — 메시지 목록
   - `.link-sidebar` — 우측 링크 패널 (데스크톱 상시 표시, 모바일: 86vw 슬라이드)
     - `.link-sidebar-header` — 링크 패널 제목
@@ -156,7 +158,7 @@ ETF Checker https://www.etfcheck.co.kr
 - 캘린더: `.calendar`, `.calendar-nav`, `.calendar-grid`, `.day`, `.day.has-messages`, `.day.selected`
 - 날짜목록: `.date-list`, `.date-item`, `.date-item.selected`, `.leader-ratio`
 - 메시지: `.message`, `.message-bubble`, `.user-name`, `.content`, `.time`
-- 리더: `.message.leader` (황금색 그라데이션), `#leaderFilterBtn.active` (금색 배경)
+- 사용자 필터: `.leader-filter-panel`, `.leader-filter-controls`, `.message.leader` (황금색 그라데이션), `#leaderFilterBtn.active` (금색 배경)
 - 첨부파일: `.attachment`, `.attachment img`, `.file-link`, `.emoticon`, `.no-file`, `.loading-placeholder`
 - 스크롤마커: `.scroll-markers`, `.scroll-marker`
 - 모달: `.modal`, `.modal.active`, `.modal-overlay`, `.modal-overlay.open`, `.modal-box`, `.modal-header`, `.modal-close-btn`
@@ -207,7 +209,7 @@ UI 렌더링:
 - `renderCalendar()` — 월별 캘린더
 - `renderDateList(searchQuery)` — 날짜 목록 (검색 필터 적용)
 - `renderChat(date)` — 선택된 날짜의 메시지 렌더링
-- `renderScrollMarkers(positions)` — 리더 발언 마커 생성
+- `renderScrollMarkers(positions)` — 필터 대상 사용자 발언 마커 생성
 - `selectDate(date)` — 날짜 선택 + 캘린더 하이라이트 + 메시지 렌더링
 - `focusDateForMonth(year, month)` — 월 이동 시 가장 가까운 날짜 자동 선택
 - `scrollToDateInList(date)` — 날짜 목록 스크롤 동기화
@@ -218,7 +220,7 @@ UI 렌더링:
 - `applyFont(font, isAutoSwitch)` — 폰트 적용, 자동 전환 관리
 - `initSettings()` — 저장된 테마/폰트 로드 (localStorage)
 - `updateSettingsUI()` — 설정 모달 활성 버튼 표시
-- `applyLeaderFilter()` — 리더 발언만 표시/전체 표시 토글
+- `applyLeaderFilter()` — 필터 대상 사용자 발언만 표시/전체 표시 토글
 
 브라우저 기능 제한:
 - `getBrowserCapabilityStatus()` — `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 지원 확인
@@ -228,7 +230,7 @@ UI 렌더링:
 - `openModal(modalId)` / `closeModal(modalId)` — 모달 열기/닫기
 
 유틸리티:
-- `isLeader(username)` — "채상욱 리더" 여부 확인
+- `isLeader(username)` — 현재 필터 대상 사용자 여부 확인 (기본값: `채상욱 리더`)
 - `escapeHtml(text)` — HTML 이스케이프
 - `formatSize(bytes)` — 파일 크기 포맷 (KB/MB/GB)
 - `isMobileView()` — 900px 미만 여부
@@ -244,10 +246,11 @@ UI 렌더링:
 - `attachmentEntries` — 파일명 → ZIP 엔트리 경로 (ZIP 모드)
 - `zipInstance` — JSZip 인스턴스 (지연 로딩용)
 - `dates` — 날짜 배열 (내림차순)
-- `leaderCountByDate` — 날짜별 리더 발언 수 (사전 계산)
+- `leaderCountByDate` — 날짜별 필터 대상 사용자 발언 수
 - `currentMonth` — 현재 캘린더 월
 - `selectedDate` — 선택된 날짜
-- `leaderFilterActive` — 리더 필터 상태
+- `leaderFilterActive` — 사용자 필터 상태
+- `leaderFilterTarget` — 현재 필터 대상 사용자명 (기본값: `채상욱 리더`)
 - `detectedPlatform` — 'ios', 'android', 'windows'
 - `linkSidebar`/`linkSidebarToggle` — 오른쪽 링크 패널 DOM 상태 제어
 

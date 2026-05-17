@@ -387,6 +387,24 @@
   * `python3 harness/scripts/check_doc_drift.py` 통과
   * `python3 harness/scripts/check_ui_smoke.py` 통과
 
+## 2-1-23단계: 왕관 사용자 필터 대상 입력 추가 (2026-05-17)
+* 결정:
+  * 왕관 버튼의 기본 필터 대상은 `채상욱 리더`로 유지하되, 사용자가 런타임에서 대상 사용자명을 직접 입력할 수 있게 함
+  * 필터 대상 사용자명은 사용자/대화 데이터가 될 수 있으므로 localStorage에 저장하지 않고 현재 세션 UI 상태로만 사용
+  * 대상 변경 시 하이라이트, 스크롤 마커, 날짜별 비중, 대화 헤더의 필터 카운트를 같은 기준으로 재계산
+* 변경:
+  * [index.html](index.html)에 `#leaderFilterPanel`, `#leaderFilterInput`, 적용/전체 버튼 추가
+  * [assets/scripts/app.js](assets/scripts/app.js)에 필터 대상 사용자 상태, 대상 변경 재계산, 적용/해제 UI 흐름 추가
+  * [assets/styles/app.css](assets/styles/app.css)에 왕관 필터 입력 패널 스타일 추가
+  * README/AGENTS/harness 문서와 Node/Playwright UI smoke를 사용자 지정 필터 흐름에 맞게 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

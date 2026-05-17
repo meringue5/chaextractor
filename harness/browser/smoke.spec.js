@@ -88,9 +88,20 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   await page.locator('#searchInput').fill('');
   await page.locator('.date-item', { hasText: '2026/03/01' }).click();
   await page.locator('#leaderFilterBtn').click();
+  await expect(page.locator('#leaderFilterPanel')).toBeVisible();
+  await expect(page.locator('#leaderFilterInput')).toHaveValue('채상욱 리더');
   await expect(page.locator('#leaderFilterBtn')).toHaveClass(/active/);
   await expect(page.locator('#chatMessages .message.leader')).toHaveCount(1);
   await expect(page.locator('#chatMessages .message:not(.leader)').first()).toBeHidden();
+  await page.locator('#leaderFilterInput').fill('테스터');
+  await page.locator('#leaderFilterInput').press('Enter');
+  await expect(page.locator('#leaderFilterPanel')).toBeHidden();
+  await expect(page.locator('#chatMessages .message.leader')).toHaveCount(4);
+  await expect(page.locator('#chatMessages .message:not(.leader)').first()).toBeHidden();
+  await page.locator('#leaderFilterBtn').click();
+  await page.locator('#leaderFilterClearBtn').click();
+  await expect(page.locator('#leaderFilterBtn')).not.toHaveClass(/active/);
+  await expect(page.locator('#chatMessages .message').first()).toBeVisible();
 
   await page.locator('#settingsBtn').click();
   await expect(page.locator('#settingsModal')).toHaveClass(/open/);

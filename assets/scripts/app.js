@@ -1,14 +1,17 @@
 // ========== 상태 관리 ==========
+const DEFAULT_LEADER_FILTER_TARGET = '채상욱 리더';
+
 let messages = [];
 let messagesByDate = {};
 let attachmentFiles = {};  // filename -> Blob URL (캐시)
 let attachmentEntries = {}; // filename -> ZIP entry path (지연 로딩용)
 let zipInstance = null;     // ZIP 객체 참조 (지연 로딩용)
 let dates = [];
-let leaderCountByDate = {};  // 날짜별 리더 메시지 수 (사전 계산)
+let leaderCountByDate = {};  // 날짜별 필터 대상 사용자 메시지 수
 let currentMonth = new Date();
 let selectedDate = null;
 let leaderFilterActive = false;
+let leaderFilterTarget = DEFAULT_LEADER_FILTER_TARGET;
 
 // ========== 정규식 패턴 (AGENTS.md 기반) ==========
 // 여러 언어/버전을 지원하기 위한 패턴 배열
@@ -140,7 +143,6 @@ function detectPlatform(txtFilenames, attachFilenames) {
 
 // 삭제 메시지는 문자열 비교로 최적화
 const DELETED_MESSAGE = '메시지가 삭제되었습니다.';
-const LEADER_NAME = '채상욱 리더';
 
 // ========== IndexedDB 캐시 설정 ==========
 const DB_CONFIG = {
@@ -483,30 +485,158 @@ function initSettings() {
     updateSettingsUI();
 }
 
-// 리더 필터 버튼 클릭
+// 사용자 필터 버튼 클릭
 const leaderFilterBtn = document.getElementById('leaderFilterBtn');
-leaderFilterBtn.addEventListener('click', () => {
-    leaderFilterActive = !leaderFilterActive;
+const leaderFilterPanel = document.getElementById('leaderFilterPanel');
+const leaderFilterInput = document.getElementById('leaderFilterInput');
+const leaderFilterApplyBtn = document.getElementById('leaderFilterApplyBtn');
+const leaderFilterClearBtn = document.getElementById('leaderFilterClearBtn');
+
+function normalizeLeaderFilterTarget(value) {
+    const normalized = String(value || '').trim();
+    return normalized || DEFAULT_LEADER_FILTER_TARGET;
+}
+
+function updateLeaderFilterUI() {
     leaderFilterBtn.classList.toggle('active', leaderFilterActive);
+    leaderFilterBtn.setAttribute('aria-pressed', String(leaderFilterActive));
+    leaderFilterBtn.title = `${leaderFilterTarget} 대화만 보기`;
+    leaderFilterBtn.setAttribute('aria-label', `${leaderFilterTarget} 대화 필터`);
+
+    if (leaderFilterInput && leaderFilterInput.value !== leaderFilterTarget) {
+        leaderFilterInput.value = leaderFilterTarget;
+    }
+}
+
+function setLeaderFilterPanelOpen(open) {
+    if (!leaderFilterPanel) return;
+
+    leaderFilterPanel.hidden = !open;
+    leaderFilterBtn.setAttribute('aria-expanded', String(open));
+
+    if (open && leaderFilterInput) {
+        leaderFilterInput.value = leaderFilterTarget;
+        requestAnimationFrame(() => {
+            leaderFilterInput.focus();
+            if (typeof leaderFilterInput.select === 'function') {
+                leaderFilterInput.select();
+            }
+        });
+    }
+}
+
+function recalculateLeaderCountByDate() {
+    const nextCounts = {};
+
+    Object.keys(messagesByDate).forEach(date => {
+        nextCounts[date] = 0;
+    });
+
+    messages.forEach(msg => {
+        if (!nextCounts[msg.date]) {
+            nextCounts[msg.date] = 0;
+        }
+        if (isLeader(msg.user)) {
+            nextCounts[msg.date]++;
+        }
+    });
+
+    leaderCountByDate = nextCounts;
+}
+
+function refreshLeaderFilterViews() {
+    recalculateLeaderCountByDate();
+    updateLeaderFilterUI();
+
+    const searchInput = document.getElementById('searchInput');
+    renderDateList(searchInput ? searchInput.value.toLowerCase() : '');
+
+    if (selectedDate && messagesByDate[selectedDate]) {
+        renderChat(selectedDate);
+    } else {
+        applyLeaderFilter();
+    }
+}
+
+function commitLeaderFilterTarget({ activate = true, closePanel = true } = {}) {
+    leaderFilterTarget = normalizeLeaderFilterTarget(leaderFilterInput ? leaderFilterInput.value : leaderFilterTarget);
+    leaderFilterActive = activate;
+    refreshLeaderFilterViews();
+
+    if (closePanel) {
+        setLeaderFilterPanelOpen(false);
+    }
+}
+
+function clearLeaderFilter() {
+    leaderFilterActive = false;
+    updateLeaderFilterUI();
     applyLeaderFilter();
+    setLeaderFilterPanelOpen(false);
+}
+
+function hasClass(element, className) {
+    if (element.classList && element.classList.contains(className)) {
+        return true;
+    }
+    return String(element.className || '').split(/\s+/).includes(className);
+}
+
+leaderFilterBtn.addEventListener('click', () => {
+    const shouldOpen = leaderFilterPanel ? leaderFilterPanel.hidden : false;
+    setLeaderFilterPanelOpen(shouldOpen);
+
+    if (!leaderFilterActive) {
+        leaderFilterActive = true;
+        refreshLeaderFilterViews();
+    }
 });
 
 function applyLeaderFilter() {
-    const messages = document.querySelectorAll('#chatMessages .message');
-    messages.forEach(msg => {
+    const container = document.getElementById('chatMessages');
+    const renderedMessages = Array.from(container.children).filter(child =>
+        hasClass(child, 'message')
+    );
+
+    renderedMessages.forEach(msg => {
         if (leaderFilterActive) {
-            msg.style.display = msg.classList.contains('leader') ? '' : 'none';
+            msg.style.display = hasClass(msg, 'leader') ? '' : 'none';
         } else {
             msg.style.display = '';
         }
     });
 }
 
-function setLeaderFilterForTest(active) {
-    leaderFilterActive = active;
-    leaderFilterBtn.classList.toggle('active', leaderFilterActive);
-    applyLeaderFilter();
+if (leaderFilterApplyBtn) {
+    leaderFilterApplyBtn.addEventListener('click', () => {
+        commitLeaderFilterTarget();
+    });
 }
+
+if (leaderFilterClearBtn) {
+    leaderFilterClearBtn.addEventListener('click', clearLeaderFilter);
+}
+
+if (leaderFilterInput) {
+    leaderFilterInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            commitLeaderFilterTarget();
+        } else if (event.key === 'Escape') {
+            event.preventDefault();
+            setLeaderFilterPanelOpen(false);
+        }
+    });
+}
+
+function setLeaderFilterForTest(active, target = leaderFilterTarget) {
+    leaderFilterTarget = normalizeLeaderFilterTarget(target);
+    leaderFilterActive = active;
+    refreshLeaderFilterViews();
+}
+
+updateLeaderFilterUI();
+setLeaderFilterPanelOpen(false);
 
 // 설정 버튼 클릭
 settingsBtn.addEventListener('click', () => {
@@ -1113,7 +1243,7 @@ function parseKakaoChat(content) {
                 leaderCountByDate[msg.date] = 0;
             }
             messagesByDate[msg.date].push(msg);
-            if (msg.user === LEADER_NAME) leaderCountByDate[msg.date]++;
+            if (isLeader(msg.user)) leaderCountByDate[msg.date]++;
             lastMessage = msg;
             continue;
         }
@@ -1180,7 +1310,7 @@ function parseKakaoChat(content) {
                     messagesByDate[dateStr].push(msg);
 
                     // 리더 메시지 카운트 (사전 계산)
-                    if (user === LEADER_NAME) {
+                    if (isLeader(user)) {
                         leaderCountByDate[dateStr]++;
                     }
 
@@ -1290,7 +1420,7 @@ function parseKakaoChat(content) {
                         messagesByDate[dateStr].push(msg);
 
                         // 리더 메시지 카운트 (사전 계산)
-                        if (user === LEADER_NAME) {
+                        if (isLeader(user)) {
                             leaderCountByDate[dateStr]++;
                         }
 
@@ -1367,7 +1497,7 @@ function parseMergedChatFiles(chatContents) {
         }
         messagesByDate[msg.date].push(msg);
 
-        if (msg.user === LEADER_NAME) {
+        if (isLeader(msg.user)) {
             leaderCountByDate[msg.date]++;
         }
     }
@@ -1483,12 +1613,12 @@ function sortDatesDescending(dateKeys) {
 function restoreCachedChatData(cachedData) {
     messages = cachedData.messages || [];
     messagesByDate = cachedData.messagesByDate || {};
-    leaderCountByDate = cachedData.leaderCountByDate || {};
 
     const cachedDates = Array.isArray(cachedData.dates) && cachedData.dates.length > 0
         ? cachedData.dates
         : Object.keys(messagesByDate);
     dates = sortDatesDescending(cachedDates);
+    recalculateLeaderCountByDate();
 }
 
 // 캐시 조회
@@ -1911,9 +2041,9 @@ function scrollToDateInList(date) {
     });
 }
 
-// ========== 리더 판별 ==========
+// ========== 필터 대상 사용자 판별 ==========
 function isLeader(username) {
-    return username === LEADER_NAME;
+    return username === leaderFilterTarget;
 }
 
 // ========== 대화 렌더링 ==========
@@ -1931,7 +2061,7 @@ function renderChat(date) {
     const leaderMsgs = msgs.filter(m => isLeader(m.user)).length;
     document.getElementById('chatInfo').textContent =
         `${msgs.length}개 메시지 · ${users.size}명 참여` +
-        (leaderMsgs > 0 ? ` · 리더 ${leaderMsgs}개` : '') +
+        (leaderMsgs > 0 ? ` · 필터 ${leaderMsgs}개` : '') +
         (photos > 0 ? ` · 사진 ${photos}장` : '');
 
     const container = document.getElementById('chatMessages');
@@ -2023,7 +2153,7 @@ function renderChat(date) {
     container.scrollTop = 0;
     renderScrollMarkers(leaderPositions);
 
-    // 리더 필터가 활성화되어 있으면 적용
+    // 사용자 필터가 활성화되어 있으면 적용
     if (leaderFilterActive) {
         applyLeaderFilter();
     }
@@ -2217,6 +2347,7 @@ function buildParserTestSnapshot() {
         typeCounts,
         attachmentRefCount: messages.filter(msg => msg.has_attachment).length,
         attachmentMappedCount: messages.filter(msg => !!msg.attachment_path).length,
+        leaderFilterTarget,
         leaderCountByDate: { ...leaderCountByDate },
         messages: messages.map(msg => ({ ...msg }))
     };
@@ -2233,6 +2364,10 @@ function buildRenderedChatTestSnapshot(date) {
 }
 
 function buildUiTestSnapshot() {
+    const renderedMessages = Array.from(document.getElementById('chatMessages').children).filter(child =>
+        hasClass(child, 'message')
+    );
+
     return {
         stats: document.getElementById('stats').textContent,
         selectedDate,
@@ -2240,9 +2375,13 @@ function buildUiTestSnapshot() {
         dateListCount: document.getElementById('dateList').children.length,
         calendarCellCount: document.getElementById('calendarGrid').children.length,
         chatMessageCount: document.getElementById('chatMessages').children.length,
+        leaderMessageCount: renderedMessages.filter(child => hasClass(child, 'leader')).length,
+        hiddenChatMessageCount: renderedMessages.filter(child => child.style.display === 'none').length,
         chatTitle: document.getElementById('chatTitle').textContent,
         chatInfo: document.getElementById('chatInfo').textContent,
         leaderFilterActive,
+        leaderFilterTarget,
+        leaderFilterPanelOpen: leaderFilterPanel ? !leaderFilterPanel.hidden : false,
         settingsModalOpen: isModalOpen('settingsModal'),
         sidebarOpen: sidebar.classList.contains('open'),
         linkSidebarOpen: linkSidebar.classList.contains('open'),
