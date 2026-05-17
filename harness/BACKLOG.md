@@ -52,17 +52,19 @@
 | Open Graph/hero 이미지 정적 자산 위치 정리 | `assets/og-image.png`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
 | 앱 JS와 JSZip vendor 정적 자산 분리 | `assets/scripts/app.js`, `assets/vendor/jszip-3.10.1.min.js`, `index.html`, `harness/scripts/parse_with_index.mjs` | 반영 |
 | 선택 실행 Playwright browser smoke 추가 | `package.json`, `harness/browser/playwright.config.js`, `harness/browser/smoke.spec.js`, `harness/TESTING.md` | 반영 |
+| macOS 데스크톱 CSV 텍스트 내보내기 정식 지원 승격 | `README.md`, `AGENTS.md`, `harness/DOMAIN_RULES.md`, `test/parser-golden/macos-csv.json` | 반영 |
 
 ## 우선순위 백로그
 
-현재 자동화 가능한 우선순위 백로그는 없다. Windows 첨부파일 매핑은 아래 외부 샘플 필요 항목으로 남긴다.
+현재 자동화 가능한 우선순위 백로그는 없다. Windows/macOS 첨부파일 매핑은 아래 외부 샘플 필요 항목으로 남긴다.
 
 ## 외부 샘플 필요
 
 | ID | 영역 | 상태 | 다음 필요 증거 |
 |---|---|---|---|
 | H-014 | Windows attachment | 실제 Windows 첨부파일 export 구조 미확인. `windows-attachments-unsupported` fixture로 현재 미지원 범위를 고정 | 실제 Windows 첨부파일 포함 export 샘플과 파일 구조 |
+| H-015 | macOS attachment | macOS CSV 텍스트 파싱은 공식 지원하나 첨부파일 export 구조 미확인. 현재 직접 매핑하지 않음 | 실제 macOS 첨부파일 포함 export 샘플과 파일 구조 |
 
 ## 다음 구현 묶음
 
-다음 구현 묶음은 vendor 업데이트 절차를 문서화하거나, 실제 Windows 첨부파일 export 샘플 확보 후 결정한다.
+다음 구현 묶음은 vendor 업데이트 절차를 문서화하거나, 실제 Windows/macOS 첨부파일 export 샘플 확보 후 결정한다.

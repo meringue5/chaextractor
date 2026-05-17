@@ -72,8 +72,8 @@
 | 앱은 서버 없이 실행 가능한 빌드 없는 정적 앱이다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` 앱 로직, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타/hero 이미지 | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
 | 런타임 정적 자산은 소스와 배포본이 같은 파일이어야 한다. | 별도 빌드 산출물 없음 | doc drift checker와 파일 경로 존재 점검 |
 | 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 3.10.1 로컬 vendor, 폰트 CDN | doc drift checker로 일부 점검 |
-| 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소/Windows 최소 fixture parser golden 시작 | macOS 확장 시 fixture 추가 |
-| 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 텍스트 파서는 공식 지원으로 승격, Windows 첨부파일/macOS는 미결정 | 미결정 항목은 README에 홍보하지 않음 |
+| 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소/Windows 최소/macOS CSV fixture parser golden 시작 | 새 플랫폼 확장 시 fixture 추가 |
+| 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 텍스트 파서와 macOS CSV 파서는 공식 지원으로 승격, Windows/macOS 첨부파일은 미결정 | 미결정 항목은 README에 홍보하지 않음 |
 | 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | project skill, parser golden/doc drift, 선택 실행 Playwright browser smoke 하네스 시작 | 로컬 표준 명령 유지 |
 
 ## 요구사항으로 정의된 것
@@ -82,8 +82,8 @@
 
 | 영역 | 요구사항 | 현재 검증 수준 |
 |---|---|---|
-| 입력 | ZIP 또는 폴더 입력으로 대화 로그와 첨부파일 파싱 | parser golden, Node UI smoke, browser smoke에서 Windows TXT 업로드 검증 |
-| 플랫폼 | iOS/Android/Windows 내보내기 지원 | Android 실제 ZIP/iOS 최소/Windows 최소/Windows 첨부 미지원 fixture golden 검증 |
+| 입력 | ZIP/TXT/CSV 또는 폴더 입력으로 대화 로그와 첨부파일 파싱 | parser golden, Node UI smoke, browser smoke에서 Windows TXT 업로드 검증 |
+| 플랫폼 | iOS/Android/Windows/macOS 내보내기 지원 | Android 실제 ZIP/iOS 최소/Windows 최소/macOS CSV/Windows 첨부 미지원 fixture golden 검증 |
 | 파싱 | 날짜 그룹화, 시스템 메시지 제외, 연속 텍스트 병합 | parser golden 부분 검증 |
 | 메시지 타입 | text/photo/file/emoticon 분리 | parser golden 부분 검증 |
 | 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음 | parser golden: iOS PDF/사진, Android hash/일반 파일, 누락 첨부 검증 |
@@ -105,14 +105,14 @@
 | 20줄 미만 대화 파일 거부 | `validateChatFile` | 짧은 실제 내보내기 거부 가능 | 요구사항으로 인정할지 결정 |
 | 캐시 키 전략 | 파일명/크기/mtime 중심 | 폴더/첨부 변경 감지 부족 가능 | 캐시 정책 표준화 |
 | 검색 결과 하이라이트 부재 | 검색은 `renderDateList`에만 연결 | AGENTS와 불일치 | 구현 또는 요구사항 수정 |
-| Windows 첨부파일 매핑 | 텍스트 파싱은 지원하나 첨부파일 패턴은 미확정. 현재 직접 매핑하지 않도록 fixture로 고정 | Windows 사용자 기대 혼선 | 실제 샘플 확보 후 정식화 |
+| Windows/macOS 첨부파일 매핑 | 텍스트/CSV 파싱은 지원하나 첨부파일 패턴은 미확정. 현재 직접 매핑하지 않도록 fixture로 고정 | 데스크톱 사용자 기대 혼선 | 실제 샘플 확보 후 정식화 |
 
 ## 미결정 항목
 
 | 질문 | 왜 중요한가 | 권장 기본값 |
 |---|---|---|
 | 외부 폰트 CDN을 허용할 것인가? | "외부 전송 없음" 문구와 충돌할 수 있다 | 허용하되 대화 데이터 외부 전송 없음으로 표현 정밀화 |
-| Windows 첨부파일 매핑을 공식화할 것인가? | 텍스트 지원과 첨부파일 지원을 혼동할 수 있다 | 실제 export 구조 확인 전까지 공식 범위 밖으로 둠 |
+| Windows/macOS 첨부파일 매핑을 공식화할 것인가? | 데스크톱 텍스트/CSV 지원과 첨부파일 지원을 혼동할 수 있다 | 실제 export 구조 확인 전까지 공식 범위 밖으로 둠 |
 | CSP 같은 브라우저 보안 정책을 둘 것인가? | inline script/style과 정적 파일 분리 경계 때문에 정책 설계가 필요하다 | 우선 위협 모델 문서화 후 적용 검토 |
 | Python CSV 파서를 유지할 것인가? | 브라우저 파서와 기능 차이가 커질 수 있다 | 보조 iOS-only 도구로 명시 |
 | vendor 업데이트 절차를 어떻게 관리할 것인가? | 로컬 vendor 파일은 CDN 드리프트를 줄이지만 출처/버전/무결성 기록이 필요하다 | `THIRD_PARTY` 또는 dependency manifest 추가를 검토 |

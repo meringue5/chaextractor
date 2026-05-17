@@ -20,9 +20,9 @@
 | Open Graph와 hero 이미지는 `assets/og-image.png`에 둔다. | 채택 | 런타임 정적 이미지 자산 위치 일관화 |
 | 하네스, fixture, 문서, 테스트 도구는 앱 런타임 밖의 보조 파일로 둔다. | 채택 | 앱 런타임과 개발 검증 레이어 분리 |
 | 대화 원문과 첨부파일은 클라이언트 로컬에서 처리한다. | 채택 | 개인정보 표준 |
-| iOS, Android, Windows는 공식 지원 플랫폼으로 유지한다. | 채택 | README/AGENTS 약속, parser golden fixture |
+| iOS, Android, Windows, macOS는 공식 지원 플랫폼으로 유지한다. | 채택 | README/AGENTS 약속, parser golden fixture |
 | Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원한다. | 채택 | `windows-minimal` fixture/expected 추가 |
-| macOS는 규칙 확인 전까지 지원 대상으로 홍보하지 않는다. | 보류 | 실제 내보내기 구조 미확인 |
+| macOS는 데스크톱 CSV 텍스트 내보내기 파싱을 공식 지원한다. | 채택 | 실제 CSV 형식 확인 후 `macos-csv` fixture/expected 추가 |
 | `tools/parse_kakao_chat.py`는 보조 iOS CSV 파서로 취급한다. | 채택 | 브라우저 앱과 범위 분리 |
 | 첨부파일 로드는 순차 처리와 진행률 표시를 유지한다. | 채택 | 2026-02-05 성능 테스트에서 순차 처리가 병렬보다 빠름 |
 | 날짜 목록은 최신 날짜부터 표시한다. | 채택 | UI/UX 개선 이력 |
@@ -33,6 +33,7 @@
 | Blob URL은 새 업로드 전 해제한다. | 채택 | 런타임 첨부 URL 메모리/개인정보 잔류 최소화 |
 | Android 일반 파일/PDF는 URL 인코딩/디코딩 비교로 직접 매핑한다. | 채택 | `android-files` parser golden fixture |
 | Windows 첨부파일 매핑은 실제 export 샘플 확보 전까지 미지원으로 둔다. | 보류 | `windows-attachments-unsupported` fixture로 현 범위 고정 |
+| macOS 첨부파일 매핑은 실제 export 샘플 확보 전까지 미지원으로 둔다. | 보류 | macOS CSV 텍스트 파싱과 첨부파일 지원 혼동 방지 |
 | 하네스 리뷰의 미반영 항목은 `harness/BACKLOG.md`에서 추적한다. | 채택 | 리뷰 문서는 스냅샷, 백로그는 실행 대기열 |
 
 ## 문서화로 정정한 결정
@@ -52,7 +53,7 @@
 
 | 질문 | 기본 입장 | 결정에 필요한 증거 |
 |---|---|---|
-| Windows 첨부파일 매핑을 지원할 것인가? | 보류 | 실제 첨부파일 export 구조와 fixture |
+| Windows/macOS 첨부파일 매핑을 지원할 것인가? | 보류 | 실제 첨부파일 export 구조와 fixture |
 | CSP를 도입할 것인가? | 보류 | inline script/style과 정적 파일 분리 경계 검토 |
 | 20줄 미만 대화 파일을 허용할 것인가? | 보류 | 최소 대화 fixture와 사용자 오류 메시지 기준 |
 

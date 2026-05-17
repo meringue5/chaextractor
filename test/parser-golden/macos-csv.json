@@ -1,0 +1,70 @@
+{
+  "id": "macos-csv",
+  "description": "macOS 데스크톱 CSV fixture: Date/User/Message 헤더, 24시간 timestamp, CSV quoted multiline, 시스템 행 제외, 텍스트 병합",
+  "platform": "macos",
+  "input": {
+    "text": "test/fixtures/macos-csv/KakaoTalk_Chat_[테스트방]_2026-05-18-12-03-00.csv",
+    "attachments": [
+      "보고서.pdf",
+      "photo.jpg"
+    ]
+  },
+  "expected": {
+    "detectedPlatform": "macos",
+    "messageCount": 8,
+    "dateCount": 2,
+    "dates": ["2026-05-18", "2026-05-17"],
+    "typeCounts": {
+      "text": 4,
+      "photo": 2,
+      "file": 1,
+      "emoticon": 1
+    },
+    "attachmentRefCount": 4,
+    "attachmentMappedCount": 0,
+    "leaderCountByDate": {
+      "2026-05-17": 1,
+      "2026-05-18": 2
+    },
+    "messages": [
+      {
+        "index": 0,
+        "date": "2026-05-17",
+        "time": "09:00",
+        "user": "채상욱 리더",
+        "message_type": "text",
+        "content": "안녕하세요\n이어서 말합니다"
+      },
+      {
+        "index": 1,
+        "date": "2026-05-17",
+        "time": "09:02",
+        "user": "테스터",
+        "message_type": "text",
+        "has_link": true
+      },
+      {
+        "index": 3,
+        "message_type": "file",
+        "attachment_ref": "보고서.pdf",
+        "attachment_path": ""
+      },
+      {
+        "index": 5,
+        "date": "2026-05-18",
+        "time": "12:00",
+        "user": "다른사람",
+        "message_type": "text",
+        "content": "쉼표, 포함 메시지\n둘째 줄\n정오 이후"
+      },
+      {
+        "index": 6,
+        "date": "2026-05-18",
+        "time": "12:02",
+        "user": "채상욱 리더",
+        "message_type": "photo",
+        "attachment_path": ""
+      }
+    ]
+  }
+}

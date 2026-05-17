@@ -12,8 +12,8 @@
 - 배포: https://meringue5.github.io/chaextractor/
 - 기술: HTML (`index.html`), CSS (`assets/styles/app.css`), JS (`assets/scripts/app.js`), JSZip local vendor (`assets/vendor/jszip-3.10.1.min.js`), `assets/guide` 정적 이미지, `assets/og-image.png`, IndexedDB (캐시), 폰트 CDN
 - 개발 검증: Python/Node VM 하네스 + 선택 실행 Playwright browser smoke (`npm run test:browser`)
-- 플랫폼: iOS / Android / Windows 카카오톡 내보내기 파일 지원
-- TODO: macOS 카카오톡 데스크톱 내보내기 지원 예정
+- 플랫폼: iOS / Android / Windows / macOS 카카오톡 내보내기 파일 지원
+- TODO: Windows/macOS 첨부파일 매핑 지원 예정
 
 # 하네스 문서
 
@@ -61,8 +61,8 @@
 
 세부 요구사항은 [harness/REQUIREMENTS.md](harness/REQUIREMENTS.md)를 우선한다.
 
-- ZIP 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다.
-- iOS/Android/Windows 카카오톡 내보내기 파일을 공식 지원한다.
+- ZIP/TXT/CSV 파일 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다.
+- iOS/Android/Windows/macOS 카카오톡 내보내기 파일을 공식 지원한다.
 - 날짜별 탐색, 검색, 통계, 기본값 `채상욱 리더`인 사용자 하이라이트/필터, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
 - 선택 날짜 또는 전체 대화를 LLM 요약에 붙여넣기 좋은 TXT로 정리하는 갈무리 복사/다운로드를 제공한다.
 - 시스템 메시지는 제외하고, 동일 사용자 연속 텍스트는 병합한다.
@@ -76,12 +76,13 @@
 
 - iOS 대화 파일명: `Talk_YYYY.M.D HH_mm-n.txt`
 - Android 대화 파일명: `KakaoTalkChats.txt`
+- macOS 대화 파일명: `KakaoTalk_Chat_[방 이름]_YYYY-MM-DD-HH-MM-SS.csv`
 - iOS 첨부파일: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
 - Android 이미지 첨부파일: `{64자리 hex}.(jpg|jpeg|png|gif|webp)`
 - Android 일반 파일/PDF: `파일: {파일명}`. 파일명은 URL 인코딩될 수 있으며 디코딩 비교로 직접 매핑한다.
 - Windows 첨부파일 매핑은 실제 export 구조 확인 전까지 공식 범위 밖이다.
 - Windows 데스크톱 텍스트 내보내기는 공식 지원한다.
-- macOS 공식 지원은 실제 export 규칙과 fixture가 확인되기 전까지 TODO다.
+- macOS 데스크톱 CSV 텍스트 내보내기는 공식 지원한다. 첨부파일 매핑은 실제 export 구조 확인 전까지 공식 범위 밖이다.
 - 대화 내용, 사용자명, 파일명, 첨부파일 참조는 모두 신뢰하지 않는 입력으로 취급한다.
 
 # 앱 콘텐츠 데이터
@@ -113,7 +114,7 @@ GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=
 - `#setupScreen` — 초기 화면
   - `.guide-section` — 사용 가이드 (`assets/guide` 스크린샷 6장)
   - `#step1` — 파일 업로드 영역
-    - `#zipBtn` / `#zipInput` — ZIP/TXT 파일 선택 (iOS/Windows)
+    - `#zipBtn` / `#zipInput` — ZIP/TXT/CSV 파일 선택 (iOS/Windows/macOS)
     - `#folderBtn` / `#folderInput` — 폴더 선택 (Android, webkitdirectory)
     - `#dropZone` — 드래그앤드롭 영역
     - `#zipName` — 파일 상태 메시지
@@ -189,10 +190,10 @@ GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=
 - `updateProgress(percent, text)` — 진행률 바 업데이트
 
 파싱:
-- `parseKakaoChat(content)` — 대화 파싱 (iOS/Android/Windows 정규식 분기)
+- `parseKakaoChat(content)` — 대화 파싱 (iOS/Android/Windows 정규식 분기, macOS CSV 분기)
 - `parseMergedChatFiles(chatContents)` — 다중 대화 파일 병합 + 정렬
 - `classifyContent(content)` — 메시지 유형 분류 (text/photo/emoticon/file)
-- `detectPlatform(txtFilenames, attachFilenames)` — iOS/Android/Windows 감지
+- `detectPlatform(chatFilenames, attachFilenames)` — iOS/Android/Windows/macOS 감지
 - `testPatternArray(line, patternArray)` — 정규식 배열 매칭 테스트
 - `execPatternArray(line, patternArray)` — 정규식 배열 실행 + 첫 매치 반환
 
@@ -273,7 +274,7 @@ UI 렌더링:
 - `selectedDate` — 선택된 날짜
 - `leaderFilterActive` — 사용자 필터 상태
 - `leaderFilterTarget` — 현재 필터 대상 사용자명 (기본값: `채상욱 리더`)
-- `detectedPlatform` — 'ios', 'android', 'windows'
+- `detectedPlatform` — 'ios', 'android', 'windows', 'macos'
 - `linkSidebar`/`linkSidebarToggle` — 오른쪽 링크 패널 DOM 상태 제어
 - `diagnosticState` — 안전 진단 리포트용 처리 단계, 입력 요약, 최근 오류 이벤트
 
@@ -281,6 +282,7 @@ UI 렌더링:
 - `DATE_HEADER` — iOS 날짜 구분선 (`YYYY년 M월 D일 d요일`)
 - `DATE_HEADER_ANDROID` — Android 날짜 줄 (`YYYY년 M월 D일 오전/오후 H:mm`, 사용자 없음)
 - `DATE_HEADER_WINDOWS` — Windows 날짜 구분선
+- `DATETIME_MACOS_CSV` — macOS CSV `Date` 컬럼 (`YYYY-MM-DD HH:mm:ss`)
 - `MESSAGE_IOS` — iOS 메시지 (24시간 + 12시간 오전/오후 두 패턴)
 - `MESSAGE_ANDROID` — Android 메시지 (`YYYY년 M월 D일 오전/오후 H:mm, 사용자 : 내용`)
 - `MESSAGE_WINDOWS` — Windows 메시지
@@ -291,7 +293,7 @@ UI 렌더링:
 - `ATTACHMENT_FILENAME_IOS` — iOS 첨부파일명 (`YYYYMMDD_HHMMSS[_n].ext`)
 - `ATTACHMENT_FILENAME_ANDROID` — Android 첨부파일명 (`[0-9a-f]{64}.ext`)
 - `ATTACHMENT_FILENAME_ANDROID_FILE` — Android 일반 문서 첨부파일명
-- TODO: macOS 공식 패턴 확인 필요
+- macOS CSV는 정규식 메시지 라인이 아니라 `Date,User,Message` 헤더를 가진 CSV 레코드로 파싱한다.
 
 # 진행 이력
 **상세 진행 이력은 [HISTORY.md](HISTORY.md)를 참고하세요.**

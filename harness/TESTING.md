@@ -19,6 +19,7 @@ python3 harness/scripts/run_parser_golden.py
 - `ios-minimal`: `test/fixtures/ios-minimal/`의 최소 iOS fixture
 - `windows-minimal`: `test/fixtures/windows-minimal/`의 최소 Windows 데스크톱 TXT fixture
 - `windows-attachments-unsupported`: Windows 첨부파일 매핑 미지원 범위 고정 fixture
+- `macos-csv`: `test/fixtures/macos-csv/`의 최소 macOS 데스크톱 CSV fixture
 - `security-xss`: 파일명/첨부 ref/사용자명 렌더링 escape fixture
 
 검증 범위:
@@ -33,6 +34,7 @@ python3 harness/scripts/run_parser_golden.py
 - iOS 사진/PDF 타임스탬프 매핑
 - Windows 날짜 헤더, 오전/오후 메시지, 시스템 메시지 제외, 연속 텍스트 병합
 - Windows 첨부파일 direct mapping 미지원 범위
+- macOS CSV `Date,User,Message` 헤더, 24시간 timestamp, 삭제/관리자 숨김 시스템 행 제외, quoted multiline, 연속 텍스트 병합
 - 누락 첨부파일의 비중단 처리
 - 파일명/첨부 ref/사용자명 HTML escape와 `target="_blank"`의 `rel="noopener"` 렌더링
 

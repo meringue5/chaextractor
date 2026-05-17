@@ -73,21 +73,33 @@ def main() -> int:
 
     check_markdown_links(errors)
 
-    check("iOS / Android / Windows" in readme, "README must publicly support iOS / Android / Windows", errors)
-    check(
-        not re.search(r"macOS[^.\n]{0,30}지원", readme),
-        "README must not advertise macOS support before fixtures exist",
-        errors,
-    )
-    check("iOS / Android / Windows 카카오톡 내보내기 파일 지원" in agents, "AGENTS must state iOS / Android / Windows support", errors)
+    check("iOS / Android / Windows / macOS" in readme, "README must publicly support iOS / Android / Windows / macOS", errors)
+    check("iOS / Android / Windows / macOS 카카오톡 내보내기 파일 지원" in agents, "AGENTS must state iOS / Android / Windows / macOS support", errors)
 
     if "MESSAGE_WINDOWS" in runtime or "DATE_HEADER_WINDOWS" in runtime:
         check("Windows 데스크톱 텍스트 내보내기는 공식 지원" in agents, "AGENTS must state Windows text export support", errors)
         check("Windows | 공식 지원" in domain, "DOMAIN_RULES must classify Windows as official support", errors)
         check("Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원" in decisions, "DECISIONS must adopt Windows text support", errors)
-        check("Windows 첨부파일 매핑" in manifest, "MANIFEST must keep Windows attachment mapping unresolved", errors)
+        check(
+            "Windows 첨부파일 매핑" in manifest or "Windows/macOS 첨부파일 매핑" in manifest,
+            "MANIFEST must keep Windows attachment mapping unresolved",
+            errors,
+        )
         check(exists("test/parser-golden/windows-minimal.json"), "Windows support requires parser golden expected", errors)
         check(exists("test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt"), "Windows support requires fixture txt", errors)
+
+    if "DATETIME_MACOS_CSV" in runtime or "parseMacOSCsvChat" in runtime:
+        check("macOS 데스크톱 CSV" in readme, "README must document macOS CSV support", errors)
+        check("macOS 데스크톱 CSV 텍스트 내보내기는 공식 지원" in agents, "AGENTS must state macOS CSV text export support", errors)
+        check("macOS | 공식 지원" in domain, "DOMAIN_RULES must classify macOS as official support", errors)
+        check("macOS는 데스크톱 CSV 텍스트 내보내기 파싱을 공식 지원" in decisions, "DECISIONS must adopt macOS CSV support", errors)
+        check("Windows/macOS 첨부파일 매핑" in manifest, "MANIFEST must keep desktop attachment mapping unresolved", errors)
+        check(exists("test/parser-golden/macos-csv.json"), "macOS support requires parser golden expected", errors)
+        check(
+            exists("test/fixtures/macos-csv/KakaoTalk_Chat_[테스트방]_2026-05-18-12-03-00.csv"),
+            "macOS support requires CSV fixture",
+            errors,
+        )
 
     if app_script_assets:
         check("assets/scripts" in readme, "README must document app script asset directory", errors)

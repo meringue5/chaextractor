@@ -449,6 +449,31 @@
   * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
   * `npm run test:browser -- --project=chromium-desktop` 통과: 2 passed, 1 skipped
   * `npm run test:browser`는 최신 `origin/dev` 기준 모바일 오버레이 클릭 timeout으로 3 passed, 1 failed, 2 skipped. 갈무리 검증이 포함된 desktop smoke는 통과했고, 실패 지점은 기존 모바일 사이드바 닫기 하네스다.
+## 2-1-25단계: macOS CSV 내보내기 지원 추가 (2026-05-17)
+* 확인:
+  * macOS 카카오톡 데스크톱 내보내기 파일은 UTF-8 BOM이 있는 CSV이며, 헤더는 `Date,User,Message`
+  * 날짜는 `YYYY-MM-DD HH:mm:ss` 24시간 형식
+  * 삭제 메시지와 관리자 숨김 메시지는 `Date`/`User`가 비어 있는 시스템 행으로 확인
+  * 제공된 실제 파일에는 카카오톡 앱 버전 정보가 포함되어 있지 않고, 파일명에는 내보내기 시각만 포함
+* 결정:
+  * macOS 데스크톱 CSV 텍스트 내보내기 파싱을 공식 지원으로 승격
+  * macOS 첨부파일 매핑은 실제 첨부파일 포함 export 구조 확인 전까지 공식 범위 밖으로 유지
+* 변경:
+  * 초기 업로드 버튼 문구를 `파일(zip, txt, csv)`로 정리하고 CSV 선택 허용
+  * [assets/scripts/app.js](assets/scripts/app.js)에 macOS CSV 감지, CSV 레코드 파서, macOS timestamp 파서, 시스템 행 제외 로직 추가
+  * [test/fixtures/macos-csv/](test/fixtures/macos-csv/)와 [test/parser-golden/macos-csv.json](test/parser-golden/macos-csv.json) 추가
+  * README/AGENTS/harness 문서를 macOS CSV 공식 지원과 데스크톱 첨부파일 미지원 경계에 맞게 갱신
+* 검증:
+  * macOS 실제 CSV 샘플 구조를 원문 없이 요약 확인
+  * 실제 macOS CSV 샘플 파싱 요약: `macos`, 54,537 메시지, 224일, 첨부파일 매핑 0건
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `git diff --check` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
 
 ## 테스트 이력
 

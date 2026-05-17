@@ -18,6 +18,7 @@ const ISSUE_REPORT_TEMPLATE = 'bug_report.yml';
 const DIAGNOSTIC_EVENT_LIMIT = 8;
 const DIAGNOSTIC_CONSOLE_LIMIT = 6;
 const DIAGNOSTIC_REPORT_URL_LIMIT = 12000;
+const CHAT_FILE_PATTERN = /\.(txt|csv)$/i;
 
 // ========== 정규식 패턴 (AGENTS.md 기반) ==========
 // 여러 언어/버전을 지원하기 위한 패턴 배열
@@ -62,6 +63,8 @@ const PATTERNS = {
     MESSAGE_WINDOWS: [
         /^\[(.+?)\] \[(오전|오후) (\d{1,2}):(\d{2})\] (.*)$/,
     ],
+    // macOS CSV Date 컬럼: 2026-05-17 21:28:15
+    DATETIME_MACOS_CSV: /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/,
     // Windows 입장/퇴장 (타임스탬프 없음)
     ENTER_LEAVE_WINDOWS: [
         /^.+?님이 (?:들어왔습니다|나갔습니다)\.$/,
@@ -90,6 +93,11 @@ function execPatternArray(line, patternArray) {
         if (match) return match;
     }
     return null;
+}
+
+function containsUrl(text) {
+    PATTERNS.URL.lastIndex = 0;
+    return PATTERNS.URL.test(text);
 }
 
 // 첨부파일 여부 확인 (iOS/Android 패턴 모두 지원)
@@ -127,16 +135,19 @@ function parseAttachmentFilename(filename) {
 }
 
 // ========== 플랫폼 감지 ==========
-let detectedPlatform = 'ios'; // 'ios' | 'android' | 'windows'
+let detectedPlatform = 'ios'; // 'ios' | 'android' | 'windows' | 'macos'
 
-function detectPlatform(txtFilenames, attachFilenames) {
-    // txt 파일명으로 우선 감지
-    for (const name of txtFilenames) {
+function detectPlatform(chatFilenames, attachFilenames) {
+    // 대화 파일명으로 우선 감지
+    for (const name of chatFilenames) {
         const base = name.split('/').pop();
         if (/Talk_.*\.txt$/i.test(base)) return 'ios';
         if (/KakaoTalkChats\.txt$/i.test(base)) return 'android';
         // Windows: KakaoTalk_YYYYMMDD_HHMM_SS_nnn_*.txt
         if (/^KakaoTalk_\d{8}_\d{4}_\d{2}_\d+.*\.txt$/i.test(base)) return 'windows';
+        // macOS: KakaoTalk_Chat_[room]_YYYY-MM-DD-HH-MM-SS.csv
+        if (/^KakaoTalk_Chat_.*_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.csv$/i.test(base)) return 'macos';
+        if (/\.csv$/i.test(base)) return 'macos';
     }
     // 첨부파일명으로 보조 감지
     for (const name of attachFilenames) {
@@ -228,6 +239,7 @@ const diagnosticState = {
         totalBytes: 0,
         extensions: [],
         txtFileCount: 0,
+        csvFileCount: 0,
         zipFileCount: 0,
         attachmentFileCount: 0
     },
@@ -303,6 +315,7 @@ function recordDiagnosticInput(files, source) {
     const list = Array.from(files || []);
     let totalBytes = 0;
     let txtFileCount = 0;
+    let csvFileCount = 0;
     let zipFileCount = 0;
     let attachmentFileCount = 0;
     const redactions = [];
@@ -312,6 +325,7 @@ function recordDiagnosticInput(files, source) {
         const relativePath = String(file.webkitRelativePath || '');
         totalBytes += Number(file.size) || 0;
         if (/\.txt$/i.test(name)) txtFileCount++;
+        if (/\.csv$/i.test(name)) csvFileCount++;
         if (/\.zip$/i.test(name)) zipFileCount++;
         if (isAttachmentFile(name)) attachmentFileCount++;
         if (name) redactions.push(name);
@@ -326,6 +340,7 @@ function recordDiagnosticInput(files, source) {
         totalBytes,
         extensions: summarizeFileExtensions(list),
         txtFileCount,
+        csvFileCount,
         zipFileCount,
         attachmentFileCount
     };
@@ -481,6 +496,7 @@ function buildDiagnosticReport(options = {}) {
         `- 총 크기: ${formatSize(input.totalBytes)}`,
         `- 확장자 분포: ${input.extensions.length ? input.extensions.join(', ') : '없음'}`,
         `- TXT 후보: ${input.txtFileCount}`,
+        `- CSV 후보: ${input.csvFileCount}`,
         `- ZIP 후보: ${input.zipFileCount}`,
         `- 첨부파일 후보: ${input.attachmentFileCount}`,
         '',
@@ -1458,7 +1474,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 // 페이지 로드시 설정 초기화
 initSettings();
 
-// ========== ZIP/TXT 파일 선택 ==========
+// ========== ZIP/TXT/CSV 파일 선택 ==========
 zipBtn.addEventListener('click', () => zipInput.click());
 zipInput.addEventListener('change', async (e) => {
     if (e.target.files.length > 0) {
@@ -1674,23 +1690,23 @@ async function processZipFile(file) {
 
     updateProgress(10, `${entries.length}개 파일 발견`);
 
-    // 대화 파일 찾기 (모든 .txt 파일 검증)
-    const allTxtFiles = entries.filter(name =>
-        name.match(/\.txt$/i) && !zip.files[name].dir
+    // 대화 파일 찾기 (모든 .txt/.csv 파일 검증)
+    const allChatFiles = entries.filter(name =>
+        name.match(CHAT_FILE_PATTERN) && !zip.files[name].dir
     );
 
-    if (allTxtFiles.length === 0) {
-        throw new Error('대화 파일(.txt)을 찾을 수 없습니다');
+    if (allChatFiles.length === 0) {
+        throw new Error('대화 파일(.txt/.csv)을 찾을 수 없습니다');
     }
 
-    updateProgress(15, `${allTxtFiles.length}개 txt 파일 검증 중...`);
+    updateProgress(15, `${allChatFiles.length}개 대화 파일 검증 중...`);
 
-    // 각 txt 파일 읽고 검증
+    // 각 대화 파일 읽고 검증
     const validChatFiles = [];
-    for (const txtFile of allTxtFiles) {
-        const content = await zip.files[txtFile].async('string');
+    for (const chatFile of allChatFiles) {
+        const content = await zip.files[chatFile].async('string');
         if (validateChatFile(content)) {
-            validChatFiles.push({ name: txtFile, content });
+            validChatFiles.push({ name: chatFile, content });
         }
     }
 
@@ -1716,9 +1732,9 @@ async function processZipFile(file) {
     }
     console.log(`⏱️ 첨부파일 ${attachEntryList.length}개 발견 (지연 로딩 준비)`);
 
-    // 플랫폼 감지 (txt 파일명 + 첨부파일명 기반)
+    // 플랫폼 감지 (대화 파일명 + 첨부파일명 기반)
     const attachFilenames = attachEntryList.map(e => e.split('/').pop());
-    detectedPlatform = detectPlatform(allTxtFiles, attachFilenames);
+    detectedPlatform = detectPlatform(allChatFiles, attachFilenames);
     setDiagnosticStage(`platform-detected-${detectedPlatform}`);
     console.log(`플랫폼 감지: ${detectedPlatform}`);
 
@@ -1766,21 +1782,21 @@ async function processFolderFiles(files) {
 
     updateProgress(5, '파일 분석 중...');
 
-    // 대화 파일 찾기 (모든 .txt 파일 검증)
-    const allTxtFiles = files.filter(f => f.name.match(/\.txt$/i));
+    // 대화 파일 찾기 (모든 .txt/.csv 파일 검증)
+    const allChatFiles = files.filter(f => f.name.match(CHAT_FILE_PATTERN));
 
-    if (allTxtFiles.length === 0) {
-        throw new Error('대화 파일(.txt)을 찾을 수 없습니다');
+    if (allChatFiles.length === 0) {
+        throw new Error('대화 파일(.txt/.csv)을 찾을 수 없습니다');
     }
 
-    updateProgress(7, `${allTxtFiles.length}개 txt 파일 검증 중...`);
+    updateProgress(7, `${allChatFiles.length}개 대화 파일 검증 중...`);
 
-    // 각 txt 파일 읽고 검증
+    // 각 대화 파일 읽고 검증
     const validChatFiles = [];
-    for (const txtFile of allTxtFiles) {
-        const content = await txtFile.text();
+    for (const chatFile of allChatFiles) {
+        const content = await chatFile.text();
         if (validateChatFile(content)) {
-            validChatFiles.push({ file: txtFile, content });
+            validChatFiles.push({ file: chatFile, content });
         }
     }
 
@@ -1790,9 +1806,9 @@ async function processFolderFiles(files) {
 
     console.log(`⏱️ ${validChatFiles.length}개 유효한 대화 파일 발견`);
 
-    // 플랫폼 감지 (txt 파일명 + 첨부파일명 기반)
+    // 플랫폼 감지 (대화 파일명 + 첨부파일명 기반)
     const attachFilenames = files.filter(f => isAttachmentFile(f.name)).map(f => f.name);
-    detectedPlatform = detectPlatform(allTxtFiles.map(f => f.name), attachFilenames);
+    detectedPlatform = detectPlatform(allChatFiles.map(f => f.name), attachFilenames);
     setDiagnosticStage(`platform-detected-${detectedPlatform}`);
     console.log(`플랫폼 감지: ${detectedPlatform}`);
 
@@ -1905,8 +1921,146 @@ async function processFolderFiles(files) {
     cleanOldCache();
 }
 
+
+function parseCsvRecords(content, maxRecords = Infinity) {
+    const records = [];
+    let record = [];
+    let field = '';
+    let inQuotes = false;
+    let i = content.charCodeAt(0) === 0xFEFF ? 1 : 0;
+
+    while (i < content.length) {
+        const ch = content[i];
+
+        if (inQuotes) {
+            if (ch === '"') {
+                if (content[i + 1] === '"') {
+                    field += '"';
+                    i += 2;
+                    continue;
+                }
+                inQuotes = false;
+                i++;
+                continue;
+            }
+
+            field += ch;
+            i++;
+            continue;
+        }
+
+        if (ch === '"') {
+            inQuotes = true;
+            i++;
+            continue;
+        }
+
+        if (ch === ',') {
+            record.push(field);
+            field = '';
+            i++;
+            continue;
+        }
+
+        if (ch === '\r' || ch === '\n') {
+            if (ch === '\r' && content[i + 1] === '\n') i++;
+            record.push(field);
+            records.push(record);
+            if (records.length >= maxRecords) return records;
+            record = [];
+            field = '';
+            i++;
+            continue;
+        }
+
+        field += ch;
+        i++;
+    }
+
+    if (field.length > 0 || record.length > 0) {
+        record.push(field);
+        records.push(record);
+    }
+
+    return records;
+}
+
+function normalizeCsvHeaderCell(value) {
+    return String(value || '').replace(/^\uFEFF/, '').trim();
+}
+
+function isMacOSCsvHeader(row) {
+    if (!row || row.length < 3) return false;
+    return normalizeCsvHeaderCell(row[0]) === 'Date' &&
+        normalizeCsvHeaderCell(row[1]) === 'User' &&
+        normalizeCsvHeaderCell(row[2]) === 'Message';
+}
+
+function isMacOSCsvContent(content) {
+    return isMacOSCsvHeader(parseCsvRecords(content, 1)[0]);
+}
+
+function parseMacOSDateTime(value) {
+    const match = PATTERNS.DATETIME_MACOS_CSV.exec(String(value || '').trim());
+    if (!match) return null;
+
+    const [, year, month, day, hour, minute] = match;
+    const dateStr = `${year}-${month}-${day}`;
+    const timeStr = `${hour}:${minute}`;
+    return {
+        date: dateStr,
+        time: timeStr,
+        datetime: `${dateStr} ${timeStr}`
+    };
+}
+
+function isMacOSSystemMessage(content) {
+    const stripped = String(content || '').trim();
+    return stripped === DELETED_MESSAGE ||
+        stripped === '관리자가 메시지를 가렸습니다.' ||
+        /^.+?님이 (?:들어왔습니다|나갔습니다)\.$/.test(stripped);
+}
+
+function validateMacOSCsvFile(content) {
+    const records = parseCsvRecords(content, 100);
+    if (!isMacOSCsvHeader(records[0])) return false;
+
+    for (let i = 1; i < records.length; i++) {
+        const row = records[i];
+        if (!row || row.length < 3) continue;
+
+        const dateRaw = String(row[0] || '').trim();
+        const user = String(row[1] || '').trim();
+        const message = row.slice(2).join(',');
+
+        if (!dateRaw && !user && isMacOSSystemMessage(message)) continue;
+        if (parseMacOSDateTime(dateRaw) && user) return true;
+    }
+
+    return false;
+}
+
+function addMessageToCollections(msg) {
+    messages.push(msg);
+
+    if (!messagesByDate[msg.date]) {
+        messagesByDate[msg.date] = [];
+        leaderCountByDate[msg.date] = 0;
+    }
+    messagesByDate[msg.date].push(msg);
+
+    if (isLeader(msg.user)) {
+        leaderCountByDate[msg.date]++;
+    }
+}
+
 // ========== 대화 파일 검증 (카카오톡 패턴 확인) ==========
 function validateChatFile(content) {
+    if (validateMacOSCsvFile(content)) {
+        console.log('✅ 유효한 macOS CSV 대화 파일로 확인됨');
+        return true;
+    }
+
     const lines = content.split('\n');
 
     // 최소 20줄 이상이어야 함
@@ -1981,8 +2135,77 @@ function validateChatFile(content) {
     return false;
 }
 
+
+function parseMacOSCsvChat(content) {
+    const records = parseCsvRecords(content);
+    messages = [];
+    messagesByDate = {};
+    leaderCountByDate = {};
+    detectedPlatform = 'macos';
+
+    if (!isMacOSCsvHeader(records[0])) {
+        dates = [];
+        return;
+    }
+
+    let lastMessage = null;
+
+    for (let i = 1; i < records.length; i++) {
+        const row = records[i];
+        if (!row || row.length < 3) continue;
+
+        const parsedDate = parseMacOSDateTime(row[0]);
+        const user = String(row[1] || '').trim();
+        const contentText = row.slice(2).join(',').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+        if (!parsedDate || !user) {
+            continue;
+        }
+
+        if (isMacOSSystemMessage(contentText)) {
+            continue;
+        }
+
+        const { type, attachType, attachRef } = classifyContent(contentText);
+        const hasLink = containsUrl(contentText);
+        const isAttachment = ['photo', 'file', 'emoticon'].includes(type);
+
+        if (!isAttachment && lastMessage &&
+            lastMessage.user === user &&
+            lastMessage.date === parsedDate.date &&
+            lastMessage.message_type === 'text') {
+            lastMessage.content += '\n' + contentText;
+            if (hasLink) lastMessage.has_link = true;
+        } else {
+            const msg = {
+                datetime: parsedDate.datetime,
+                date: parsedDate.date,
+                time: parsedDate.time,
+                user,
+                message_type: type,
+                content: contentText,
+                has_attachment: !!attachType,
+                attachment_type: attachType,
+                attachment_ref: attachRef,
+                attachment_path: '',
+                has_link: hasLink
+            };
+
+            addMessageToCollections(msg);
+            lastMessage = msg;
+        }
+    }
+
+    dates = sortDatesDescending(Object.keys(messagesByDate));
+}
+
 // ========== 카카오톡 대화 파싱 (정규식 최적화) ==========
 function parseKakaoChat(content) {
+    if (isMacOSCsvContent(content)) {
+        parseMacOSCsvChat(content);
+        return;
+    }
+
     const lines = content.split('\n');
     messages = [];
     messagesByDate = {};
@@ -2062,7 +2285,7 @@ function parseKakaoChat(content) {
 
                 // 메시지 타입 분류
                 const { type, attachType, attachRef } = classifyContent(content);
-                const hasLink = PATTERNS.URL.test(content);
+                const hasLink = containsUrl(content);
 
                 const isAttachment = ['photo', 'file', 'emoticon'].includes(type);
 
@@ -2172,7 +2395,7 @@ function parseKakaoChat(content) {
 
                     // 메시지 타입 분류
                     const { type, attachType, attachRef } = classifyContent(content);
-                    const hasLink = PATTERNS.URL.test(content);
+                    const hasLink = containsUrl(content);
 
                     const isAttachment = ['photo', 'file', 'emoticon'].includes(type);
 
@@ -2217,7 +2440,7 @@ function parseKakaoChat(content) {
                     // 패턴 매칭 실패 - 이전 메시지 연속
                     if (lastMessage && lastMessage.message_type === 'text') {
                         lastMessage.content += '\n' + line;
-                        if (PATTERNS.URL.test(line)) {
+                        if (containsUrl(line)) {
                             lastMessage.has_link = true;
                         }
                     }
@@ -2226,7 +2449,7 @@ function parseKakaoChat(content) {
                 // 이전 메시지 연속
                 if (lastMessage && lastMessage.message_type === 'text') {
                     lastMessage.content += '\n' + line;
-                    if (PATTERNS.URL.test(line)) {
+                    if (containsUrl(line)) {
                         lastMessage.has_link = true;
                     }
                 }
@@ -2245,7 +2468,7 @@ function parseKakaoChat(content) {
             if (lastMessage && lastMessage.message_type === 'text') {
                 // 기타 - 이전 메시지 연속
                 lastMessage.content += '\n' + line;
-                if (PATTERNS.URL.test(line)) {
+                if (containsUrl(line)) {
                     lastMessage.has_link = true;
                 }
             }
@@ -2530,7 +2753,7 @@ function mapAttachments() {
                 }
             }
         }
-    } else {
+    } else if (detectedPlatform === 'ios') {
         // iOS: 날짜 기반 탐색
         const attachmentList = Object.keys(filenameSource)
             .map(filename => parseAttachmentFilename(filename))
@@ -2558,6 +2781,8 @@ function mapAttachments() {
                 }
             }
         }
+    } else {
+        // Windows/macOS 첨부파일 구조는 실제 export 규칙 확인 전까지 매핑하지 않는다.
     }
 
 }
