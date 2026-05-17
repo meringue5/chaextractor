@@ -1,7 +1,7 @@
 # 프로젝트 진행 이력
 
 ## 1단계: 데이터 확인 (2026-02-03)
-* 상세 결과: [RESULT_STEP1.md](RESULT_STEP1.md)
+* 상세 결과: `RESULT_STEP1.md` (현재 저장소에는 미포함)
 * 데이터 규모: 95,786줄, 195일, 첨부파일 165개
 * 발견사항:
   * 퇴장 메시지 패턴 누락 → AGENTS.md에 추가
@@ -97,7 +97,7 @@
 * **UI 버그 수정**
   * guide-step 다크 테마 지원 (CSS 변수 사용)
   * 리스트 불릿 위치 수정 (`padding-left` 추가)
-* **Android 실제 데이터 분석 (2026-02-08)**: 샘플 `tmp/android/` 확보
+* **Android 실제 데이터 분석 (2026-02-08)**: 샘플 확보. 현재 tracked 샘플 경로는 `test/dataset/android/`
   * 대화 파일명: `KakaoTalkChats.txt` (고정, iOS와 다름!)
   * 첨부파일명: **64자리 hex hash** (기존에 잘못 추정한 `KakaoTalk_Photo_...` 아님)
   * 사진 참조: 대화 내에 hash 파일명 직접 명시 (iOS의 '사진' 텍스트와 다름)
@@ -106,6 +106,37 @@
   * 플랫폼 감지: txt 파일명 우선, 보조로 첨부파일명 패턴 사용
   * `detectedPlatform` 전역 변수로 처리 분기
   * 첨부파일 매핑: iOS=날짜 기반 탐색, Android=attachment_ref로 직접 매핑
+
+## 2-1-3단계: 하네스 검토 (2026-05-17)
+* 상세 결과: [harness/reviews/2026-05-17.md](harness/reviews/2026-05-17.md)
+* 검토 대상:
+  * `AGENTS.md`, `CLAUDE.md`, `README.md`, `HISTORY.md`의 문서 약속
+  * `index.html`, `tools/parse_kakao_chat.py`의 실제 구현
+  * `test/dataset/android/`의 Android 실제 ZIP 샘플
+* 주요 판정:
+  * 실행 가능한 자동 테스트 하네스는 아직 없음
+  * Android 실제 샘플은 있으나 golden expected JSON이 없음
+  * iOS 최소 fixture와 브라우저 smoke 테스트가 없음
+  * 문서에는 Windows가 TODO이나 `index.html`에는 Windows 후보 파서가 일부 구현되어 있음
+  * 검색 하이라이트, Escape 모달 닫기, 캐시 날짜 정렬 등 문서-구현 드리프트가 확인됨
+* 권장 다음 단계:
+  * Parser golden harness 추가
+  * 문서 드리프트 checker 추가
+  * Playwright 기반 browser smoke 추가
+  * `chaextractor-maintainer` 로컬 스킬은 하네스 명령 확정 후 작성
+* 추가 보강:
+  * `/harness` 디렉터리 추가
+  * [harness/MANIFEST.md](harness/MANIFEST.md)에 표준/요구사항/구현-only/미결정 항목 분류
+  * [harness/REQUIREMENTS.md](harness/REQUIREMENTS.md)에 기존 AGENTS 요구사항을 하네스 정본으로 이관
+  * [harness/DOMAIN_RULES.md](harness/DOMAIN_RULES.md)에 플랫폼별 내보내기 규칙과 파싱 불변식 이관
+  * [harness/DECISIONS.md](harness/DECISIONS.md)에 HISTORY의 반복 참조용 기술/제품 결정 정리
+  * 개인정보 경계, 외부 네트워크 표면, XSS 입력 신뢰 경계, 캐시 정책 등 상위 표준 공백 확인
+  * 검토 보고서를 `harness/reviews/2026-05-17.md`로 이동해 루트 Markdown을 입구 문서 중심으로 정리
+  * 보조 Python CSV 파서를 `tools/parse_kakao_chat.py`로 이동해 본 앱(`index.html`)과 선택 유틸의 경계를 명확화
+  * [harness/BACKLOG.md](harness/BACKLOG.md)에 하네스 리뷰의 미반영 실행 과제와 우선순위 이관
+  * [.agents/skills/chaextractor-maintainer/SKILL.md](.agents/skills/chaextractor-maintainer/SKILL.md), [.agents/skills/chaextractor-tester/SKILL.md](.agents/skills/chaextractor-tester/SKILL.md) project-specific 스킬 추가
+  * `AGENTS.md`에 스킬 위치, 작업 라우팅, 수동 적용 절차 안내 추가
+  * `CLAUDE.md`는 드리프트 방지를 위해 `AGENTS.md`를 가리키는 얇은 Claude Code 호환 진입점으로 축소
 
 ## 테스트 이력
 

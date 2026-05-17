@@ -1,7 +1,7 @@
 # 채상욱의 머니버스 대화 뷰어
 
 카카오톡 오픈채팅방 대화 내역을 브라우저에서 바로 보는 뷰어입니다.
-서버 업로드 없이 클라이언트에서만 처리하므로 개인정보가 외부로 전송되지 않습니다.
+대화 원문과 첨부파일은 서버 업로드 없이 브라우저에서 처리합니다.
 
 **배포**: <https://meringue5.github.io/chaextractor/>
 
@@ -39,11 +39,13 @@
 ```
 chaextractor/
 ├── index.html           # 메인 앱 (HTML + CSS + JS 단일 파일, ~2MB)
-├── parse_kakao_chat.py  # Python CSV 파서 (대안, 선택사항)
+├── tools/               # 선택 유틸리티 (Python CSV 파서 등)
 ├── pyproject.toml       # Python 프로젝트 설정
 ├── og-image.png         # Open Graph 이미지
-├── CLAUDE.md            # AI 에이전트 작업 지침
-├── AGENTS.md            # 프로젝트 명세 (도메인 지식, 코드 구조, 패턴)
+├── harness/             # 요구사항/도메인 규칙/결정/하네스 매니페스트
+├── .agents/skills/      # Project-specific skill procedures
+├── CLAUDE.md            # Claude Code용 AGENTS.md 포워딩 문서
+├── AGENTS.md            # AI 에이전트 진입점 (하네스/코드 구조)
 ├── HISTORY.md           # 진행 이력
 ├── LICENSE              # MIT License
 └── README.md            # 이 파일
@@ -57,18 +59,25 @@ chaextractor/
 ## 배포
 
 `index.html` 하나만 정적 호스팅(GitHub Pages, Netlify 등)에 올리면 됩니다.
-외부 의존성은 JSZip CDN 하나뿐입니다.
+JSZip은 `index.html`에 인라인되어 있으며, 폰트는 CDN에서 로드됩니다.
+
+## 개인정보와 외부 요청
+
+- 대화 원문, 첨부파일, 파싱 결과는 자동으로 외부 서버에 전송하지 않습니다.
+- 폰트 로드를 위한 CDN 요청은 발생할 수 있습니다.
+- 꿀팁, 문의/제보 등 외부 링크는 사용자가 클릭했을 때만 열립니다.
 
 ## 대안: Python CSV 파서
 
 브라우저 뷰어 대신 CSV 파일로 추출해야 하는 경우:
 
 ```bash
-python parse_kakao_chat.py [입력파일] [출력파일]
+python3 tools/parse_kakao_chat.py [입력파일] [출력파일]
 ```
 
 - Python 3.12 이상 필요
 - iOS 대화 파일만 지원
+- 설치형 CLI가 필요하면 `uv run parse-chat [입력파일] [출력파일]`로도 실행할 수 있습니다.
 
 ### CSV 출력 컬럼
 

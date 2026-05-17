@@ -6,7 +6,10 @@ requires-python = ">=3.12"
 dependencies = []
 
 [project.scripts]
-parse-chat = "parse_kakao_chat:main"
+parse-chat = "tools.parse_kakao_chat:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["tools"]
 
 [build-system]
 requires = ["hatchling"]

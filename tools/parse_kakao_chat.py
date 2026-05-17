@@ -3,7 +3,7 @@
 대화 내용을 CSV로 변환합니다.
 
 사용법:
-    python parse_kakao_chat.py [input_file] [output_file]
+    python3 tools/parse_kakao_chat.py [input_file] [output_file]
 
     기본값:
     - input_file: data/Talk_2026.1.27 21_37-1.txt
@@ -290,9 +290,11 @@ class KakaoChatParser:
 
 
 def main():
+    project_root = Path(__file__).resolve().parents[1]
+
     # 기본 파일 경로
-    default_input = Path(__file__).parent / "data" / "Talk_2026.1.27 21_37-1.txt"
-    default_output = Path(__file__).parent / "parsed_chat.csv"
+    default_input = project_root / "data" / "Talk_2026.1.27 21_37-1.txt"
+    default_output = project_root / "parsed_chat.csv"
 
     # 명령줄 인자 처리
     input_file = sys.argv[1] if len(sys.argv) > 1 else str(default_input)
