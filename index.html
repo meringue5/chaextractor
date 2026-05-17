@@ -1129,6 +1129,37 @@
             color: white;
         }
 
+        .settings-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cache-clear-btn {
+            flex: 0 0 auto;
+            padding: 9px 12px;
+            border: 1px solid rgba(220, 53, 69, 0.4);
+            border-radius: 6px;
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .cache-clear-btn:hover {
+            border-color: #dc3545;
+        }
+
+        .cache-clear-btn:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .settings-status {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
         /* 각 폰트 버튼은 자기 자신의 폰트로 표시 */
         .font-btn[data-font="default"] {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
@@ -1496,6 +1527,13 @@
                     <button data-font="neodgm" class="font-btn">Neo둥근모Pro</button>
                 </div>
             </div>
+            <div class="settings-group">
+                <label>로컬 캐시</label>
+                <div class="settings-actions">
+                    <button type="button" class="cache-clear-btn" id="clearCacheBtn">캐시 삭제</button>
+                    <span class="settings-status" id="cacheStatus"></span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1681,6 +1719,8 @@
         const zipName = document.getElementById('zipName');
         const startBtn = document.getElementById('startBtn');
         const step1 = document.getElementById('step1');
+        const clearCacheBtn = document.getElementById('clearCacheBtn');
+        const cacheStatus = document.getElementById('cacheStatus');
         const progressContainer = document.getElementById('progressContainer');
         const progressFill = document.getElementById('progressFill');
         const progressText = document.getElementById('progressText');
@@ -1756,7 +1796,65 @@
             };
         }
 
+        function setAttachmentFilesForTest(files) {
+            attachmentFiles = { ...files };
+        }
+
+        function buildCachePrivacyTestSnapshot() {
+            return {
+                attachmentFileCount: Object.keys(attachmentFiles).length,
+                attachmentEntriesCount: Object.keys(attachmentEntries).length,
+                zipInstanceActive: !!zipInstance,
+                cacheStatus: cacheStatus.textContent,
+                clearCacheDisabled: clearCacheBtn.disabled
+            };
+        }
+
         applyBrowserCapabilityStatus();
+
+        // ========== 런타임 첨부파일/캐시 정리 ==========
+        function clearRuntimeAttachmentFiles() {
+            let revokedCount = 0;
+
+            if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+                for (const url of Object.values(attachmentFiles)) {
+                    if (typeof url === 'string' && url.startsWith('blob:')) {
+                        URL.revokeObjectURL(url);
+                        revokedCount++;
+                    }
+                }
+            }
+
+            attachmentFiles = {};
+            return revokedCount;
+        }
+
+        function resetRuntimeAttachmentState() {
+            const revokedCount = clearRuntimeAttachmentFiles();
+            attachmentEntries = {};
+            zipInstance = null;
+            return revokedCount;
+        }
+
+        async function clearAllCache() {
+            try {
+                if (typeof indexedDB === 'undefined') {
+                    return { ok: false, reason: 'indexedDB-missing' };
+                }
+
+                const db = await initDB();
+                return new Promise((resolve) => {
+                    const transaction = db.transaction([DB_CONFIG.storeName], 'readwrite');
+                    const store = transaction.objectStore(DB_CONFIG.storeName);
+                    const request = store.clear();
+
+                    request.onsuccess = () => resolve({ ok: true });
+                    request.onerror = () => resolve({ ok: false, reason: 'clear-failed' });
+                });
+            } catch (error) {
+                return { ok: false, reason: error.message || 'clear-failed' };
+            }
+        }
 
         // ========== 공통 모달 함수 ==========
         let lastModalTrigger = null;
@@ -1963,6 +2061,18 @@
             updateSettingsUI();
         });
 
+        clearCacheBtn.addEventListener('click', async () => {
+            clearCacheBtn.disabled = true;
+            cacheStatus.textContent = '삭제 중...';
+
+            const result = await clearAllCache();
+            cacheStatus.textContent = result.ok
+                ? '삭제 완료'
+                : '삭제 실패';
+
+            clearCacheBtn.disabled = false;
+        });
+
         // 테마 버튼 클릭
         document.querySelectorAll('.theme-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -2159,6 +2269,7 @@
         async function processZipFile(file) {
             const startTime = performance.now();
             console.log('⏱️ ZIP 처리 시작');
+            resetRuntimeAttachmentState();
 
             // === 캐시 확인 ===
             const cacheKey = generateCacheKey(file.name, file.size, file.lastModified);
@@ -2282,6 +2393,7 @@
         async function processFolderFiles(files) {
             const startTime = performance.now();
             console.log('⏱️ 폴더 처리 시작');
+            resetRuntimeAttachmentState();
 
             updateProgress(5, '파일 분석 중...');
 
@@ -3647,6 +3759,11 @@
                 applyBrowserCapabilityStatus,
                 getBrowserCapabilityStatus,
                 getCapabilitySnapshot: buildCapabilityTestSnapshot,
+                setAttachmentFilesForTest,
+                getCachePrivacySnapshot: buildCachePrivacyTestSnapshot,
+                clearRuntimeAttachmentFiles,
+                resetRuntimeAttachmentState,
+                clearAllCache,
                 openModal,
                 closeActiveModal,
                 handleModalKeydown,

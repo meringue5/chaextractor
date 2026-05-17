@@ -145,6 +145,57 @@ const localStorage = {
 
 function FakeFile() {}
 function FakeBlob() {}
+const revokedObjectUrls = [];
+
+function createSuccessRequest(resultValue) {
+  const request = { result: resultValue };
+  setTimeout(() => {
+    if (request.onsuccess) {
+      request.onsuccess({ target: { result: resultValue } });
+    }
+  }, 0);
+  return request;
+}
+
+function createFakeIndexedDB() {
+  const store = new Map();
+  const db = {
+    objectStoreNames: {
+      contains() {
+        return true;
+      }
+    },
+    createObjectStore() {
+      return this.transaction().objectStore();
+    },
+    transaction() {
+      return {
+        objectStore() {
+          return {
+            clear() {
+              store.clear();
+              return createSuccessRequest(undefined);
+            },
+            get(key) {
+              return createSuccessRequest(store.get(key));
+            },
+            put(value) {
+              store.set(value.cacheKey, value);
+              return createSuccessRequest(undefined);
+            },
+            createIndex() {}
+          };
+        }
+      };
+    }
+  };
+
+  return {
+    open() {
+      return createSuccessRequest(db);
+    }
+  };
+}
 
 const windowObject = {
   __CHAEXTRACTOR_ENABLE_TEST_API__: true,
@@ -161,6 +212,8 @@ const windowObject = {
     };
   }
 };
+
+const fakeIndexedDB = createFakeIndexedDB();
 
 const context = {
   console: {
@@ -197,10 +250,15 @@ const context = {
   window: windowObject,
   File: FakeFile,
   Blob: FakeBlob,
-  indexedDB: {},
+  indexedDB: fakeIndexedDB,
   localStorage,
   performance: { now: () => 0 },
-  URL: { createObjectURL: () => 'blob:test' },
+  URL: {
+    createObjectURL: () => 'blob:test',
+    revokeObjectURL(url) {
+      revokedObjectUrls.push(url);
+    }
+  },
   setTimeout,
   clearTimeout,
   requestAnimationFrame(callback) {
@@ -319,6 +377,28 @@ if (input.mode === 'capabilityNotice') {
   process.stdout.write(JSON.stringify({
     result,
     snapshot: api.getCapabilitySnapshot()
+  }, null, 2));
+  process.exit(0);
+}
+
+if (input.mode === 'cachePrivacy') {
+  const api = windowObject.__CHAEXTRACTOR_TEST__;
+  api.setAttachmentFilesForTest({
+    image: 'blob:test-image',
+    file: 'blob:test-file',
+    external: 'https://example.com/not-a-blob'
+  });
+  const beforeCleanup = api.getCachePrivacySnapshot();
+  const revokedCount = api.resetRuntimeAttachmentState();
+  const afterCleanup = api.getCachePrivacySnapshot();
+  const clearCacheResult = await api.clearAllCache();
+
+  process.stdout.write(JSON.stringify({
+    beforeCleanup,
+    revokedCount,
+    revokedObjectUrls,
+    afterCleanup,
+    clearCacheResult
   }, null, 2));
   process.exit(0);
 }

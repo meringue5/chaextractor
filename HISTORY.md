@@ -228,6 +228,20 @@
 * 검증:
   * `python3 harness/scripts/check_capability_notice.py` 통과
 
+## 2-1-11단계: 캐시 삭제와 Blob URL 정리 구현 (2026-05-17)
+* 대상 백로그:
+  * H-011 캐시 삭제 UX와 Blob URL 해제 정책 구현
+* 결정:
+  * IndexedDB 캐시는 설정 모달에서 삭제할 수 있게 제공
+  * 새 업로드 전 기존 런타임 첨부 Blob URL은 `URL.revokeObjectURL`로 해제
+* 변경:
+  * 설정 모달에 로컬 캐시 삭제 버튼과 상태 문구 추가
+  * `clearAllCache()`, `clearRuntimeAttachmentFiles()`, `resetRuntimeAttachmentState()` 추가
+  * ZIP/폴더 새 처리 시작 시 런타임 첨부 상태 초기화
+  * [harness/scripts/check_cache_privacy.py](harness/scripts/check_cache_privacy.py) 추가
+* 검증:
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

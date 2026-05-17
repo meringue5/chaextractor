@@ -41,6 +41,7 @@ python3 harness/scripts/check_modal_escape.py
 python3 harness/scripts/check_cache_date_sort.py
 python3 harness/scripts/check_ui_smoke.py
 python3 harness/scripts/check_capability_notice.py
+python3 harness/scripts/check_cache_privacy.py
 PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"
 ```
 
@@ -53,6 +54,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; p
 `check_ui_smoke.py`는 Node VM에서 실제 앱 UI 함수를 호출해 fixture 로드, 날짜 선택, 검색 날짜 필터, 리더 필터, 테마/폰트 설정, 설정 모달, 사이드바 열기/닫기를 검사한다. Playwright 같은 실제 브라우저 smoke는 의존성을 도입할 때 이 명령 위에 확장한다.
 
 `check_capability_notice.py`는 `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 지원 여부에 따라 안내 문구와 업로드 제한 상태가 올바른지 검사한다.
+
+`check_cache_privacy.py`는 새 업로드 전 Blob URL 해제, 런타임 첨부 상태 초기화, 설정 모달 캐시 삭제가 호출하는 IndexedDB clear 경로를 검사한다.
 
 ## 예정 명령
 

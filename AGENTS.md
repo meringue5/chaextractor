@@ -180,9 +180,11 @@
 - `initDB()` — IndexedDB 초기화
 - `getCache(cacheKey)` / `setCache(cacheKey, data)` — 캐시 읽기/쓰기
 - `cleanOldCache()` — 오래된 캐시 정리
+- `clearAllCache()` — 설정 모달 캐시 삭제
 - `generateCacheKey(fileName, fileSize, lastModified)` — 캐시 키 생성
 - `sortDatesDescending(dateKeys)` — 날짜 목록 최신순 정규화
 - `restoreCachedChatData(cachedData)` — 캐시 hit 상태 복원
+- `clearRuntimeAttachmentFiles()` / `resetRuntimeAttachmentState()` — Blob URL 해제와 런타임 첨부 상태 초기화
 
 UI 렌더링:
 - `initApp()` — 앱 초기화 (파일 처리 완료 후)
