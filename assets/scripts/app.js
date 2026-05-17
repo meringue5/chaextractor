@@ -1275,10 +1275,43 @@ function rememberModalTrigger() {
     lastModalTrigger = document.activeElement;
 }
 
-function restoreModalTrigger() {
-    if (lastModalTrigger && typeof lastModalTrigger.focus === 'function') {
-        lastModalTrigger.focus();
+function canUseProgrammaticFocus() {
+    return !isIOSFirefox();
+}
+
+function safeFocus(element, options) {
+    if (!canUseProgrammaticFocus()) return false;
+    if (!element || typeof element.focus !== 'function') return false;
+    try {
+        element.focus(options);
+        return true;
+    } catch (error) {
+        return false;
     }
+}
+
+function focusModalWhenReady(modal, maxAttempts = 8) {
+    if (!canUseProgrammaticFocus()) return;
+    if (!modal) return;
+
+    const closeButton = modal.querySelector('.modal-close-btn');
+    if (!closeButton) return;
+
+    const tryFocus = (attempt) => {
+        const isOpen = modal.classList.contains('open') || modal.classList.contains('active');
+        const isHiddenByAnimation = modal.classList.contains('win31-window-hidden') || modal.classList.contains('closing');
+        if (isOpen && !isHiddenByAnimation && safeFocus(closeButton, { preventScroll: true })) {
+            return;
+        }
+        if (attempt >= maxAttempts) return;
+        requestAnimationFrame(() => tryFocus(attempt + 1));
+    };
+
+    tryFocus(0);
+}
+
+function restoreModalTrigger() {
+    safeFocus(lastModalTrigger, { preventScroll: true });
     lastModalTrigger = null;
 }
 
@@ -1432,10 +1465,7 @@ function play1995GhostBox(fromRect, toRect, onFinish) {
 }
 
 function focusModalCloseButton(modal) {
-    const closeButton = modal.querySelector('.modal-close-btn');
-    if (closeButton && typeof closeButton.focus === 'function') {
-        closeButton.focus();
-    }
+    focusModalWhenReady(modal);
 }
 
 function animate1995Panel(panel, className, fromRect, toRect) {
@@ -3409,7 +3439,7 @@ function initApp() {
     document.getElementById('stats').textContent =
         `${messages.length.toLocaleString()}개 메시지 · ${users.size}명 · ${dates.length}일`;
     if (captureBtn) {
-        captureBtn.disabled = messages.length === 0;
+        captureBtn.disabled = true;
     }
 
     if (dates.length > 0) {
@@ -3568,6 +3598,9 @@ function renderDateList(searchQuery = '') {
 // ========== 날짜 선택 ==========
 function selectDate(date) {
     selectedDate = date;
+    if (captureBtn) {
+        captureBtn.disabled = false;
+    }
 
     const dateObj = new Date(date);
     if (dateObj.getMonth() !== currentMonth.getMonth() ||
@@ -3796,7 +3829,7 @@ function showImage(url, triggerElement = null) {
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
 
-    const focusClose = () => document.getElementById('modalClose').focus();
+    const focusClose = () => focusModalWhenReady(modal);
     if (!is1995ThemeActive()) {
         focusClose();
         return;
