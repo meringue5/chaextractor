@@ -1286,6 +1286,17 @@ function is1995ThemeActive() {
     return document.documentElement.getAttribute('data-theme') === '1995';
 }
 
+function isIOSFirefox() {
+    const ua = (typeof navigator !== 'undefined' && navigator.userAgent)
+        ? navigator.userAgent
+        : '';
+    return /iPhone|iPad|iPod/i.test(ua) && /FxiOS/i.test(ua);
+}
+
+function is1995AnimationAllowed() {
+    return !isIOSFirefox();
+}
+
 function normalize1995GhostRect(rect) {
     if (!rect) return null;
 
@@ -1380,7 +1391,7 @@ function play1995GhostBox(fromRect, toRect, onFinish) {
         }
     };
 
-    if (!is1995ThemeActive() || !document.body || typeof document.createElement !== 'function') {
+    if (!is1995ThemeActive() || !is1995AnimationAllowed() || !document.body || typeof document.createElement !== 'function') {
         finish();
         return;
     }
@@ -1451,7 +1462,7 @@ function openModal(modalId) {
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
 
-    if (!is1995ThemeActive()) {
+    if (!is1995ThemeActive() || !is1995AnimationAllowed()) {
         focusModalCloseButton(modal);
         return;
     }
@@ -1470,6 +1481,7 @@ function closeModal(modalId, restoreFocus = true) {
     if (!modal) return;
 
     const shouldAnimateClose = is1995ThemeActive()
+        && is1995AnimationAllowed()
         && modal.classList.contains('open')
         && !modal.classList.contains('closing');
 
@@ -1504,6 +1516,7 @@ function closeImageModal(restoreFocus = true) {
     if (!modal) return;
 
     const shouldAnimateClose = is1995ThemeActive()
+        && is1995AnimationAllowed()
         && modal.classList.contains('active')
         && !modal.classList.contains('closing');
 
@@ -1931,6 +1944,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 });
 
 // 페이지 로드시 설정 초기화
+document.documentElement.setAttribute('data-ios-firefox', isIOSFirefox() ? 'true' : 'false');
 initSettings();
 
 // ========== ZIP/TXT/CSV 파일 선택 ==========
