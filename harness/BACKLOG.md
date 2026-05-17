@@ -39,12 +39,12 @@
 | `index.html` parser test API 추가 | `window.__CHAEXTRACTOR_ENABLE_TEST_API__` guard 기반 test hook | 반영 |
 | Doc drift checker 추가 | `harness/scripts/check_doc_drift.py`, `harness/TESTING.md` | 반영 |
 | Windows 텍스트 내보내기 정식 지원 승격 | `README.md`, `AGENTS.md`, `harness/DOMAIN_RULES.md`, `test/parser-golden/windows-minimal.json` | 반영 |
+| H-005 파일명/첨부 ref HTML escape 보강 | `index.html`, `test/parser-golden/security-xss.json` | 반영 |
 
 ## 우선순위 백로그
 
 | ID | 우선순위 | 영역 | 작업 | 완료 기준 |
 |---|---|---|---|---|
-| H-005 | P0 | Security | 파일명/첨부 ref HTML escape 보강 | XSS fixture가 실행되지 않고 텍스트로 렌더링 |
 | H-006 | P0 | Accessibility | Escape 모달 닫기와 키보드 접근성 보강 | 이미지/꿀팁/설정 모달이 Escape로 닫힘 |
 | H-007 | P0 | Cache | cache hit 날짜 정렬 회귀 고정 | 캐시 사용 시에도 날짜 목록이 최신순 유지 |
 | H-009 | P1 | Browser smoke | 주요 UI 흐름 Playwright smoke 추가 | 업로드, 날짜 선택, 검색, 리더 필터, 설정, 모바일 사이드바 검증 |

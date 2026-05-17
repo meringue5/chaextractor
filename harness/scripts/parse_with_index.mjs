@@ -105,6 +105,9 @@ function createElement(tagName = 'div') {
     },
     set innerHTML(value) {
       html = String(value);
+      if (html === '') {
+        this.children = [];
+      }
     }
   };
 }
@@ -190,10 +193,17 @@ if (!windowObject.__CHAEXTRACTOR_TEST__) {
   throw new Error('index.html did not expose __CHAEXTRACTOR_TEST__');
 }
 
-const result = windowObject.__CHAEXTRACTOR_TEST__.parseChat(input.content, {
+let result = windowObject.__CHAEXTRACTOR_TEST__.parseChat(input.content, {
   platform: input.platform,
   attachments: input.attachments || [],
   mapAttachments: true
 });
+
+if (input.renderDate) {
+  result = {
+    ...result,
+    rendered: windowObject.__CHAEXTRACTOR_TEST__.renderChat(input.renderDate)
+  };
+}
 
 process.stdout.write(JSON.stringify(result, null, 2));

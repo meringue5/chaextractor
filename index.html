@@ -2695,13 +2695,13 @@
                 if (type === 'photo') {
                     el.innerHTML = `<img src="${url}" onclick="showImage('${url}')" alt="사진">`;
                 } else {
-                    el.innerHTML = `<a class="file-link" href="${url}" target="_blank">📎 ${ref || filename}</a>`;
+                    el.innerHTML = `<a class="file-link" href="${url}" target="_blank" rel="noopener">📎 ${escapeHtml(ref || filename)}</a>`;
                 }
             } else {
                 if (type === 'photo') {
                     el.innerHTML = `<span class="no-file">📷 사진 (로드 실패)</span>`;
                 } else {
-                    el.innerHTML = `<span class="no-file">📎 ${ref || '파일'} (로드 실패)</span>`;
+                    el.innerHTML = `<span class="no-file">📎 ${escapeHtml(ref || '파일')} (로드 실패)</span>`;
                 }
             }
         }
@@ -3173,7 +3173,7 @@
                 let contentHtml = escapeHtml(msg.content);
                 contentHtml = contentHtml.replace(
                     /(https?:\/\/[^\s]+)/g,
-                    '<a href="$1" target="_blank">$1</a>'
+                    '<a href="$1" target="_blank" rel="noopener">$1</a>'
                 );
 
                 let attachmentHtml = '';
@@ -3205,8 +3205,8 @@
                         const url = attachmentFiles[msg.attachment_path];
                         attachmentHtml = `
                             <div class="attachment">
-                                <a class="file-link" href="${url}" target="_blank">
-                                    📎 ${msg.attachment_ref || msg.attachment_path}
+                                <a class="file-link" href="${url}" target="_blank" rel="noopener">
+                                    📎 ${escapeHtml(msg.attachment_ref || msg.attachment_path)}
                                 </a>
                             </div>
                         `;
@@ -3218,7 +3218,7 @@
                         `;
                         setTimeout(() => loadAndRenderAttachment(attachId, msg.attachment_path, 'file', msg.attachment_ref), 0);
                     } else {
-                        attachmentHtml = `<div class="attachment"><span class="no-file">📎 ${msg.attachment_ref || '파일'} (파일 없음)</span></div>`;
+                        attachmentHtml = `<div class="attachment"><span class="no-file">📎 ${escapeHtml(msg.attachment_ref || '파일')} (파일 없음)</span></div>`;
                     }
                 } else if (msg.message_type === 'emoticon') {
                     attachmentHtml = `<div class="attachment"><span class="emoticon">😊 이모티콘</span></div>`;
@@ -3370,6 +3370,16 @@
             };
         }
 
+        function buildRenderedChatTestSnapshot(date) {
+            renderChat(date);
+            const container = document.getElementById('chatMessages');
+            return {
+                date,
+                messageCount: container.children.length,
+                messagesHtml: Array.from(container.children).map(child => child.innerHTML)
+            };
+        }
+
         if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
             window.__CHAEXTRACTOR_TEST__ = {
                 parseChat(content, options = {}) {
@@ -3413,7 +3423,8 @@
                     return buildParserTestSnapshot();
                 },
                 classifyContent,
-                getSnapshot: buildParserTestSnapshot
+                getSnapshot: buildParserTestSnapshot,
+                renderChat: buildRenderedChatTestSnapshot
             };
         }
 

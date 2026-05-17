@@ -143,6 +143,26 @@ def compare_case(case: dict[str, Any], actual: dict[str, Any]) -> list[str]:
                 f"{json.dumps(expected_message, ensure_ascii=False)}"
             )
 
+    rendered = actual.get("rendered", {})
+    rendered_html = "\n".join(rendered.get("messagesHtml", []))
+
+    if "renderedMessageCount" in expected:
+        compare_value(
+            case_id,
+            "rendered.messageCount",
+            expected["renderedMessageCount"],
+            rendered.get("messageCount"),
+            errors,
+        )
+
+    for expected_text in expected.get("renderedHtmlContains", []):
+        if expected_text not in rendered_html:
+            errors.append(f"{case_id}: rendered HTML missing {expected_text!r}")
+
+    for forbidden_text in expected.get("renderedHtmlNotContains", []):
+        if forbidden_text in rendered_html:
+            errors.append(f"{case_id}: rendered HTML contained {forbidden_text!r}")
+
     return errors
 
 
@@ -159,6 +179,8 @@ def main() -> int:
     for case_path in case_paths:
         case = read_case(case_path)
         payload = load_input(case)
+        if "renderDate" in case:
+            payload["renderDate"] = case["renderDate"]
         actual = parse_with_index(payload)
         errors = compare_case(case, actual)
 

@@ -56,9 +56,9 @@
 
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
-| 대화 내용, 사용자명, 파일명은 신뢰하지 않는 입력으로 취급한다. | 메시지 본문은 `escapeHtml` 처리 | 파일명/첨부 ref 출력 escape 점검 필요 |
+| 대화 내용, 사용자명, 파일명은 신뢰하지 않는 입력으로 취급한다. | 메시지 본문, 사용자명, 파일명/첨부 ref는 렌더링 전 `escapeHtml` 처리 | `security-xss` golden fixture로 렌더링 결과 점검 |
 | untrusted 파일 내용은 스크립트로 실행하지 않는다. | Blob URL로 이미지/파일 표시 | MIME/확장자 정책 테스트 필요 |
-| `innerHTML` 사용 시 사용자 입력은 반드시 escape 후 삽입한다. | 일부 템플릿에 raw `attachment_ref` 사용 가능성 | XSS fixture 필요 |
+| `innerHTML` 사용 시 사용자 입력은 반드시 escape 후 삽입한다. | 파일명/첨부 ref raw 삽입 경로 보강 완료 | 새 `innerHTML` 경로 추가 시 security fixture 확장 |
 | `target="_blank"` 외부 링크는 `rel="noopener"`를 사용한다. | 현재 주요 외부 링크에 적용됨 | 링크 lint 가능 |
 | Blob URL은 새 업로드/정리 시 해제 가능해야 한다. | `URL.revokeObjectURL` 정책 없음 | 메모리/개인정보 표준 보강 필요 |
 | 오류는 복구 가능하게 사용자에게 표시한다. | 업로드 오류 메시지는 있음 | 오류 taxonomy와 fixture 필요 |
@@ -104,7 +104,6 @@
 | 캐시 hit 날짜 reverse | `cachedData.dates.slice().reverse()` | 날짜 정렬 회귀 가능 | 테스트로 고정 또는 수정 |
 | 검색 결과 하이라이트 부재 | 검색은 `renderDateList`에만 연결 | AGENTS와 불일치 | 구현 또는 요구사항 수정 |
 | Escape 모달 닫기 부재 | click close만 구현 | 접근성 요구와 불일치 | 접근성 표준으로 구현 |
-| 파일명 raw HTML 삽입 가능성 | file link template의 ref 출력 | XSS 가능성 | escape 표준 적용 |
 | Windows 첨부파일 매핑 | 텍스트 파싱은 지원하나 첨부파일 패턴은 미확정 | Windows 사용자 기대 혼선 | 실제 샘플 확보 후 정식화 |
 
 ## 미결정 항목

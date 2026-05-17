@@ -173,6 +173,17 @@
   * `python3 harness/scripts/run_parser_golden.py` 통과 (`android-sample`, `ios-minimal`, `windows-minimal`)
   * `python3 harness/scripts/check_doc_drift.py` 통과
 
+## 2-1-6단계: 보안 렌더링 하네스 보강 (2026-05-17)
+* 대상 백로그:
+  * H-005 파일명/첨부 ref HTML escape 보강
+* 변경:
+  * `index.html`의 파일 링크/누락 파일/지연 로딩 파일 렌더링에서 첨부 ref와 파일명을 `escapeHtml` 처리
+  * 대화 본문 URL 링크와 파일 링크에 `rel="noopener"` 적용
+  * [harness/scripts/parse_with_index.mjs](harness/scripts/parse_with_index.mjs)와 [harness/scripts/run_parser_golden.py](harness/scripts/run_parser_golden.py)에 `renderChat` HTML 검증 경로 추가
+  * [test/fixtures/security-xss/xss_attachment_ref.txt](test/fixtures/security-xss/xss_attachment_ref.txt), [test/parser-golden/security-xss.json](test/parser-golden/security-xss.json) 추가
+* 검증:
+  * `python3 harness/scripts/run_parser_golden.py test/parser-golden/security-xss.json` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트
