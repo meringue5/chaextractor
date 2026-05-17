@@ -32,12 +32,13 @@ python3 harness/scripts/run_parser_golden.py
 
 ```bash
 git diff --check
-ruby -e 'Dir["*.md", "harness/*.md", "harness/reviews/*.md", "tools/*.md", ".agents/skills/*/SKILL.md"].each do |file|; dir = File.dirname(file); File.readlines(file).each_with_index do |line, idx|; line.scan(/\[[^\]]+\]\(([^)#]+\.md)\)/).each do |match|; target = match[0]; path = File.expand_path(target, dir); puts "#{file}:#{idx + 1}: missing #{target}" unless File.exist?(path); end; end; end'
+python3 harness/scripts/check_doc_drift.py
 PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"
 ```
 
+`check_doc_drift.py`는 Markdown 로컬 링크, 플랫폼 지원 범위, Windows 후보 구현-only 분류, JSZip 인라인 상태, 폰트 CDN 문서화, Python 도구 위치, Android 샘플 경로, parser golden 명령 문서화를 함께 검사한다.
+
 ## 예정 명령
 
-- doc drift checker: README/AGENTS/harness/index.html의 플랫폼, 의존성, 공개 약속 일치 여부
 - browser smoke: 업로드, 날짜 선택, 검색, 리더 필터, 설정, 이미지 모달, 모바일 사이드바
 - performance smoke: 합성 대용량 로그 파싱 시간과 날짜 단위 렌더링 부담

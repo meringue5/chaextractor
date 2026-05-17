@@ -37,12 +37,12 @@
 | Android 실제 ZIP expected 추가 | `test/parser-golden/android-sample.json` | 반영 |
 | iOS 최소 fixture와 expected 추가 | `test/fixtures/ios-minimal/`, `test/parser-golden/ios-minimal.json` | 반영 |
 | `index.html` parser test API 추가 | `window.__CHAEXTRACTOR_ENABLE_TEST_API__` guard 기반 test hook | 반영 |
+| Doc drift checker 추가 | `harness/scripts/check_doc_drift.py`, `harness/TESTING.md` | 반영 |
 
 ## 우선순위 백로그
 
 | ID | 우선순위 | 영역 | 작업 | 완료 기준 |
 |---|---|---|---|---|
-| H-004 | P0 | Doc drift | Markdown/플랫폼/PATTERNS/의존성 drift checker 추가 | 로컬 명령이 통과/실패를 반환 |
 | H-005 | P0 | Security | 파일명/첨부 ref HTML escape 보강 | XSS fixture가 실행되지 않고 텍스트로 렌더링 |
 | H-006 | P0 | Accessibility | Escape 모달 닫기와 키보드 접근성 보강 | 이미지/꿀팁/설정 모달이 Escape로 닫힘 |
 | H-007 | P0 | Cache | cache hit 날짜 정렬 회귀 고정 | 캐시 사용 시에도 날짜 목록이 최신순 유지 |
@@ -57,7 +57,7 @@
 
 다음으로 가장 작은 구현 단위:
 
-1. Doc drift checker 추가
-2. 파일명/첨부 ref HTML escape 보강과 XSS fixture 추가
-3. Escape 모달 닫기와 키보드 접근성 보강
-4. cache hit 날짜 정렬 회귀 고정
+1. 파일명/첨부 ref HTML escape 보강과 XSS fixture 추가
+2. Escape 모달 닫기와 키보드 접근성 보강
+3. cache hit 날짜 정렬 회귀 고정
+4. Windows 후보 지원 상태 결정

@@ -36,9 +36,9 @@
 
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
-| 대화 원문, 첨부파일, 파싱 결과는 외부 서버로 자동 전송하지 않는다. | 구현은 클라이언트 로컬 처리 중심 | 외부 네트워크 표면 점검 |
+| 대화 원문, 첨부파일, 파싱 결과는 외부 서버로 자동 전송하지 않는다. | 구현은 클라이언트 로컬 처리 중심 | doc drift checker로 문구 일부 점검 |
 | 사용자가 명시적으로 클릭한 외부 링크는 허용하되, 대화 데이터가 URL/query/body로 포함되면 안 된다. | 꿀팁 링크와 문의/제보 링크가 있음 | 링크 목록 매니페스트와 회귀 체크 |
-| 자동 외부 요청은 문서화되어야 한다. | 폰트 CDN 요청이 자동 발생함 | README 문구 정밀화 완료, 회귀 체크 필요 |
+| 자동 외부 요청은 문서화되어야 한다. | 폰트 CDN 요청이 자동 발생함 | doc drift checker로 문서화 여부 점검 |
 | IndexedDB 캐시는 로컬 캐시이며 민감 데이터로 취급한다. | 30일 정리 로직이 있음 | 캐시 삭제 UX/정책 결정 필요 |
 | localStorage에는 UI 설정만 저장한다. | theme/font/fontAutoSwitch만 사용 | 설정 키 allowlist 체크 |
 
@@ -68,7 +68,7 @@
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
 | 앱은 서버 없이 실행 가능한 단일 HTML 앱이다. | `index.html` 중심 | 테스트/문서 도구는 별도 파일 허용 |
-| 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 인라인, 폰트 CDN | README/AGENTS 정리 완료, 회귀 체크 필요 |
+| 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 인라인, 폰트 CDN | doc drift checker로 일부 점검 |
 | 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소 fixture parser golden 시작 | Windows/macOS 확장 시 fixture 추가 |
 | 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 코드가 숨은 상태로 존재 | Windows 결정 필요 |
 | 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | project skill과 parser golden 하네스 시작 | CI 게이트 필요 |
@@ -97,7 +97,7 @@
 | 항목 | 구현 위치/근거 | 리스크 | 다음 결정 |
 |---|---|---|---|
 | Windows 파서 후보 | `PATTERNS.DATE_HEADER_WINDOWS`, `MESSAGE_WINDOWS`, `detectPlatform(... 'windows')` | 문서상 TODO와 충돌 | 정식/실험/제거 중 결정 |
-| JSZip 인라인 | `index.html` 하단 JSZip 3.10.1 | 런타임 의존성 설명이 드리프트될 수 있음 | 문서화 완료, doc drift checker 필요 |
+| JSZip 인라인 | `index.html` 하단 JSZip 3.10.1 | 런타임 의존성 설명이 드리프트될 수 있음 | doc drift checker로 점검 |
 | 폰트 CDN 자동 요청 | CSS `@font-face` | 개인정보 문구와 외부 요청 범위 혼선 | 외부 네트워크 표면으로 공식 등재 완료 |
 | Google Forms 문의 링크 | setup/footer/header 링크 | 사용자 클릭 외부 이동 | 개인정보 문구에 "클릭 시 외부 이동" 명시 |
 | 20줄 미만 대화 파일 거부 | `validateChatFile` | 짧은 실제 내보내기 거부 가능 | 요구사항으로 인정할지 결정 |
@@ -136,5 +136,4 @@
 1. Windows 후보 지원 상태를 실험 또는 정식으로 결정한다.
 2. XSS/파일명 escape 표준을 구현 요구사항으로 승격한다.
 3. cache retention과 삭제 정책을 요구사항으로 정의한다.
-4. README/AGENTS와 하네스 문서 간 드리프트 checker를 추가한다.
-5. parser golden을 CI 게이트로 연결한다.
+4. parser golden과 doc drift checker를 CI 게이트로 연결한다.

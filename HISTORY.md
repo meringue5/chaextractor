@@ -154,6 +154,9 @@
   * `window.__CHAEXTRACTOR_ENABLE_TEST_API__`가 설정된 경우에만 노출되는 parser test hook 추가
 * 검증:
   * `python3 harness/scripts/run_parser_golden.py` 통과 (`android-sample`, `ios-minimal`)
+* Doc drift checker 추가:
+  * [harness/scripts/check_doc_drift.py](harness/scripts/check_doc_drift.py): Markdown 로컬 링크, 플랫폼 지원 범위, Windows 후보 구현-only 분류, JSZip 인라인, 폰트 CDN, Python 도구 위치, Android 샘플 경로, parser golden 명령 문서화 점검
+  * `python3 harness/scripts/check_doc_drift.py` 통과
 
 ## 테스트 이력
 
