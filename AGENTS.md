@@ -89,7 +89,7 @@
 
 ## 머니버스 꿀팁
 ### 개발자: 춤추는 토끼 171879
-머니버스 하지 마라 15계명 https://moneybus-labs.github.io/hidden-gems/
+머니버스 하지 마라 19계명 https://moneybus-labs.github.io/hidden-gems/
 머니버스 톡 추천 도서 https://github.com/moneybus-labs/books/blob/main/머니버스톡.md
 채부심 북스 추천 도서 https://github.com/moneybus-labs/books/blob/main/채부심북스.md
 
