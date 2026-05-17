@@ -1287,6 +1287,27 @@ body {
     text-decoration: none;
 }
 
+/* iOS Firefox(WebKit)에서 3D border 방향이 반대로 렌더링되는 현상 완화 */
+[data-theme="1995"][data-ios-firefox="true"] .setup-step,
+[data-theme="1995"][data-ios-firefox="true"] .leader-filter-panel,
+[data-theme="1995"][data-ios-firefox="true"] .link-item,
+[data-theme="1995"][data-ios-firefox="true"] .footer-link-btn,
+[data-theme="1995"][data-ios-firefox="true"] .header-btn,
+[data-theme="1995"][data-ios-firefox="true"] .capture-btn,
+[data-theme="1995"][data-ios-firefox="true"] .leader-filter-controls button,
+[data-theme="1995"][data-ios-firefox="true"] .report-action-btn,
+[data-theme="1995"][data-ios-firefox="true"] .capture-controls label,
+[data-theme="1995"][data-ios-firefox="true"] .capture-filter-option,
+[data-theme="1995"][data-ios-firefox="true"] .diagnostic-toast-actions button,
+[data-theme="1995"][data-ios-firefox="true"] .theme-btn,
+[data-theme="1995"][data-ios-firefox="true"] .font-btn,
+[data-theme="1995"][data-ios-firefox="true"] .cache-clear-btn,
+[data-theme="1995"][data-ios-firefox="true"] .file-btn,
+[data-theme="1995"][data-ios-firefox="true"] .start-btn,
+[data-theme="1995"][data-ios-firefox="true"] .missing-attachment-help summary {
+    border-color: var(--win31-dark) var(--win31-light) var(--win31-light) var(--win31-dark);
+}
+
 .attachment .file-link:hover {
     background: var(--border-color);
 }
