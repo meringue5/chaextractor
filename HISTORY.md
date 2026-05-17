@@ -138,6 +138,23 @@
   * `AGENTS.md`에 스킬 위치, 작업 라우팅, 수동 적용 절차 안내 추가
   * `CLAUDE.md`는 드리프트 방지를 위해 `AGENTS.md`를 가리키는 얇은 Claude Code 호환 진입점으로 축소
 
+## 2-1-4단계: Parser golden 하네스 시작 (2026-05-17)
+* 로컬 커밋 기준점:
+  * `7da439c chore: add harness contracts and project skills`
+* 추가한 실행 하네스:
+  * [harness/scripts/run_parser_golden.py](harness/scripts/run_parser_golden.py): parser golden case 실행기
+  * [harness/scripts/parse_with_index.mjs](harness/scripts/parse_with_index.mjs): `index.html`에 포함된 실제 파서를 Node VM에서 호출하는 helper
+  * [harness/TESTING.md](harness/TESTING.md): 현재 사용 가능한 검증 명령 정리
+* 추가한 fixture/expected:
+  * [test/parser-golden/android-sample.json](test/parser-golden/android-sample.json): Android 실제 ZIP 샘플 expected
+  * [test/fixtures/ios-minimal/Talk_2026.1.27 21_37-1.txt](<test/fixtures/ios-minimal/Talk_2026.1.27 21_37-1.txt>): iOS 최소 fixture
+  * [test/parser-golden/ios-minimal.json](test/parser-golden/ios-minimal.json): iOS 최소 fixture expected
+* 구현 수정:
+  * Android 연속 사진 hash가 숫자로 시작할 때 파싱에서 누락되던 문제 수정
+  * `window.__CHAEXTRACTOR_ENABLE_TEST_API__`가 설정된 경우에만 노출되는 parser test hook 추가
+* 검증:
+  * `python3 harness/scripts/run_parser_golden.py` 통과 (`android-sample`, `ios-minimal`)
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

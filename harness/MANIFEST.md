@@ -69,9 +69,9 @@
 |---|---|---|
 | 앱은 서버 없이 실행 가능한 단일 HTML 앱이다. | `index.html` 중심 | 테스트/문서 도구는 별도 파일 허용 |
 | 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 인라인, 폰트 CDN | README/AGENTS 정리 완료, 회귀 체크 필요 |
-| 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | 아직 자동 fixture 없음 | parser golden harness |
+| 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소 fixture parser golden 시작 | Windows/macOS 확장 시 fixture 추가 |
 | 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 코드가 숨은 상태로 존재 | Windows 결정 필요 |
-| 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | 관례는 있으나 하네스 없음 | maintainer skill 후보 |
+| 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | project skill과 parser golden 하네스 시작 | CI 게이트 필요 |
 
 ## 요구사항으로 정의된 것
 
@@ -80,12 +80,12 @@
 | 영역 | 요구사항 | 현재 검증 수준 |
 |---|---|---|
 | 입력 | ZIP 또는 폴더 입력으로 대화 로그와 첨부파일 파싱 | 수동 구현 확인 |
-| 플랫폼 | iOS/Android 내보내기 지원 | Android 샘플 있음, expected 없음 |
-| 파싱 | 날짜 그룹화, 시스템 메시지 제외, 연속 텍스트 병합 | 자동 검증 없음 |
-| 메시지 타입 | text/photo/file/emoticon 분리 | 자동 검증 없음 |
-| 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음 | 자동 검증 없음 |
+| 플랫폼 | iOS/Android 내보내기 지원 | Android 실제 ZIP/iOS 최소 fixture golden 검증 시작 |
+| 파싱 | 날짜 그룹화, 시스템 메시지 제외, 연속 텍스트 병합 | parser golden 부분 검증 |
+| 메시지 타입 | text/photo/file/emoticon 분리 | parser golden 부분 검증 |
+| 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음 | parser golden 부분 검증 |
 | 검색 | 전체 메시지 대상, 날짜 목록/결과 반영 | 일부 구현, 하이라이트 드리프트 |
-| 통계 | 날짜별 메시지 수, 참여자, 리더 발언 수, 사진 수 | 자동 검증 없음 |
+| 통계 | 날짜별 메시지 수, 참여자, 리더 발언 수, 사진 수 | parser golden이 타입/리더 수 일부 검증 |
 | UI | 꿀팁, 리더 필터, 설정, 테마/폰트 유지 | 자동 검증 없음 |
 | 접근성 | 키보드 주요 기능, 포커스, 대비 | 문서만 있음 |
 | 성능 | 50만 메시지 10초 내 파싱 목표 | 수동 이력만 있음 |
@@ -137,3 +137,4 @@
 2. XSS/파일명 escape 표준을 구현 요구사항으로 승격한다.
 3. cache retention과 삭제 정책을 요구사항으로 정의한다.
 4. README/AGENTS와 하네스 문서 간 드리프트 checker를 추가한다.
+5. parser golden을 CI 게이트로 연결한다.

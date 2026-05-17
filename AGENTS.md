@@ -23,6 +23,7 @@
 - [harness/DOMAIN_RULES.md](harness/DOMAIN_RULES.md): 카카오톡 플랫폼별 내보내기 규칙과 파싱 불변식
 - [harness/DECISIONS.md](harness/DECISIONS.md): HISTORY에서 추린 현재 유효한 기술/제품 결정
 - [harness/BACKLOG.md](harness/BACKLOG.md): 하네스 리뷰에서 나온 미반영 실행 과제
+- [harness/TESTING.md](harness/TESTING.md): 현재 사용 가능한 검증 명령과 예정 검증
 - [harness/reviews/2026-05-17.md](harness/reviews/2026-05-17.md): 2026-05-17 기준 문서-구현-하네스 검토 결과
 
 `index.html`에 코드가 존재하더라도 하네스에 분류되기 전까지는 공식 요구사항이 아니다. 사용자에게 공개되는 약속은 `README.md`, 시간순 진행 기록은 `HISTORY.md`에 남긴다.

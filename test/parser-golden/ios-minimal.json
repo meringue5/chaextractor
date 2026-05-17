@@ -1,0 +1,57 @@
+{
+  "id": "ios-minimal",
+  "description": "iOS 최소 fixture: 날짜 헤더, 24시간/오전오후 메시지, 텍스트 병합, 사진/PDF 매핑, 누락 첨부파일",
+  "platform": "ios",
+  "input": {
+    "text": "test/fixtures/ios-minimal/Talk_2026.1.27 21_37-1.txt",
+    "attachments": [
+      "20260127_213901_1.jpeg",
+      "20260127_214001.pdf"
+    ]
+  },
+  "expected": {
+    "detectedPlatform": "ios",
+    "messageCount": 5,
+    "dateCount": 1,
+    "dates": ["2026-01-27"],
+    "typeCounts": {
+      "text": 1,
+      "photo": 1,
+      "file": 2,
+      "emoticon": 1
+    },
+    "attachmentRefCount": 4,
+    "attachmentMappedCount": 2,
+    "leaderCountByDate": {
+      "2026-01-27": 1
+    },
+    "messages": [
+      {
+        "index": 0,
+        "user": "채상욱 리더",
+        "message_type": "text",
+        "content": "안녕하세요\n이어서 말합니다"
+      },
+      {
+        "index": 1,
+        "user": "테스터",
+        "message_type": "photo",
+        "attachment_path": "20260127_213901_1.jpeg"
+      },
+      {
+        "index": 2,
+        "user": "테스터",
+        "message_type": "file",
+        "attachment_ref": "보고서.pdf",
+        "attachment_path": "20260127_214001.pdf"
+      },
+      {
+        "index": 4,
+        "user": "테스터",
+        "message_type": "file",
+        "attachment_ref": "missing.pdf",
+        "attachment_path": ""
+      }
+    ]
+  }
+}

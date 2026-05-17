@@ -1,0 +1,68 @@
+{
+  "id": "android-sample",
+  "description": "Android 실제 ZIP 샘플: hash 이미지, 연속 사진 줄, URL 인코딩 파일명, 시스템 메시지 제외",
+  "platform": "android",
+  "input": {
+    "zip": "test/dataset/android/TalkFile_KakaoTalk_Chats_2026-02-08_15.19.13_-131450398.zip",
+    "chatFile": "KakaoTalkChats.txt"
+  },
+  "expected": {
+    "detectedPlatform": "android",
+    "messageCount": 14,
+    "dateCount": 1,
+    "dates": ["2026-02-08"],
+    "typeCounts": {
+      "text": 5,
+      "file": 1,
+      "photo": 8
+    },
+    "attachmentRefCount": 9,
+    "attachmentMappedCount": 8,
+    "leaderCountByDate": {
+      "2026-02-08": 0
+    },
+    "messages": [
+      {
+        "index": 2,
+        "user": "티비 보는 라이언",
+        "message_type": "text",
+        "content": "똥이다\n끝?\n더 해야함?"
+      },
+      {
+        "index": 3,
+        "user": "테스터",
+        "message_type": "file",
+        "attachment_ref": "Signature%20iFD01_User%20manual.pdf",
+        "attachment_path": ""
+      },
+      {
+        "index": 4,
+        "user": "테스터",
+        "message_type": "text",
+        "content": "잠시만\n사진전송고 해뷰게"
+      }
+    ],
+    "containsMessages": [
+      {
+        "message_type": "photo",
+        "attachment_ref": "5bb9f52bba8bbca2649ff696c703f29b5af20acf3b1913908a4614546640c28d.jpg",
+        "attachment_path": "5bb9f52bba8bbca2649ff696c703f29b5af20acf3b1913908a4614546640c28d.jpg"
+      },
+      {
+        "message_type": "photo",
+        "attachment_ref": "7d9bc0c41eed45af2038216f2c46dab583c2d7e5318ab94da0a58ef63368ce84.jpg",
+        "attachment_path": "7d9bc0c41eed45af2038216f2c46dab583c2d7e5318ab94da0a58ef63368ce84.jpg"
+      },
+      {
+        "message_type": "photo",
+        "attachment_ref": "752e94a97e5add8c227045e1538f54b10ee15555164be034fdebbe745aad2558.jpg",
+        "attachment_path": "752e94a97e5add8c227045e1538f54b10ee15555164be034fdebbe745aad2558.jpg"
+      },
+      {
+        "message_type": "photo",
+        "attachment_ref": "6c67a960cd0a5f160a0a1e0bebd8d9257f92a350e2a03f64b3f3971902d63d93.jpg",
+        "attachment_path": "6c67a960cd0a5f160a0a1e0bebd8d9257f92a350e2a03f64b3f3971902d63d93.jpg"
+      }
+    ]
+  }
+}

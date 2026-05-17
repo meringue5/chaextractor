@@ -33,14 +33,15 @@
 | Python CSV 파서 위치 정리 | `tools/parse_kakao_chat.py`, `tools/README.md`, `pyproject.toml` | 반영 |
 | Maintainer project skill 추가 | `.agents/skills/chaextractor-maintainer/SKILL.md`, `AGENTS.md`, `CLAUDE.md` | 반영 |
 | Tester project skill 추가 | `.agents/skills/chaextractor-tester/SKILL.md`, `AGENTS.md`, `CLAUDE.md` | 반영 |
+| Parser golden runner 추가 | `harness/scripts/run_parser_golden.py`, `harness/scripts/parse_with_index.mjs`, `harness/TESTING.md` | 반영 |
+| Android 실제 ZIP expected 추가 | `test/parser-golden/android-sample.json` | 반영 |
+| iOS 최소 fixture와 expected 추가 | `test/fixtures/ios-minimal/`, `test/parser-golden/ios-minimal.json` | 반영 |
+| `index.html` parser test API 추가 | `window.__CHAEXTRACTOR_ENABLE_TEST_API__` guard 기반 test hook | 반영 |
 
 ## 우선순위 백로그
 
 | ID | 우선순위 | 영역 | 작업 | 완료 기준 |
 |---|---|---|---|---|
-| H-001 | P0 | Parser golden | Android 실제 ZIP expected JSON 추가 | `test/expected/android-sample.json`이 메시지 수, 날짜 수, 타입 수, 첨부 매핑 수를 고정 |
-| H-002 | P0 | Parser golden | iOS 최소 fixture와 expected JSON 추가 | 날짜 헤더, 텍스트 병합, 사진, PDF, 누락 첨부파일을 검증 |
-| H-003 | P0 | Parser golden | `index.html` test-only parser export 추가 | 브라우저 컨텍스트에서 파서 함수 호출 가능 |
 | H-004 | P0 | Doc drift | Markdown/플랫폼/PATTERNS/의존성 drift checker 추가 | 로컬 명령이 통과/실패를 반환 |
 | H-005 | P0 | Security | 파일명/첨부 ref HTML escape 보강 | XSS fixture가 실행되지 않고 텍스트로 렌더링 |
 | H-006 | P0 | Accessibility | Escape 모달 닫기와 키보드 접근성 보강 | 이미지/꿀팁/설정 모달이 Escape로 닫힘 |
@@ -54,12 +55,9 @@
 
 ## 다음 구현 묶음
 
-가장 작은 첫 구현 단위:
+다음으로 가장 작은 구현 단위:
 
-1. Android sample expected JSON 추가
-2. iOS minimal fixture와 expected JSON 추가
-3. `index.html` test-only parser export 추가
-4. Parser golden runner 추가
-5. Doc drift checker 추가
-
-이 묶음이 끝나야 리뷰에서 말한 "실행 가능한 하네스" 단계로 넘어간다.
+1. Doc drift checker 추가
+2. 파일명/첨부 ref HTML escape 보강과 XSS fixture 추가
+3. Escape 모달 닫기와 키보드 접근성 보강
+4. cache hit 날짜 정렬 회귀 고정

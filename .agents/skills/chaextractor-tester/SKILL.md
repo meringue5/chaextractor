@@ -27,6 +27,7 @@ Run these when relevant and safe:
 git diff --check
 ruby -e 'Dir["*.md", "harness/*.md", "harness/reviews/*.md", "tools/*.md", ".agents/skills/*/SKILL.md"].each do |file|; dir = File.dirname(file); File.readlines(file).each_with_index do |line, idx|; line.scan(/\[[^\]]+\]\(([^)#]+\.md)\)/).each do |match|; target = match[0]; path = File.expand_path(target, dir); puts "#{file}:#{idx + 1}: missing #{target}" unless File.exist?(path); end; end; end'
 PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"
+python3 harness/scripts/run_parser_golden.py
 ```
 
 Only run heavier checks when the repo has the required runner and fixtures.
@@ -35,7 +36,6 @@ Only run heavier checks when the repo has the required runner and fixtures.
 
 When implemented, prefer these evidence sources:
 
-- parser golden runner for iOS/Android/Windows-candidate fixtures
 - doc drift checker for README/AGENTS/harness/index.html consistency
 - browser smoke for upload, date navigation, search, leader filter, settings, image modal, and mobile sidebar
 - performance smoke for synthetic large logs

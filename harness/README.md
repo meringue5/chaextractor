@@ -16,6 +16,7 @@
 - [DOMAIN_RULES.md](DOMAIN_RULES.md): 카카오톡 플랫폼별 내보내기 규칙과 파싱 불변식
 - [DECISIONS.md](DECISIONS.md): HISTORY에서 추린 현재 유효한 기술/제품 결정
 - [BACKLOG.md](BACKLOG.md): 하네스 리뷰에서 나온 미반영 실행 과제
+- [TESTING.md](TESTING.md): 현재 사용 가능한 검증 명령과 예정 검증
 - [reviews/2026-05-17.md](reviews/2026-05-17.md): 2026-05-17 기준 하네스 검토 결과
 - [../AGENTS.md](../AGENTS.md): 에이전트 작업 진입점과 코드 구조 맵
 - [../HISTORY.md](../HISTORY.md): 프로젝트 진행 이력
