@@ -39,6 +39,7 @@ git diff --check
 python3 harness/scripts/check_doc_drift.py
 python3 harness/scripts/check_modal_escape.py
 python3 harness/scripts/check_cache_date_sort.py
+python3 harness/scripts/check_ui_smoke.py
 PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"
 ```
 
@@ -48,7 +49,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; p
 
 `check_cache_date_sort.py`는 캐시 hit 복원 시 날짜 목록이 항상 최신순으로 정규화되는지 검사한다.
 
+`check_ui_smoke.py`는 Node VM에서 실제 앱 UI 함수를 호출해 fixture 로드, 날짜 선택, 검색 날짜 필터, 리더 필터, 테마/폰트 설정, 설정 모달, 사이드바 열기/닫기를 검사한다. Playwright 같은 실제 브라우저 smoke는 의존성을 도입할 때 이 명령 위에 확장한다.
+
 ## 예정 명령
 
-- browser smoke: 업로드, 날짜 선택, 검색, 리더 필터, 설정, 이미지 모달, 모바일 사이드바
 - performance smoke: 합성 대용량 로그 파싱 시간과 날짜 단위 렌더링 부담

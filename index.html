@@ -1854,6 +1854,12 @@
             });
         }
 
+        function setLeaderFilterForTest(active) {
+            leaderFilterActive = active;
+            leaderFilterBtn.classList.toggle('active', leaderFilterActive);
+            applyLeaderFilter();
+        }
+
         // 설정 버튼 클릭
         settingsBtn.addEventListener('click', () => {
             openModal('settingsModal');
@@ -3467,6 +3473,27 @@
             };
         }
 
+        function buildUiTestSnapshot() {
+            return {
+                stats: document.getElementById('stats').textContent,
+                selectedDate,
+                currentMonth: `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`,
+                dateListCount: document.getElementById('dateList').children.length,
+                calendarCellCount: document.getElementById('calendarGrid').children.length,
+                chatMessageCount: document.getElementById('chatMessages').children.length,
+                chatTitle: document.getElementById('chatTitle').textContent,
+                chatInfo: document.getElementById('chatInfo').textContent,
+                leaderFilterActive,
+                settingsModalOpen: isModalOpen('settingsModal'),
+                sidebarOpen: sidebar.classList.contains('open'),
+                sidebarOverlayActive: sidebarOverlay.classList.contains('active'),
+                theme: document.documentElement.getAttribute('data-theme'),
+                font: document.documentElement.getAttribute('data-font') || 'default',
+                storedTheme: localStorage.getItem('theme'),
+                storedFont: localStorage.getItem('font')
+            };
+        }
+
         if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
             window.__CHAEXTRACTOR_TEST__ = {
                 parseChat(content, options = {}) {
@@ -3512,6 +3539,15 @@
                 classifyContent,
                 getSnapshot: buildParserTestSnapshot,
                 renderChat: buildRenderedChatTestSnapshot,
+                getUiSnapshot: buildUiTestSnapshot,
+                initApp,
+                selectDate,
+                renderDateList,
+                setLeaderFilterForTest,
+                applyTheme,
+                applyFont,
+                openSidebar,
+                closeSidebar,
                 openModal,
                 closeActiveModal,
                 handleModalKeydown,

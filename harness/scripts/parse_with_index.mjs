@@ -256,6 +256,53 @@ if (input.mode === 'cacheDateSort') {
   process.exit(0);
 }
 
+if (input.mode === 'uiSmoke') {
+  const api = windowObject.__CHAEXTRACTOR_TEST__;
+  const parseResult = api.parseChat(input.content, {
+    platform: input.platform,
+    attachments: input.attachments || [],
+    mapAttachments: true
+  });
+
+  api.initApp();
+  const afterInit = api.getUiSnapshot();
+
+  api.selectDate(input.selectDate || parseResult.dates[0]);
+  const afterSelect = api.getUiSnapshot();
+
+  api.renderDateList(input.searchQuery || '');
+  const afterSearch = api.getUiSnapshot();
+
+  api.setLeaderFilterForTest(true);
+  const afterLeaderFilter = api.getUiSnapshot();
+
+  api.applyTheme('dark');
+  api.applyFont('ridi');
+  const afterSettings = api.getUiSnapshot();
+
+  api.openModal('settingsModal');
+  const afterSettingsModal = api.getUiSnapshot();
+
+  api.openSidebar();
+  const afterSidebarOpen = api.getUiSnapshot();
+
+  api.closeSidebar();
+  const afterSidebarClose = api.getUiSnapshot();
+
+  process.stdout.write(JSON.stringify({
+    parseResult,
+    afterInit,
+    afterSelect,
+    afterSearch,
+    afterLeaderFilter,
+    afterSettings,
+    afterSettingsModal,
+    afterSidebarOpen,
+    afterSidebarClose
+  }, null, 2));
+  process.exit(0);
+}
+
 let result = windowObject.__CHAEXTRACTOR_TEST__.parseChat(input.content, {
   platform: input.platform,
   attachments: input.attachments || [],

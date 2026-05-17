@@ -205,6 +205,18 @@
 * 검증:
   * `python3 harness/scripts/check_cache_date_sort.py` 통과
 
+## 2-1-9단계: UI smoke 하네스 추가 (2026-05-17)
+* 대상 백로그:
+  * H-009 주요 UI 흐름 smoke 추가
+* 결정:
+  * Playwright 의존성은 현재 저장소에 없으므로, 첫 단계는 Node VM에서 실제 `index.html` UI 함수를 호출하는 deterministic smoke로 시작
+  * 실제 브라우저 smoke는 의존성 도입 시 [harness/scripts/check_ui_smoke.py](harness/scripts/check_ui_smoke.py) 위에 확장
+* 변경:
+  * `index.html` test API에 `initApp`, `selectDate`, `renderDateList`, 리더 필터, 설정, 사이드바 상태 snapshot 추가
+  * [harness/scripts/check_ui_smoke.py](harness/scripts/check_ui_smoke.py) 추가
+* 검증:
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트
