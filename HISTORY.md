@@ -184,6 +184,17 @@
 * 검증:
   * `python3 harness/scripts/run_parser_golden.py test/parser-golden/security-xss.json` 통과
 
+## 2-1-7단계: 모달 키보드 접근성 보강 (2026-05-17)
+* 대상 백로그:
+  * H-006 Escape 모달 닫기와 키보드 접근성 보강
+* 변경:
+  * 이미지/꿀팁/설정 모달에 `role="dialog"`, `aria-modal`, `aria-hidden`, 닫기 버튼 `aria-label` 적용
+  * 공통 `closeActiveModal()`과 Escape 키 처리 추가
+  * 이미지 모달 닫기 요소를 키보드 포커스 가능한 버튼으로 변경
+  * [harness/scripts/check_modal_escape.py](harness/scripts/check_modal_escape.py) 추가
+* 검증:
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

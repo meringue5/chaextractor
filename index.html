@@ -837,6 +837,9 @@
             right: 20px;
             font-size: 30px;
             color: white;
+            background: transparent;
+            border: 0;
+            line-height: 1;
             cursor: pointer;
         }
 
@@ -1420,11 +1423,11 @@
     </div>
 
     <!-- 꿀팁 모달 -->
-    <div class="modal-overlay" id="tipsModal">
+    <div class="modal-overlay" id="tipsModal" role="dialog" aria-modal="true" aria-labelledby="tipsModalTitle" aria-hidden="true">
         <div class="modal-box">
             <div class="modal-header">
-                <h3>💡 머니버스 꿀팁</h3>
-                <button class="modal-close-btn" data-modal="tipsModal">✕</button>
+                <h3 id="tipsModalTitle">💡 머니버스 꿀팁</h3>
+                <button class="modal-close-btn" data-modal="tipsModal" aria-label="꿀팁 모달 닫기">✕</button>
             </div>
             <div class="tips-group">
                 <div class="tips-group-header">🐰 춤추는 토끼 171879</div>
@@ -1444,11 +1447,11 @@
     </div>
 
     <!-- 설정 모달 -->
-    <div class="modal-overlay" id="settingsModal">
+    <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" aria-hidden="true">
         <div class="modal-box">
             <div class="modal-header">
-                <h3>설정</h3>
-                <button class="modal-close-btn" data-modal="settingsModal">✕</button>
+                <h3 id="settingsModalTitle">설정</h3>
+                <button class="modal-close-btn" data-modal="settingsModal" aria-label="설정 모달 닫기">✕</button>
             </div>
             <div class="settings-group">
                 <label>테마</label>
@@ -1470,9 +1473,9 @@
     </div>
 
     <!-- 이미지 모달 -->
-    <div class="modal" id="imageModal">
-        <span class="modal-close" id="modalClose">×</span>
-        <img id="modalImage" src="">
+    <div class="modal" id="imageModal" role="dialog" aria-modal="true" aria-label="이미지 확대" aria-hidden="true">
+        <button type="button" class="modal-close" id="modalClose" aria-label="이미지 모달 닫기">×</button>
+        <img id="modalImage" src="" alt="확대된 첨부 이미지">
     </div>
     <script>
         // ========== 상태 관리 ==========
@@ -1659,15 +1662,86 @@
         const sidebarOverlay = document.getElementById('sidebarOverlay');
 
         // ========== 공통 모달 함수 ==========
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) modal.classList.add('open');
+        let lastModalTrigger = null;
+        const modalIds = ['tipsModal', 'settingsModal', 'imageModal'];
+
+        function rememberModalTrigger() {
+            lastModalTrigger = document.activeElement;
         }
 
-        function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) modal.classList.remove('open');
+        function restoreModalTrigger() {
+            if (lastModalTrigger && typeof lastModalTrigger.focus === 'function') {
+                lastModalTrigger.focus();
+            }
+            lastModalTrigger = null;
         }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+
+            rememberModalTrigger();
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+
+            const closeButton = modal.querySelector('.modal-close-btn');
+            if (closeButton && typeof closeButton.focus === 'function') {
+                closeButton.focus();
+            }
+        }
+
+        function closeModal(modalId, restoreFocus = true) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+
+            if (restoreFocus) {
+                restoreModalTrigger();
+            }
+        }
+
+        function closeImageModal(restoreFocus = true) {
+            const modal = document.getElementById('imageModal');
+            if (!modal) return;
+
+            modal.classList.remove('active');
+            modal.setAttribute('aria-hidden', 'true');
+
+            if (restoreFocus) {
+                restoreModalTrigger();
+            }
+        }
+
+        function isModalOpen(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return false;
+            return modal.classList.contains('open') || modal.classList.contains('active');
+        }
+
+        function closeActiveModal() {
+            for (const modalId of modalIds) {
+                if (isModalOpen(modalId)) {
+                    if (modalId === 'imageModal') {
+                        closeImageModal();
+                    } else {
+                        closeModal(modalId);
+                    }
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function handleModalKeydown(e) {
+            if (e.key === 'Escape' && closeActiveModal()) {
+                e.preventDefault();
+            }
+        }
+
+        document.addEventListener('keydown', handleModalKeydown);
 
         // 모달 닫기 버튼 (data-modal 속성 사용)
         document.querySelectorAll('.modal-close-btn').forEach(btn => {
@@ -1680,7 +1754,7 @@
         document.querySelectorAll('.modal-overlay').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
-                    modal.classList.remove('open');
+                    closeModal(modal.id);
                 }
             });
         });
@@ -2959,12 +3033,12 @@
             });
 
             document.getElementById('modalClose').addEventListener('click', () => {
-                document.getElementById('imageModal').classList.remove('active');
+                closeImageModal();
             });
 
             document.getElementById('imageModal').addEventListener('click', (e) => {
                 if (e.target === e.currentTarget) {
-                    e.currentTarget.classList.remove('active');
+                    closeImageModal();
                 }
             });
         }
@@ -3275,8 +3349,12 @@
 
         // ========== 유틸리티 ==========
         function showImage(url) {
+            rememberModalTrigger();
             document.getElementById('modalImage').src = url;
-            document.getElementById('imageModal').classList.add('active');
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+            document.getElementById('modalClose').focus();
         }
 
         function escapeHtml(text) {
@@ -3424,7 +3502,12 @@
                 },
                 classifyContent,
                 getSnapshot: buildParserTestSnapshot,
-                renderChat: buildRenderedChatTestSnapshot
+                renderChat: buildRenderedChatTestSnapshot,
+                openModal,
+                closeActiveModal,
+                handleModalKeydown,
+                isModalOpen,
+                showImage
             };
         }
 

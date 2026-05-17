@@ -40,12 +40,12 @@
 | Doc drift checker 추가 | `harness/scripts/check_doc_drift.py`, `harness/TESTING.md` | 반영 |
 | Windows 텍스트 내보내기 정식 지원 승격 | `README.md`, `AGENTS.md`, `harness/DOMAIN_RULES.md`, `test/parser-golden/windows-minimal.json` | 반영 |
 | H-005 파일명/첨부 ref HTML escape 보강 | `index.html`, `test/parser-golden/security-xss.json` | 반영 |
+| H-006 Escape 모달 닫기와 키보드 접근성 보강 | `index.html`, `harness/scripts/check_modal_escape.py` | 반영 |
 
 ## 우선순위 백로그
 
 | ID | 우선순위 | 영역 | 작업 | 완료 기준 |
 |---|---|---|---|---|
-| H-006 | P0 | Accessibility | Escape 모달 닫기와 키보드 접근성 보강 | 이미지/꿀팁/설정 모달이 Escape로 닫힘 |
 | H-007 | P0 | Cache | cache hit 날짜 정렬 회귀 고정 | 캐시 사용 시에도 날짜 목록이 최신순 유지 |
 | H-009 | P1 | Browser smoke | 주요 UI 흐름 Playwright smoke 추가 | 업로드, 날짜 선택, 검색, 리더 필터, 설정, 모바일 사이드바 검증 |
 | H-010 | P1 | Capability | 브라우저 기능 제한 안내 구현 | `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 미지원 시 복구 가능한 메시지 표시 |
@@ -59,6 +59,5 @@
 다음으로 가장 작은 구현 단위:
 
 1. 파일명/첨부 ref HTML escape 보강과 XSS fixture 추가
-2. Escape 모달 닫기와 키보드 접근성 보강
-3. cache hit 날짜 정렬 회귀 고정
-4. Android 일반 파일/PDF와 Windows 첨부파일 매핑 범위 결정
+2. cache hit 날짜 정렬 회귀 고정
+3. Android 일반 파일/PDF와 Windows 첨부파일 매핑 범위 결정

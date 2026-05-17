@@ -77,6 +77,9 @@ function createElement(tagName = 'div') {
     addEventListener() {},
     removeEventListener() {},
     click() {},
+    focus() {
+      documentActiveElement = this;
+    },
     scrollIntoView() {},
     querySelector() {
       return null;
@@ -115,6 +118,8 @@ function createElement(tagName = 'div') {
 const elementsById = new Map();
 const documentElement = createElement('html');
 const body = createElement('body');
+let documentActiveElement = body;
+const documentListeners = new Map();
 
 function getElementById(id) {
   if (!elementsById.has(id)) {
@@ -163,6 +168,19 @@ const context = {
     documentElement,
     createElement,
     getElementById,
+    get activeElement() {
+      return documentActiveElement;
+    },
+    addEventListener(type, handler) {
+      if (!documentListeners.has(type)) {
+        documentListeners.set(type, []);
+      }
+      documentListeners.get(type).push(handler);
+    },
+    removeEventListener(type, handler) {
+      const handlers = documentListeners.get(type) || [];
+      documentListeners.set(type, handlers.filter(item => item !== handler));
+    },
     querySelector(selector) {
       if (selector === '.sidebar') return getElementById('sidebar');
       return createElement('div');
@@ -191,6 +209,44 @@ vm.runInContext(appScript, context, { filename: 'index.html' });
 
 if (!windowObject.__CHAEXTRACTOR_TEST__) {
   throw new Error('index.html did not expose __CHAEXTRACTOR_TEST__');
+}
+
+if (input.mode === 'modalEscape') {
+  const api = windowObject.__CHAEXTRACTOR_TEST__;
+  const modalIds = ['tipsModal', 'settingsModal'];
+  const results = [];
+
+  for (const modalId of modalIds) {
+    let prevented = false;
+    api.openModal(modalId);
+    const before = api.isModalOpen(modalId);
+    api.handleModalKeydown({
+      key: 'Escape',
+      preventDefault() {
+        prevented = true;
+      }
+    });
+    results.push({ modalId, before, after: api.isModalOpen(modalId), prevented });
+  }
+
+  let prevented = false;
+  api.showImage('blob:test-image');
+  const before = api.isModalOpen('imageModal');
+  api.handleModalKeydown({
+    key: 'Escape',
+    preventDefault() {
+      prevented = true;
+    }
+  });
+  results.push({
+    modalId: 'imageModal',
+    before,
+    after: api.isModalOpen('imageModal'),
+    prevented
+  });
+
+  process.stdout.write(JSON.stringify({ results }, null, 2));
+  process.exit(0);
 }
 
 let result = windowObject.__CHAEXTRACTOR_TEST__.parseChat(input.content, {
