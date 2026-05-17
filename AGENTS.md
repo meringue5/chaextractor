@@ -64,6 +64,7 @@
 - ZIP 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다.
 - iOS/Android/Windows 카카오톡 내보내기 파일을 공식 지원한다.
 - 날짜별 탐색, 검색, 통계, 기본값 `채상욱 리더`인 사용자 하이라이트/필터, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
+- 선택 날짜 또는 전체 대화를 LLM 요약에 붙여넣기 좋은 TXT로 정리하는 갈무리 복사/다운로드를 제공한다.
 - 시스템 메시지는 제외하고, 동일 사용자 연속 텍스트는 병합한다.
 - 사진/파일/이모티콘은 텍스트와 별도 타입으로 유지한다.
 - 누락 첨부파일은 앱 중단 없이 복구 가능한 상태로 표시한다.
@@ -142,12 +143,14 @@ GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=
     - `.chat-header` — 날짜 제목 + 통계
       - `#chatTitle` — 날짜/요일
       - `#chatInfo` — 메시지 수, 참여자, 필터 대상 발언 수, 사진 수
+      - `#captureBtn` — 갈무리 TXT 모달 열기
     - `#chatMessages` — 메시지 목록
   - `.link-sidebar` — 우측 링크 패널 (데스크톱 상시 표시, 모바일: 86vw 슬라이드)
     - `.link-sidebar-header` — 링크 패널 제목
     - `.link-group` — 머니버스 꿀팁/버그 제보 링크 그룹
     - `.link-item` — 외부 링크/제보 버튼
 - `#imageModal` — 이미지 확대 모달 (`#modalImage`, `#modalClose`)
+- `#captureModal` — 갈무리 TXT 모달 (`#captureText`, `#copyCaptureBtn`, `#downloadCaptureBtn`)
 - `#settingsModal` — 설정 모달 (`.theme-btn`, `.font-btn`)
 - `#reportIssueModal` — 자동 작성/복사되는 오류 진단 리포트 모달 (`#diagnosticReportText`, `#copyDiagnosticBtn`, `#openIssueBtn`)
 - `#diagnosticToast` — 과거 토스트 호환 DOM. JS 오류/처리 실패 감지는 모달을 직접 연다.
@@ -163,6 +166,7 @@ GitHub Issue Form https://github.com/meringue5/chaextractor/issues/new?template=
 - 캘린더: `.calendar`, `.calendar-nav`, `.calendar-grid`, `.day`, `.day.has-messages`, `.day.selected`
 - 날짜목록: `.date-list`, `.date-item`, `.date-item.selected`, `.leader-ratio`
 - 메시지: `.message`, `.message-bubble`, `.user-name`, `.content`, `.time`
+- 갈무리: `.capture-btn`, `.capture-modal-box`, `.capture-controls`, `.capture-filter-option`, `.capture-output-text`
 - 사용자 필터: `.leader-filter-panel`, `.leader-filter-controls`, `.message.leader` (황금색 그라데이션), `#leaderFilterBtn.active` (금색 배경)
 - 첨부파일: `.attachment`, `.attachment img`, `.file-link`, `.emoticon`, `.no-file`, `.loading-placeholder`
 - 스크롤마커: `.scroll-markers`, `.scroll-marker`
@@ -220,6 +224,9 @@ UI 렌더링:
 - `focusDateForMonth(year, month)` — 월 이동 시 가장 가까운 날짜 자동 선택
 - `scrollToDateInList(date)` — 날짜 목록 스크롤 동기화
 - `showImage(url)` — 이미지 확대 모달
+- `openCaptureModal()` / `updateCaptureText()` — 현재 날짜/전체 대화 갈무리 TXT 생성
+- `buildCaptureText(scope, options)` — LLM 요약용 TXT 본문 생성 (첨부파일 내용/base64 제외)
+- `copyCaptureText()` / `downloadCaptureText()` — 갈무리 TXT 복사/다운로드
 
 설정/테마:
 - `applyTheme(theme)` — light/dark/system 테마 적용

@@ -208,6 +208,14 @@ const diagnosticToast = document.getElementById('diagnosticToast');
 const diagnosticToastMessage = document.getElementById('diagnosticToastMessage');
 const diagnosticToastDetails = document.getElementById('diagnosticToastDetails');
 const diagnosticToastIssue = document.getElementById('diagnosticToastIssue');
+const captureBtn = document.getElementById('captureBtn');
+const captureScopeCurrent = document.getElementById('captureScopeCurrent');
+const captureScopeAll = document.getElementById('captureScopeAll');
+const captureUseLeaderFilter = document.getElementById('captureUseLeaderFilter');
+const copyCaptureBtn = document.getElementById('copyCaptureBtn');
+const downloadCaptureBtn = document.getElementById('downloadCaptureBtn');
+const captureText = document.getElementById('captureText');
+const captureStatus = document.getElementById('captureStatus');
 
 // ========== 안전 진단 리포트 ==========
 const diagnosticState = {
@@ -658,6 +666,243 @@ function buildDiagnosticTestSnapshot() {
     };
 }
 
+// ========== 갈무리 TXT ==========
+function getCaptureScope() {
+    if (captureScopeCurrent && captureScopeCurrent.checked && selectedDate) {
+        return 'current';
+    }
+    return 'all';
+}
+
+function getCaptureDates(scope = getCaptureScope()) {
+    if (scope === 'current' && selectedDate && messagesByDate[selectedDate]) {
+        return [selectedDate];
+    }
+    return [...dates].reverse();
+}
+
+function getCaptureMessagesForDate(date, options = {}) {
+    const sourceMessages = messagesByDate[date] || [];
+    if (!options.useLeaderFilter) return sourceMessages;
+    return sourceMessages.filter(msg => isLeader(msg.user));
+}
+
+function formatCaptureDate(date) {
+    const [year, month, day] = date.split('-').map(Number);
+    const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+    const dateObj = new Date(year, month - 1, day);
+    return `${year}년 ${month}월 ${day}일 ${dayNames[dateObj.getDay()]}`;
+}
+
+function normalizeCaptureText(text) {
+    return String(text || '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .trim();
+}
+
+function getCaptureMessageBody(msg) {
+    if (msg.message_type === 'photo') {
+        const ref = msg.attachment_ref || msg.attachment_path || '';
+        return ref ? `[사진: ${ref}]` : '[사진]';
+    }
+    if (msg.message_type === 'file') {
+        const ref = msg.attachment_ref || msg.attachment_path || msg.content || '파일';
+        return `[파일: ${ref}]`;
+    }
+    if (msg.message_type === 'emoticon') {
+        return '[이모티콘]';
+    }
+    return normalizeCaptureText(msg.content);
+}
+
+function formatCaptureMessage(msg) {
+    const user = normalizeCaptureText(msg.user) || '알 수 없음';
+    const time = normalizeCaptureText(msg.time) || '--:--';
+    const body = getCaptureMessageBody(msg) || '(빈 메시지)';
+    const indentedBody = body.replace(/\n/g, '\n    ');
+    return `[${time}] ${user}: ${indentedBody}`;
+}
+
+function buildCapturePayload(scope = getCaptureScope(), options = {}) {
+    const useLeaderFilter = !!options.useLeaderFilter;
+    const targetDates = getCaptureDates(scope);
+    const rows = [];
+    const participants = new Set();
+    const typeCounts = { text: 0, photo: 0, file: 0, emoticon: 0 };
+
+    for (const date of targetDates) {
+        const dayMessages = getCaptureMessagesForDate(date, { useLeaderFilter });
+        if (dayMessages.length === 0) continue;
+
+        rows.push({ type: 'date', date });
+        for (const msg of dayMessages) {
+            participants.add(msg.user);
+            typeCounts[msg.message_type] = (typeCounts[msg.message_type] || 0) + 1;
+            rows.push({ type: 'message', msg });
+        }
+    }
+
+    return {
+        scope,
+        useLeaderFilter,
+        dates: targetDates,
+        rows,
+        participants: [...participants].sort(),
+        typeCounts,
+        messageCount: rows.filter(row => row.type === 'message').length
+    };
+}
+
+function buildCaptureText(scope = getCaptureScope(), options = {}) {
+    const payload = buildCapturePayload(scope, options);
+    const includedDates = payload.rows
+        .filter(row => row.type === 'date')
+        .map(row => row.date);
+    const rangeText = includedDates.length > 0
+        ? `${includedDates[0]} ~ ${includedDates[includedDates.length - 1]}`
+        : '없음';
+    const scopeText = payload.scope === 'current' ? '현재 날짜' : '전체 대화';
+    const filterText = payload.useLeaderFilter ? leaderFilterTarget : '없음';
+    const lines = [
+        '# 카카오톡 대화 갈무리',
+        '',
+        '## 요약 요청',
+        '아래 대화를 날짜별 흐름, 주요 주제, 의사결정, 할 일, 언급된 링크 중심으로 요약해주세요.',
+        '',
+        '## 메타데이터',
+        `- 생성 시각: ${new Date().toISOString()}`,
+        `- 범위: ${scopeText}`,
+        `- 기간: ${rangeText}`,
+        `- 플랫폼: ${detectedPlatform}`,
+        `- 메시지 수: ${payload.messageCount.toLocaleString()}`,
+        `- 참여자 수: ${payload.participants.length.toLocaleString()}`,
+        `- 사용자 필터: ${filterText}`,
+        `- 사진: ${(payload.typeCounts.photo || 0).toLocaleString()}개`,
+        `- 파일: ${(payload.typeCounts.file || 0).toLocaleString()}개`,
+        `- 이모티콘: ${(payload.typeCounts.emoticon || 0).toLocaleString()}개`,
+        '- 첨부파일 내용: 포함하지 않음',
+        '',
+        '## 대화'
+    ];
+
+    if (payload.messageCount === 0) {
+        lines.push('', '갈무리할 메시지가 없습니다.');
+        return lines.join('\n');
+    }
+
+    for (const row of payload.rows) {
+        if (row.type === 'date') {
+            lines.push('', `### ${formatCaptureDate(row.date)}`);
+        } else {
+            lines.push(formatCaptureMessage(row.msg));
+        }
+    }
+
+    return lines.join('\n');
+}
+
+function updateCaptureText() {
+    const scope = getCaptureScope();
+    const useLeaderFilter = !!(captureUseLeaderFilter && captureUseLeaderFilter.checked);
+    const text = buildCaptureText(scope, { useLeaderFilter });
+    if (captureText) {
+        captureText.value = text;
+    }
+    if (captureStatus) {
+        const messageCount = buildCapturePayload(scope, { useLeaderFilter }).messageCount;
+        captureStatus.textContent = `${messageCount.toLocaleString()}개 메시지를 TXT로 준비했습니다.`;
+    }
+    return text;
+}
+
+function buildCaptureFilename() {
+    const scope = getCaptureScope();
+    const targetDates = getCaptureDates(scope);
+    const range = targetDates.length > 0
+        ? `${targetDates[0].replaceAll('-', '')}-${targetDates[targetDates.length - 1].replaceAll('-', '')}`
+        : 'empty';
+    return `chaextractor-capture-${scope}-${range}.txt`;
+}
+
+function openCaptureModal() {
+    if (captureScopeCurrent) {
+        captureScopeCurrent.disabled = !selectedDate;
+        captureScopeCurrent.checked = !!selectedDate;
+    }
+    if (captureScopeAll) {
+        captureScopeAll.checked = !selectedDate;
+    }
+    if (captureUseLeaderFilter) {
+        captureUseLeaderFilter.checked = leaderFilterActive;
+    }
+    if (captureStatus) {
+        captureStatus.textContent = '';
+    }
+    updateCaptureText();
+    openModal('captureModal');
+}
+
+async function copyCaptureText() {
+    const text = updateCaptureText();
+    const nav = typeof navigator !== 'undefined'
+        ? navigator
+        : (window && window.navigator ? window.navigator : {});
+
+    try {
+        if (!nav.clipboard || typeof nav.clipboard.writeText !== 'function') {
+            throw new Error('clipboard-unavailable');
+        }
+        await nav.clipboard.writeText(text);
+        if (captureStatus) {
+            captureStatus.textContent = '갈무리 TXT를 복사했습니다.';
+        }
+        return { ok: true };
+    } catch (error) {
+        if (captureText && typeof captureText.focus === 'function') {
+            captureText.focus();
+        }
+        if (captureText && typeof captureText.select === 'function') {
+            captureText.select();
+        }
+        if (captureStatus) {
+            captureStatus.textContent = '자동 복사가 안 되면 아래 TXT를 직접 선택해 복사해주세요.';
+        }
+        return { ok: false, reason: error.message || 'copy-failed' };
+    }
+}
+
+function downloadCaptureText() {
+    const text = updateCaptureText();
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = buildCaptureFilename();
+    document.body.appendChild(link);
+    link.click();
+    if (typeof link.remove === 'function') {
+        link.remove();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    if (captureStatus) {
+        captureStatus.textContent = '갈무리 TXT를 다운로드했습니다.';
+    }
+    return { ok: true, filename: link.download };
+}
+
+function buildCaptureTestSnapshot() {
+    updateCaptureText();
+    return {
+        captureModalOpen: isModalOpen('captureModal'),
+        scope: getCaptureScope(),
+        useLeaderFilter: !!(captureUseLeaderFilter && captureUseLeaderFilter.checked),
+        text: captureText ? captureText.value : '',
+        status: captureStatus ? captureStatus.textContent : '',
+        filename: buildCaptureFilename()
+    };
+}
+
 // ========== 브라우저 기능 제한 안내 ==========
 function getBrowserCapabilityStatus(scope = window) {
     const urlApi = scope.URL || (typeof URL !== 'undefined' ? URL : null);
@@ -786,7 +1031,7 @@ async function clearAllCache() {
 
 // ========== 공통 모달 함수 ==========
 let lastModalTrigger = null;
-const modalIds = ['settingsModal', 'reportIssueModal', 'imageModal'];
+const modalIds = ['settingsModal', 'captureModal', 'reportIssueModal', 'imageModal'];
 
 function rememberModalTrigger() {
     lastModalTrigger = document.activeElement;
@@ -900,6 +1145,23 @@ if (diagnosticToastIssue) {
 }
 
 installDiagnosticConsoleCapture();
+
+if (captureBtn) {
+    captureBtn.addEventListener('click', openCaptureModal);
+}
+
+[captureScopeCurrent, captureScopeAll, captureUseLeaderFilter].forEach(control => {
+    if (!control) return;
+    control.addEventListener('change', updateCaptureText);
+});
+
+if (copyCaptureBtn) {
+    copyCaptureBtn.addEventListener('click', copyCaptureText);
+}
+
+if (downloadCaptureBtn) {
+    downloadCaptureBtn.addEventListener('click', downloadCaptureText);
+}
 
 window.addEventListener('error', (event) => {
     captureDiagnosticError(event.error || event.message, {
@@ -2353,6 +2615,9 @@ function initApp() {
     const users = new Set(messages.map(m => m.user));
     document.getElementById('stats').textContent =
         `${messages.length.toLocaleString()}개 메시지 · ${users.size}명 · ${dates.length}일`;
+    if (captureBtn) {
+        captureBtn.disabled = messages.length === 0;
+    }
 
     if (dates.length > 0) {
         // 오늘 날짜와 가장 가까운 날짜로 달력 이동 (선택은 하지 않음)
@@ -2909,6 +3174,8 @@ function buildUiTestSnapshot() {
         hiddenChatMessageCount: renderedMessages.filter(child => child.style.display === 'none').length,
         chatTitle: document.getElementById('chatTitle').textContent,
         chatInfo: document.getElementById('chatInfo').textContent,
+        captureButtonDisabled: captureBtn ? captureBtn.disabled : null,
+        captureModalOpen: isModalOpen('captureModal'),
         leaderFilterActive,
         leaderFilterTarget,
         leaderFilterPanelOpen: leaderFilterPanel ? !leaderFilterPanel.hidden : false,
@@ -3002,7 +3269,11 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
         buildDiagnosticIssueUrl,
         openDiagnosticIssueFlow,
         openDiagnosticReportModal,
-        getDiagnosticSnapshot: buildDiagnosticTestSnapshot
+        getDiagnosticSnapshot: buildDiagnosticTestSnapshot,
+        openCaptureModal,
+        updateCaptureText,
+        buildCaptureText,
+        getCaptureSnapshot: buildCaptureTestSnapshot
     };
 }
 

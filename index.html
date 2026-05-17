@@ -145,12 +145,15 @@
         <div class="chat-area">
             <div class="scroll-markers" id="scrollMarkers"></div>
             <div class="chat-header">
-                <div>
+                <div class="chat-header-title">
                     <h3 id="chatTitle">날짜를 선택하세요</h3>
                     <div class="info" id="chatInfo"></div>
                 </div>
-                <button class="sidebar-toggle" id="sidebarToggle" aria-label="날짜 패널 열기">&gt;</button>
-                <button class="link-sidebar-toggle" id="linkSidebarToggle" aria-label="링크 패널 열기">&lt;</button>
+                <div class="chat-header-actions">
+                    <button type="button" class="capture-btn" id="captureBtn">갈무리</button>
+                    <button class="sidebar-toggle" id="sidebarToggle" aria-label="날짜 패널 열기">&gt;</button>
+                    <button class="link-sidebar-toggle" id="linkSidebarToggle" aria-label="링크 패널 열기">&lt;</button>
+                </div>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <div class="empty-state">
@@ -193,6 +196,36 @@
                 </section>
             </div>
         </aside>
+    </div>
+
+    <!-- 갈무리 모달 -->
+    <div class="modal-overlay" id="captureModal" role="dialog" aria-modal="true" aria-labelledby="captureModalTitle" aria-hidden="true">
+        <div class="modal-box capture-modal-box">
+            <div class="modal-header">
+                <h3 id="captureModalTitle">갈무리</h3>
+                <button class="modal-close-btn" data-modal="captureModal" aria-label="갈무리 모달 닫기">✕</button>
+            </div>
+            <div class="capture-controls" role="group" aria-label="갈무리 범위">
+                <label>
+                    <input type="radio" name="captureScope" id="captureScopeCurrent" value="current" checked>
+                    현재 날짜
+                </label>
+                <label>
+                    <input type="radio" name="captureScope" id="captureScopeAll" value="all">
+                    전체 대화
+                </label>
+            </div>
+            <label class="capture-filter-option">
+                <input type="checkbox" id="captureUseLeaderFilter">
+                사용자 필터 적용
+            </label>
+            <div class="report-actions">
+                <button type="button" class="report-action-btn primary" id="copyCaptureBtn">TXT 복사</button>
+                <button type="button" class="report-action-btn" id="downloadCaptureBtn">TXT 다운로드</button>
+            </div>
+            <textarea id="captureText" class="diagnostic-report-text capture-output-text" readonly spellcheck="false" aria-label="갈무리 TXT"></textarea>
+            <div class="report-status" id="captureStatus" role="status" aria-live="polite"></div>
+        </div>
     </div>
 
     <!-- 설정 모달 -->

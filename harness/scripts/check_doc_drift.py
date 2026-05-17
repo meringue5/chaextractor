@@ -136,6 +136,15 @@ def main() -> int:
         check("python3 harness/scripts/check_diagnostic_report.py" in tester_skill, "tester skill must include diagnostic report check", errors)
         check("github.com/meringue5/chaextractor/issues/new" in manifest, "MANIFEST must list GitHub issue form surface", errors)
 
+    if "captureModal" in runtime or "buildCaptureText" in runtime:
+        requirements = read("harness/REQUIREMENTS.md")
+        check("갈무리 TXT" in readme, "README must document capture TXT behavior", errors)
+        check("갈무리 TXT" in agents, "AGENTS must document capture TXT UI", errors)
+        check("갈무리 TXT" in requirements, "REQUIREMENTS must include capture TXT feature", errors)
+        check("갈무리 TXT" in manifest, "MANIFEST must classify capture TXT privacy boundary", errors)
+        check("갈무리 내보내기" in decisions, "DECISIONS must record capture TXT scope", errors)
+        check("갈무리 TXT 생성" in testing, "TESTING must document capture TXT smoke coverage", errors)
+
     guide_assets = sorted(set(re.findall(r'src="(assets/guide/[^"]+)"', index)))
     if guide_assets:
         check("assets/guide" in readme, "README must document guide asset directory", errors)

@@ -73,6 +73,8 @@ function createElement(tagName = 'div') {
     focus() {
       documentActiveElement = this;
     },
+    select() {},
+    remove() {},
     scrollIntoView() {},
     querySelector() {
       return null;
@@ -292,7 +294,7 @@ if (!windowObject.__CHAEXTRACTOR_TEST__) {
 
 if (input.mode === 'modalEscape') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
-  const modalIds = ['settingsModal', 'reportIssueModal'];
+  const modalIds = ['settingsModal', 'captureModal', 'reportIssueModal'];
   const results = [];
 
   for (const modalId of modalIds) {
@@ -372,11 +374,16 @@ if (input.mode === 'uiSmoke') {
   api.selectDate(input.selectDate || parseResult.dates[0]);
   const afterSelect = api.getUiSnapshot();
 
+  api.openCaptureModal();
+  const afterCaptureModal = api.getCaptureSnapshot();
+
   api.renderDateList(input.searchQuery || '');
   const afterSearch = api.getUiSnapshot();
 
   api.setLeaderFilterForTest(true, '테스터');
   const afterLeaderFilter = api.getUiSnapshot();
+  api.openCaptureModal();
+  const afterFilteredCaptureModal = api.getCaptureSnapshot();
 
   api.applyTheme('dark');
   api.applyFont('ridi');
@@ -408,8 +415,10 @@ if (input.mode === 'uiSmoke') {
     parseResult,
     afterInit,
     afterSelect,
+    afterCaptureModal,
     afterSearch,
     afterLeaderFilter,
+    afterFilteredCaptureModal,
     afterSettings,
     afterSettingsModal,
     afterSidebarOpen,

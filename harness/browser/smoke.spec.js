@@ -84,6 +84,13 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   await expect(page.locator('#chatMessages .message')).toHaveCount(5);
   await expect(page.locator('#chatMessages')).toContainText('안녕하세요');
   await expect(page.locator('#chatMessages')).toContainText('이어서 말합니다');
+  await page.locator('#captureBtn').click();
+  await expect(page.locator('#captureModal')).toHaveClass(/open/);
+  await expect(page.locator('#captureText')).toHaveValue(/# 카카오톡 대화 갈무리/);
+  await expect(page.locator('#captureText')).toHaveValue(/첨부파일 내용: 포함하지 않음/);
+  await expect(page.locator('#captureText')).toHaveValue(/\[09:05\] 채상욱 리더:/);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#captureModal')).not.toHaveClass(/open/);
 
   await page.locator('#searchInput').fill('자정');
   await expect(page.locator('.date-item')).toHaveCount(1);
@@ -104,6 +111,12 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   await expect(page.locator('#leaderFilterPanel')).toBeHidden();
   await expect(page.locator('#chatMessages .message.leader')).toHaveCount(4);
   await expect(page.locator('#chatMessages .message:not(.leader)').first()).toBeHidden();
+  await page.locator('#captureBtn').click();
+  await expect(page.locator('#captureModal')).toHaveClass(/open/);
+  await expect(page.locator('#captureUseLeaderFilter')).toBeChecked();
+  await expect(page.locator('#captureText')).toHaveValue(/사용자 필터: 테스터/);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#captureModal')).not.toHaveClass(/open/);
   await page.locator('#leaderFilterBtn').click();
   await page.locator('#leaderFilterClearBtn').click();
   await expect(page.locator('#leaderFilterBtn')).not.toHaveClass(/active/);

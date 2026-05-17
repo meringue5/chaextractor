@@ -426,6 +426,30 @@
   * `python3 harness/scripts/check_modal_escape.py` 통과
   * `npm run test:browser` 통과: 4 passed, 2 skipped
 
+## 2-1-24단계: 갈무리 TXT 내보내기 추가 (2026-05-17)
+* 결정:
+  * LLM 요약 호환성을 우선해 갈무리 1차 범위는 TXT 복사/다운로드로 한정
+  * 이미지와 첨부파일 내용, base64 인코딩 포함은 후속 검토로 분리
+  * 갈무리 TXT는 사용자가 명시적으로 복사하거나 다운로드할 때만 생성하며 자동 외부 전송하지 않음
+* 변경:
+  * 대화 헤더 오른쪽에 `갈무리` 버튼 추가
+  * [index.html](index.html)에 갈무리 모달, 현재 날짜/전체 대화 범위 선택, 사용자 필터 적용 옵션 추가
+  * [assets/scripts/app.js](assets/scripts/app.js)에 LLM 요약용 TXT 생성, 복사, 다운로드 로직 추가
+  * [assets/styles/app.css](assets/styles/app.css)에 갈무리 버튼/모달 스타일 추가
+  * README/AGENTS/harness 문서에 갈무리 TXT 요구사항과 개인정보 경계 반영
+  * Node/Playwright UI smoke에 갈무리 TXT 생성과 사용자 필터 반영 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser -- --project=chromium-desktop` 통과: 2 passed, 1 skipped
+  * `npm run test:browser`는 최신 `origin/dev` 기준 모바일 오버레이 클릭 timeout으로 3 passed, 1 failed, 2 skipped. 갈무리 검증이 포함된 desktop smoke는 통과했고, 실패 지점은 기존 모바일 사이드바 닫기 하네스다.
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트
