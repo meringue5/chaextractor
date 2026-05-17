@@ -1275,17 +1275,43 @@ function rememberModalTrigger() {
     lastModalTrigger = document.activeElement;
 }
 
-function safeFocus(element) {
-    if (!element || typeof element.focus !== 'function') return;
+function canUseProgrammaticFocus() {
+    return !isIOSFirefox();
+}
+
+function safeFocus(element, options) {
+    if (!canUseProgrammaticFocus()) return false;
+    if (!element || typeof element.focus !== 'function') return false;
     try {
-        element.focus();
+        element.focus(options);
+        return true;
     } catch (error) {
-        console.warn('focus-failed', error);
+        return false;
     }
 }
 
+function focusModalWhenReady(modal, maxAttempts = 8) {
+    if (!canUseProgrammaticFocus()) return;
+    if (!modal) return;
+
+    const closeButton = modal.querySelector('.modal-close-btn');
+    if (!closeButton) return;
+
+    const tryFocus = (attempt) => {
+        const isOpen = modal.classList.contains('open') || modal.classList.contains('active');
+        const isHiddenByAnimation = modal.classList.contains('win31-window-hidden') || modal.classList.contains('closing');
+        if (isOpen && !isHiddenByAnimation && safeFocus(closeButton, { preventScroll: true })) {
+            return;
+        }
+        if (attempt >= maxAttempts) return;
+        requestAnimationFrame(() => tryFocus(attempt + 1));
+    };
+
+    tryFocus(0);
+}
+
 function restoreModalTrigger() {
-    safeFocus(lastModalTrigger);
+    safeFocus(lastModalTrigger, { preventScroll: true });
     lastModalTrigger = null;
 }
 
@@ -1439,8 +1465,7 @@ function play1995GhostBox(fromRect, toRect, onFinish) {
 }
 
 function focusModalCloseButton(modal) {
-    const closeButton = modal.querySelector('.modal-close-btn');
-    safeFocus(closeButton);
+    focusModalWhenReady(modal);
 }
 
 function animate1995Panel(panel, className, fromRect, toRect) {
@@ -3804,7 +3829,7 @@ function showImage(url, triggerElement = null) {
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
 
-    const focusClose = () => safeFocus(document.getElementById('modalClose'));
+    const focusClose = () => focusModalWhenReady(modal);
     if (!is1995ThemeActive()) {
         focusClose();
         return;
