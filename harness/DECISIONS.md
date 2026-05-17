@@ -10,8 +10,10 @@
 
 | 결정 | 상태 | 근거/메모 |
 |---|---|---|
-| 앱 런타임은 서버 없는 단일 `index.html`을 유지한다. | 채택 | 배포와 사용 편의성 기준 |
-| 하네스, fixture, 문서, 테스트 도구는 단일 HTML 원칙 밖의 보조 파일로 둔다. | 채택 | 앱 런타임과 개발 검증 레이어 분리 |
+| 앱 런타임은 빌드 없는 정적 앱으로 유지한다. `index.html`은 진입점이고 정적 자산은 별도 파일로 둘 수 있다. | 채택 | GitHub Pages 직접 배포와 소스/배포 드리프트 방지 |
+| CSS/JS/vendor 분리는 빌드 산출물을 만들지 않는 범위에서 단계적으로 검토한다. | 채택 | 저장소 가독성과 Pages 직접 동작 균형 |
+| 가이드 스크린샷은 `assets/guide/*.png` 개별 파일로 둔다. | 채택 | 내용 이미지라 스프라이트보다 alt/lazy loading/cache/replacement가 유리 |
+| 하네스, fixture, 문서, 테스트 도구는 앱 런타임 밖의 보조 파일로 둔다. | 채택 | 앱 런타임과 개발 검증 레이어 분리 |
 | 대화 원문과 첨부파일은 클라이언트 로컬에서 처리한다. | 채택 | 개인정보 표준 |
 | iOS, Android, Windows는 공식 지원 플랫폼으로 유지한다. | 채택 | README/AGENTS 약속, parser golden fixture |
 | Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원한다. | 채택 | `windows-minimal` fixture/expected 추가 |
@@ -35,13 +37,14 @@
 | 개인정보 | 외부 전송 없음 | 대화 데이터 자동 외부 전송 없음. 폰트 CDN 자동 요청과 사용자 클릭 외부 링크는 별도 표면으로 문서화 |
 | Android 샘플 | `tmp/android/` 확보 | tracked 샘플 기준은 `test/dataset/android/` |
 | Windows | 구현-only | 데스크톱 텍스트 내보내기 파싱은 fixture/expected를 추가해 공식 지원으로 승격 |
+| 앱 파일 구조 | 단일 `index.html` 파일 | 현재 기준은 빌드 없는 정적 앱. `index.html`은 진입점이고 `assets/guide/*.png` 같은 정적 자산 분리 허용 |
 
 ## 미결정 결정
 
 | 질문 | 기본 입장 | 결정에 필요한 증거 |
 |---|---|---|
 | Windows 첨부파일 매핑을 지원할 것인가? | 보류 | 실제 첨부파일 export 구조와 fixture |
-| CSP를 도입할 것인가? | 보류 | 단일 HTML inline script/style과 충돌 검토 |
+| CSP를 도입할 것인가? | 보류 | inline script/style과 정적 파일 분리 경계 검토 |
 | 20줄 미만 대화 파일을 허용할 것인가? | 보류 | 최소 대화 fixture와 사용자 오류 메시지 기준 |
 
 ## 결정 변경 규칙

@@ -280,6 +280,22 @@
   * `python3 harness/scripts/check_performance_smoke.py` 통과: 10,000 메시지, 15.5ms
   * `python3 harness/scripts/check_performance_smoke.py --messages 500000 --budget-ms 10000` 통과: 500,000 메시지, 502.7ms
 
+## 2-1-15단계: 가이드 이미지 정적 자산 분리 (2026-05-17)
+* 결정:
+  * 앱 구조 기준을 "단일 HTML 파일"에서 "빌드 없는 정적 앱"으로 조정
+  * `index.html`은 앱 진입점으로 유지하고, 정적 자산은 소스 파일 그대로 GitHub Pages에 배포
+  * 가이드 스크린샷은 내용 이미지이므로 스프라이트/base64 대신 `assets/guide/*.png` 개별 파일로 관리
+* 변경:
+  * 사용 가이드 base64 PNG 6장을 `assets/guide/` 아래 개별 파일로 추출
+  * `index.html`의 가이드 이미지를 상대 경로 `<img>`로 교체하고 `loading="lazy"`, `decoding="async"` 적용
+  * README/AGENTS/harness 문서와 doc drift checker에 빌드 없는 정적 앱 기준 반영
+* 검증:
+  * `file assets/guide/*.png`로 PNG 형식과 해상도 확인
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
+  * `git diff --check` 및 Python 유틸 import smoke 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

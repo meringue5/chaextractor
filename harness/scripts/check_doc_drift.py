@@ -94,6 +94,15 @@ def main() -> int:
         check("cdn.jsdelivr.net/gh/neodgm" in manifest, "MANIFEST must list NeoDunggeunmo CDN surface", errors)
         check("cdn.jsdelivr.net/gh/projectnoonnu" in manifest, "MANIFEST must list RIDIBatang CDN surface", errors)
 
+    guide_assets = sorted(set(re.findall(r'src="(assets/guide/[^"]+)"', index)))
+    if guide_assets:
+        check("assets/guide" in readme, "README must document guide asset directory", errors)
+        check("assets/guide" in agents, "AGENTS must document guide asset directory", errors)
+        check("assets/guide/*.png" in manifest, "MANIFEST must classify guide images as runtime static assets", errors)
+        check("assets/guide/*.png" in decisions, "DECISIONS must record guide image asset policy", errors)
+        for asset in guide_assets:
+            check(exists(asset), f"guide asset referenced by index.html is missing: {asset}", errors)
+
     check(not exists("parse_kakao_chat.py"), "root parse_kakao_chat.py should remain moved to tools/", errors)
     check("tools/parse_kakao_chat.py" in readme, "README must point to tools/parse_kakao_chat.py", errors)
     check("tools/parse_kakao_chat.py" in agents, "AGENTS must point to tools/parse_kakao_chat.py", errors)

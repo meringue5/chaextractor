@@ -39,7 +39,8 @@
 
 ```
 chaextractor/
-├── index.html           # 메인 앱 (HTML + CSS + JS 단일 파일, ~2MB)
+├── index.html           # 메인 앱 진입점 (현재 CSS + JS 앱 로직 포함)
+├── assets/guide/        # 사용 가이드 스크린샷 정적 자산
 ├── tools/               # 선택 유틸리티 (Python CSV 파서 등)
 ├── pyproject.toml       # Python 프로젝트 설정
 ├── og-image.png         # Open Graph 이미지
@@ -59,8 +60,11 @@ chaextractor/
 
 ## 배포
 
-`index.html` 하나만 정적 호스팅(GitHub Pages, Netlify 등)에 올리면 됩니다.
+저장소 루트의 `index.html`과 `assets/` 정적 파일을 함께 호스팅하면 됩니다.
+GitHub Pages처럼 저장소 루트를 그대로 배포하는 방식이면 별도 빌드 없이 동작합니다.
 JSZip은 `index.html`에 인라인되어 있으며, 폰트는 CDN에서 로드됩니다.
+
+오프라인으로 열 때도 `index.html`과 `assets/` 디렉터리를 함께 보관하면 됩니다.
 
 ## 개인정보와 외부 요청
 

@@ -8,9 +8,9 @@
 -->
 
 # 프로젝트 개요
-카카오톡 오픈채팅방 대화 내역 뷰어. 단일 HTML 파일, 서버 불필요, 클라이언트 사이드 처리.
+카카오톡 오픈채팅방 대화 내역 뷰어. 빌드 없는 정적 앱, 서버 불필요, 클라이언트 사이드 처리.
 - 배포: https://meringue5.github.io/chaextractor/
-- 기술: HTML + CSS + JS (단일 파일), JSZip 인라인, IndexedDB (캐시), 폰트 CDN
+- 기술: HTML + CSS + JS (`index.html` 중심), `assets/guide` 정적 이미지, JSZip 인라인, IndexedDB (캐시), 폰트 CDN
 - 플랫폼: iOS / Android / Windows 카카오톡 내보내기 파일 지원
 - TODO: macOS 카카오톡 데스크톱 내보내기 지원 예정
 
@@ -93,13 +93,15 @@
 ### 개발자: 우드워커
 액티브 ETF 구성 변화 시각화 앱 https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view
 
-# 코드 구조: index.html
+# 코드 구조: index.html + 정적 자산
 
-단일 HTML 파일. 구조: `<style>` → `<body>` (HTML) → `<script>` (JSZip 인라인 + 앱 로직)
+현재 앱 진입점은 `index.html`이다. 구조: `<style>` → `<body>` (HTML) → `<script>` (JSZip 인라인 + 앱 로직)
+
+빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 가이드 스크린샷은 `assets/guide/*.png`에 둔다.
 
 ## HTML 컴포넌트
 - `#setupScreen` — 초기 화면
-  - `.guide-section` — 사용 가이드 (base64 스크린샷 6장)
+  - `.guide-section` — 사용 가이드 (`assets/guide` 스크린샷 6장)
   - `#step1` — 파일 업로드 영역
     - `#zipBtn` / `#zipInput` — ZIP/TXT 파일 선택 (iOS/Windows)
     - `#folderBtn` / `#folderInput` — 폴더 선택 (Android, webkitdirectory)
