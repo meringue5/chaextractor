@@ -10,7 +10,7 @@
 # 프로젝트 개요
 카카오톡 오픈채팅방 대화 내역 뷰어. 빌드 없는 정적 앱, 서버 불필요, 클라이언트 사이드 처리.
 - 배포: https://meringue5.github.io/chaextractor/
-- 기술: HTML + JS (`index.html` 중심), CSS (`assets/styles/app.css`), `assets/guide` 정적 이미지, JSZip 인라인, IndexedDB (캐시), 폰트 CDN
+- 기술: HTML + JS (`index.html` 중심), CSS (`assets/styles/app.css`), `assets/guide` 정적 이미지, `assets/og-image.png`, JSZip 인라인, IndexedDB (캐시), 폰트 CDN
 - 플랫폼: iOS / Android / Windows 카카오톡 내보내기 파일 지원
 - TODO: macOS 카카오톡 데스크톱 내보내기 지원 예정
 
@@ -97,7 +97,7 @@
 
 현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `<script>` (JSZip 인라인 + 앱 로직)
 
-빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 가이드 스크린샷은 `assets/guide/*.png`에 둔다.
+빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph/hero 이미지는 `assets/og-image.png`에 둔다.
 
 ## HTML 컴포넌트
 - `#setupScreen` — 초기 화면
@@ -110,7 +110,7 @@
     - `#progressContainer` > `#progressFill` + `.progress-text` — 진행률 바
   - `#startBtn` — 대화 보기 시작 버튼 (처리 완료 전 hidden)
   - `#setupTipsBtn` — 꿀팁 모달 열기
-  - `#heroImage` — 히어로 이미지 (처리 완료 후 표시)
+  - `#heroImage` — 히어로 이미지 (`assets/og-image.png`, 처리 완료 후 표시)
 - `#app` — 메인 뷰어 (초기 hidden)
   - `.sidebar` — 좌측 패널 (320px, 모바일: 86vw 슬라이드)
     - `.sidebar-header` — 제목 + 헤더 버튼들

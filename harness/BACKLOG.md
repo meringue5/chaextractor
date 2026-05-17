@@ -49,6 +49,7 @@
 | H-013 합성 대용량 성능 smoke 추가 | `harness/scripts/check_performance_smoke.py`, `harness/TESTING.md` | 반영 |
 | 가이드 이미지 정적 자산 분리 | `assets/guide/*.png`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
 | 앱 CSS 정적 자산 분리 | `assets/styles/app.css`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
+| Open Graph/hero 이미지 정적 자산 위치 정리 | `assets/og-image.png`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
 
 ## 우선순위 백로그
 

@@ -48,7 +48,7 @@
 |---|---|---:|---|
 | 폰트 | `cdn.jsdelivr.net/gh/neodgm/...` | 예 | NeoDunggeunmo Pro |
 | 폰트 | `cdn.jsdelivr.net/gh/projectnoonnu/...` | 예 | RIDIBatang |
-| 공개 메타 | `meringue5.github.io/chaextractor/og-image.png` | 아니오 | 소셜/크롤러용 메타 |
+| 공개 메타 | `meringue5.github.io/chaextractor/assets/og-image.png` | 아니오 | 소셜/크롤러용 메타 |
 | 꿀팁 링크 | `moneybus-labs.github.io`, `github.com`, `drive.google.com` | 아니오 | 사용자 클릭 |
 | 문의/제보 | `docs.google.com/forms/...` | 아니오 | 사용자 클릭 |
 
@@ -67,7 +67,7 @@
 
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
-| 앱은 서버 없이 실행 가능한 빌드 없는 정적 앱이다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/guide/*.png` 정적 이미지, JS 앱 로직은 아직 `index.html` 중심 | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
+| 앱은 서버 없이 실행 가능한 빌드 없는 정적 앱이다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타/hero 이미지, JS 앱 로직은 아직 `index.html` 중심 | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
 | 런타임 정적 자산은 소스와 배포본이 같은 파일이어야 한다. | 별도 빌드 산출물 없음 | doc drift checker와 파일 경로 존재 점검 |
 | 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 인라인, 폰트 CDN | doc drift checker로 일부 점검 |
 | 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소/Windows 최소 fixture parser golden 시작 | macOS 확장 시 fixture 추가 |

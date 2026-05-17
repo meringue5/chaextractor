@@ -310,6 +310,18 @@
   * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
   * `git diff --check` 및 Python 유틸 import smoke 통과
 
+## 2-1-17단계: Open Graph 이미지 자산 위치 정리 (2026-05-17)
+* 결정:
+  * 루트의 `og-image.png`를 `assets/og-image.png`로 이동해 런타임 정적 자산 위치를 일관화
+  * 소셜 메타 태그는 크롤러 호환을 위해 절대 URL을 유지
+* 변경:
+  * `index.html`의 `og:image`, `twitter:image`, `#heroImage` 경로 갱신
+  * README/AGENTS/harness 문서와 doc drift checker에 `assets/og-image.png` 기준 반영
+* 검증:
+  * `file assets/og-image.png`로 PNG 형식과 해상도 확인
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `git diff --check` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

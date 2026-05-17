@@ -14,6 +14,7 @@
 | JS/vendor 분리는 빌드 산출물을 만들지 않는 범위에서 단계적으로 검토한다. | 채택 | 저장소 가독성과 Pages 직접 동작 균형 |
 | 앱 CSS는 `assets/styles/app.css`로 분리한다. | 채택 | 스타일 변경 가독성 개선, 빌드 없는 정적 배포 유지 |
 | 가이드 스크린샷은 `assets/guide/*.png` 개별 파일로 둔다. | 채택 | 내용 이미지라 스프라이트보다 alt/lazy loading/cache/replacement가 유리 |
+| Open Graph와 hero 이미지는 `assets/og-image.png`에 둔다. | 채택 | 런타임 정적 이미지 자산 위치 일관화 |
 | 하네스, fixture, 문서, 테스트 도구는 앱 런타임 밖의 보조 파일로 둔다. | 채택 | 앱 런타임과 개발 검증 레이어 분리 |
 | 대화 원문과 첨부파일은 클라이언트 로컬에서 처리한다. | 채택 | 개인정보 표준 |
 | iOS, Android, Windows는 공식 지원 플랫폼으로 유지한다. | 채택 | README/AGENTS 약속, parser golden fixture |
@@ -40,6 +41,7 @@
 | Windows | 구현-only | 데스크톱 텍스트 내보내기 파싱은 fixture/expected를 추가해 공식 지원으로 승격 |
 | 앱 파일 구조 | 단일 `index.html` 파일 | 현재 기준은 빌드 없는 정적 앱. `index.html`은 진입점이고 `assets/guide/*.png` 같은 정적 자산 분리 허용 |
 | 앱 스타일 | `index.html` 내부 `<style>` | 현재 기준은 `assets/styles/app.css` 외부 스타일시트 |
+| Open Graph 이미지 | 루트 `og-image.png` | 현재 기준은 `assets/og-image.png` |
 
 ## 미결정 결정
 

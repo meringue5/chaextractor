@@ -115,6 +115,15 @@ def main() -> int:
         for asset in guide_assets:
             check(exists(asset), f"guide asset referenced by index.html is missing: {asset}", errors)
 
+    if "og-image.png" in index:
+        check("assets/og-image.png" in index, "index.html must reference OG image under assets/", errors)
+        check("assets/og-image.png" in readme, "README must document OG image asset path", errors)
+        check("assets/og-image.png" in agents, "AGENTS must document OG image asset path", errors)
+        check("assets/og-image.png" in manifest, "MANIFEST must classify OG image as runtime static asset", errors)
+        check("assets/og-image.png" in decisions, "DECISIONS must record OG image asset policy", errors)
+        check(exists("assets/og-image.png"), "OG image asset is missing: assets/og-image.png", errors)
+        check(not exists("og-image.png"), "root og-image.png should remain moved to assets/", errors)
+
     check(not exists("parse_kakao_chat.py"), "root parse_kakao_chat.py should remain moved to tools/", errors)
     check("tools/parse_kakao_chat.py" in readme, "README must point to tools/parse_kakao_chat.py", errors)
     check("tools/parse_kakao_chat.py" in agents, "AGENTS must point to tools/parse_kakao_chat.py", errors)

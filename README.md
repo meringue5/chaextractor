@@ -40,11 +40,11 @@
 ```
 chaextractor/
 ├── index.html           # 메인 앱 진입점 (HTML + JS 앱 로직)
+├── assets/og-image.png  # Open Graph 및 앱 hero 이미지
 ├── assets/styles/       # 앱 스타일시트
 ├── assets/guide/        # 사용 가이드 스크린샷 정적 자산
 ├── tools/               # 선택 유틸리티 (Python CSV 파서 등)
 ├── pyproject.toml       # Python 프로젝트 설정
-├── og-image.png         # Open Graph 이미지
 ├── harness/             # 요구사항/도메인 규칙/결정/하네스 매니페스트
 ├── .agents/skills/      # Project-specific skill procedures
 ├── CLAUDE.md            # Claude Code용 AGENTS.md 포워딩 문서
