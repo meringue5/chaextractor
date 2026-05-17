@@ -1,0 +1,14 @@
+{
+  "name": "chaextractor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:browser": "playwright test --config harness/browser/playwright.config.js",
+    "test:browser:headed": "playwright test --config harness/browser/playwright.config.js --headed",
+    "test:browser:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.60.0"
+  }
+}

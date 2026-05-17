@@ -2,6 +2,9 @@
 .DS_Store
 .claude/*
 tmp/*
+node_modules/
+playwright-report/
+test-results/
 
 # Keep this file and the three required files
 !.gitignore

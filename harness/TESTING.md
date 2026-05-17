@@ -70,6 +70,34 @@ PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; p
 python3 harness/scripts/check_performance_smoke.py --messages 500000 --budget-ms 10000
 ```
 
+### 선택: 실제 브라우저 smoke
+
+Playwright smoke는 정적 서버로 저장소 루트의 `index.html`을 열고 실제 브라우저에서 다음을 확인한다.
+
+- CSS, JSZip vendor, 앱 JS, 가이드 이미지 정적 자산 로드
+- Windows TXT fixture 업로드와 시작 버튼 흐름
+- 날짜 목록, 날짜 선택, 검색 날짜 필터, 리더 필터, 설정 모달 Escape 닫기
+- 모바일 viewport의 사이드바 토글과 오버레이 닫기
+
+초기 설치:
+
+```bash
+npm install
+npm run test:browser:install
+```
+
+실행:
+
+```bash
+npm run test:browser
+```
+
+헤드풀 확인:
+
+```bash
+npm run test:browser:headed
+```
+
 ## 예정 명령
 
 - 날짜 단위 렌더링 부담을 별도 측정하는 실제 브라우저 성능 smoke

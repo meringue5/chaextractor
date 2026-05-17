@@ -72,7 +72,7 @@
 | 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 3.10.1 로컬 vendor, 폰트 CDN | doc drift checker로 일부 점검 |
 | 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소/Windows 최소 fixture parser golden 시작 | macOS 확장 시 fixture 추가 |
 | 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 텍스트 파서는 공식 지원으로 승격, Windows 첨부파일/macOS는 미결정 | 미결정 항목은 README에 홍보하지 않음 |
-| 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | project skill과 parser golden/doc drift 하네스 시작 | 로컬 표준 명령 유지 |
+| 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | project skill, parser golden/doc drift, 선택 실행 Playwright browser smoke 하네스 시작 | 로컬 표준 명령 유지 |
 
 ## 요구사항으로 정의된 것
 
@@ -80,14 +80,14 @@
 
 | 영역 | 요구사항 | 현재 검증 수준 |
 |---|---|---|
-| 입력 | ZIP 또는 폴더 입력으로 대화 로그와 첨부파일 파싱 | parser golden, UI smoke 부분 검증 |
+| 입력 | ZIP 또는 폴더 입력으로 대화 로그와 첨부파일 파싱 | parser golden, Node UI smoke, browser smoke에서 Windows TXT 업로드 검증 |
 | 플랫폼 | iOS/Android/Windows 내보내기 지원 | Android 실제 ZIP/iOS 최소/Windows 최소/Windows 첨부 미지원 fixture golden 검증 |
 | 파싱 | 날짜 그룹화, 시스템 메시지 제외, 연속 텍스트 병합 | parser golden 부분 검증 |
 | 메시지 타입 | text/photo/file/emoticon 분리 | parser golden 부분 검증 |
 | 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음 | parser golden: iOS PDF/사진, Android hash/일반 파일, 누락 첨부 검증 |
-| 검색 | 전체 메시지 대상, 날짜 목록/결과 반영 | UI smoke에서 날짜 목록 필터 검증 |
+| 검색 | 전체 메시지 대상, 날짜 목록/결과 반영 | Node UI smoke와 browser smoke에서 날짜 목록 필터 검증 |
 | 통계 | 날짜별 메시지 수, 참여자, 리더 발언 수, 사진 수 | parser golden이 타입/리더 수 일부 검증 |
-| UI | 꿀팁, 리더 필터, 설정, 테마/폰트 유지 | UI smoke에서 주요 함수 흐름 부분 검증 |
+| UI | 꿀팁, 리더 필터, 설정, 테마/폰트 유지 | Node UI smoke와 browser smoke에서 주요 흐름 부분 검증 |
 | 접근성 | 키보드 주요 기능, 포커스, 대비 | 모달 Escape 닫기는 `check_modal_escape.py`로 검증 |
 | 기능 제한 | `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 미지원 안내 | capability notice 검증 |
 | 성능 | 50만 메시지 10초 내 파싱 목표 | 합성 1만 자동 smoke, 50만 수동 측정 절차 |

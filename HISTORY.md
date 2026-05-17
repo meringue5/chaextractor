@@ -338,6 +338,22 @@
   * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
   * `git diff --check` 및 Python 유틸 import smoke 통과
 
+## 2-1-19단계: 선택 실행 Playwright browser smoke 추가 (2026-05-17)
+* 결정:
+  * 실제 브라우저 검증은 앱 배포 빌드가 아니라 개발 하네스로 둠
+  * 초기 범위는 Chromium 기반 정적 자산 로드, Windows TXT 업로드, 핵심 UI 흐름, 모바일 사이드바 smoke로 제한
+  * GitHub Actions 필수 게이트는 아직 도입하지 않고 로컬 선택 실행 명령으로 유지
+* 변경:
+  * [package.json](package.json)에 Playwright 개발 의존성과 `test:browser` 명령 추가
+  * [harness/browser/playwright.config.js](harness/browser/playwright.config.js) 추가
+  * [harness/browser/smoke.spec.js](harness/browser/smoke.spec.js) 추가
+  * README/AGENTS/harness 문서와 tester skill에 browser smoke 실행 기준 반영
+  * `.gitignore`에 `node_modules/`, `playwright-report/`, `test-results/` 추가
+* 검증:
+  * `npm install` 및 `npm run test:browser:install`로 Playwright/Chromium 설치 완료
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+  * 기존 deterministic 하네스와 문서 검사 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

@@ -51,6 +51,7 @@
 | 앱 CSS 정적 자산 분리 | `assets/styles/app.css`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
 | Open Graph/hero 이미지 정적 자산 위치 정리 | `assets/og-image.png`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
 | 앱 JS와 JSZip vendor 정적 자산 분리 | `assets/scripts/app.js`, `assets/vendor/jszip-3.10.1.min.js`, `index.html`, `harness/scripts/parse_with_index.mjs` | 반영 |
+| 선택 실행 Playwright browser smoke 추가 | `package.json`, `harness/browser/playwright.config.js`, `harness/browser/smoke.spec.js`, `harness/TESTING.md` | 반영 |
 
 ## 우선순위 백로그
 

@@ -28,15 +28,15 @@ git diff --check
 python3 harness/scripts/check_doc_drift.py
 PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"
 python3 harness/scripts/run_parser_golden.py
+npm run test:browser
 ```
 
-Only run heavier checks when the repo has the required runner and fixtures.
+Run `npm run test:browser` only when Playwright dependencies and browser binaries are installed or when the task specifically concerns browser/runtime UI behavior.
 
 ## Future Harness Checks
 
 When implemented, prefer these evidence sources:
 
-- browser smoke for upload, date navigation, search, leader filter, settings, image modal, and mobile sidebar
 - performance smoke for synthetic large logs
 
 ## Reporting Rules

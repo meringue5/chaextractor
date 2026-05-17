@@ -11,6 +11,7 @@
 카카오톡 오픈채팅방 대화 내역 뷰어. 빌드 없는 정적 앱, 서버 불필요, 클라이언트 사이드 처리.
 - 배포: https://meringue5.github.io/chaextractor/
 - 기술: HTML (`index.html`), CSS (`assets/styles/app.css`), JS (`assets/scripts/app.js`), JSZip local vendor (`assets/vendor/jszip-3.10.1.min.js`), `assets/guide` 정적 이미지, `assets/og-image.png`, IndexedDB (캐시), 폰트 CDN
+- 개발 검증: Python/Node VM 하네스 + 선택 실행 Playwright browser smoke (`npm run test:browser`)
 - 플랫폼: iOS / Android / Windows 카카오톡 내보내기 파일 지원
 - TODO: macOS 카카오톡 데스크톱 내보내기 지원 예정
 
@@ -98,6 +99,8 @@
 현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` 로드 → `assets/scripts/app.js` 로드
 
 빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 로직은 `assets/scripts/app.js`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph/hero 이미지는 `assets/og-image.png`에 둔다.
+
+브라우저 회귀 검증은 `harness/browser/`의 Playwright smoke를 선택 실행한다. 이 하네스는 정적 서버로 저장소 루트의 `index.html`을 열고, 앱 배포 파일을 빌드 없이 그대로 검증한다.
 
 ## HTML 컴포넌트
 - `#setupScreen` — 초기 화면

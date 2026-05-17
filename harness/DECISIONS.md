@@ -15,6 +15,7 @@
 | 앱 CSS는 `assets/styles/app.css`로 분리한다. | 채택 | 스타일 변경 가독성 개선, 빌드 없는 정적 배포 유지 |
 | 앱 JS는 `assets/scripts/app.js`로 분리한다. | 채택 | 파서/UI 로직 유지보수성 개선, 빌드 없는 정적 배포 유지 |
 | JSZip 3.10.1은 `assets/vendor/jszip-3.10.1.min.js` 로컬 vendor 파일로 둔다. | 채택 | CDN 버전 드리프트 없이 GitHub Pages와 오프라인 보관에서 동일 동작 |
+| Playwright browser smoke는 선택 실행 개발 하네스로 둔다. | 채택 | 실제 브라우저 자산 로드, 파일 업로드, 모바일 UI는 Node VM만으로 검증하기 어려움 |
 | 가이드 스크린샷은 `assets/guide/*.png` 개별 파일로 둔다. | 채택 | 내용 이미지라 스프라이트보다 alt/lazy loading/cache/replacement가 유리 |
 | Open Graph와 hero 이미지는 `assets/og-image.png`에 둔다. | 채택 | 런타임 정적 이미지 자산 위치 일관화 |
 | 하네스, fixture, 문서, 테스트 도구는 앱 런타임 밖의 보조 파일로 둔다. | 채택 | 앱 런타임과 개발 검증 레이어 분리 |
