@@ -6,7 +6,7 @@
 
 ### Parser golden
 
-`index.html`에 포함된 실제 파서 함수를 Node VM에서 호출해 fixture expected와 비교한다.
+`assets/scripts/app.js`의 실제 파서 함수를 Node VM에서 호출해 fixture expected와 비교한다.
 
 ```bash
 python3 harness/scripts/run_parser_golden.py
@@ -50,7 +50,7 @@ python3 harness/scripts/check_performance_smoke.py
 PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"
 ```
 
-`check_doc_drift.py`는 Markdown 로컬 링크, 플랫폼 지원 범위, Windows 공식 지원 문서화, JSZip 인라인 상태, 폰트 CDN 문서화, Python 도구 위치, Android 샘플 경로, parser golden 명령 문서화를 함께 검사한다.
+`check_doc_drift.py`는 Markdown 로컬 링크, 플랫폼 지원 범위, Windows 공식 지원 문서화, 앱 JS/JSZip 로컬 vendor 상태, 폰트 CDN 문서화, Python 도구 위치, Android 샘플 경로, parser golden 명령 문서화를 함께 검사한다.
 
 `check_modal_escape.py`는 Node VM에서 실제 앱 모달 함수를 호출해 이미지/꿀팁/설정 모달이 Escape 처리 후 닫히는지 검사한다.
 
@@ -62,7 +62,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; p
 
 `check_cache_privacy.py`는 새 업로드 전 Blob URL 해제, 런타임 첨부 상태 초기화, 설정 모달 캐시 삭제가 호출하는 IndexedDB clear 경로를 검사한다.
 
-`check_performance_smoke.py`는 합성 Android 로그 1만 메시지를 `index.html` 실제 파서로 파싱하고 3초 예산 안에 메시지/날짜 수가 맞는지 검사한다.
+`check_performance_smoke.py`는 합성 Android 로그 1만 메시지를 실제 앱 파서로 파싱하고 3초 예산 안에 메시지/날짜 수가 맞는지 검사한다.
 
 50만 메시지 수동 측정:
 

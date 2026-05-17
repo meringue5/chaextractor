@@ -26,7 +26,7 @@
 | 현재 유효한 결정 분리 | `harness/DECISIONS.md` | 반영 |
 | 하네스 리뷰 이동 | `harness/reviews/2026-05-17.md` | 반영 |
 | Windows 후보 파서 분류 | `harness/MANIFEST.md`, `harness/DOMAIN_RULES.md`, `AGENTS.md` | 반영 |
-| JSZip 인라인/폰트 CDN 문서화 | `README.md`, `harness/MANIFEST.md`, `harness/DECISIONS.md` | 반영 |
+| JSZip 로컬 vendor/폰트 CDN 문서화 | `README.md`, `harness/MANIFEST.md`, `harness/DECISIONS.md` | 반영 |
 | 개인정보 문구 정밀화 | `README.md`, `harness/MANIFEST.md` | 반영 |
 | Android 샘플 경로 정리 | `HISTORY.md`, `harness/DECISIONS.md` | 반영 |
 | `RESULT_STEP1.md` 미포함 상태 명시 | `HISTORY.md` | 반영 |
@@ -50,6 +50,7 @@
 | 가이드 이미지 정적 자산 분리 | `assets/guide/*.png`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
 | 앱 CSS 정적 자산 분리 | `assets/styles/app.css`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
 | Open Graph/hero 이미지 정적 자산 위치 정리 | `assets/og-image.png`, `index.html`, `README.md`, `AGENTS.md`, `harness/DECISIONS.md` | 반영 |
+| 앱 JS와 JSZip vendor 정적 자산 분리 | `assets/scripts/app.js`, `assets/vendor/jszip-3.10.1.min.js`, `index.html`, `harness/scripts/parse_with_index.mjs` | 반영 |
 
 ## 우선순위 백로그
 
@@ -63,4 +64,4 @@
 
 ## 다음 구현 묶음
 
-다음 구현 묶음은 JS/vendor를 빌드 없는 정적 파일로 분리할지 검토하거나, 실제 Windows 첨부파일 export 샘플 확보 후 결정한다.
+다음 구현 묶음은 vendor 업데이트 절차를 문서화하거나, 실제 Windows 첨부파일 export 샘플 확보 후 결정한다.

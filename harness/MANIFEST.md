@@ -67,9 +67,9 @@
 
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
-| 앱은 서버 없이 실행 가능한 빌드 없는 정적 앱이다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타/hero 이미지, JS 앱 로직은 아직 `index.html` 중심 | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
+| 앱은 서버 없이 실행 가능한 빌드 없는 정적 앱이다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` 앱 로직, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타/hero 이미지 | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
 | 런타임 정적 자산은 소스와 배포본이 같은 파일이어야 한다. | 별도 빌드 산출물 없음 | doc drift checker와 파일 경로 존재 점검 |
-| 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 인라인, 폰트 CDN | doc drift checker로 일부 점검 |
+| 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 3.10.1 로컬 vendor, 폰트 CDN | doc drift checker로 일부 점검 |
 | 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소/Windows 최소 fixture parser golden 시작 | macOS 확장 시 fixture 추가 |
 | 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 텍스트 파서는 공식 지원으로 승격, Windows 첨부파일/macOS는 미결정 | 미결정 항목은 README에 홍보하지 않음 |
 | 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | project skill과 parser golden/doc drift 하네스 시작 | 로컬 표준 명령 유지 |
@@ -98,7 +98,7 @@
 
 | 항목 | 구현 위치/근거 | 리스크 | 다음 결정 |
 |---|---|---|---|
-| JSZip 인라인 | `index.html` 하단 JSZip 3.10.1 | 런타임 의존성 설명이 드리프트될 수 있음 | doc drift checker로 점검 |
+| JSZip 로컬 vendor | `assets/vendor/jszip-3.10.1.min.js` | 런타임 의존성 설명이 드리프트될 수 있음 | doc drift checker로 점검 |
 | 폰트 CDN 자동 요청 | CSS `@font-face` | 개인정보 문구와 외부 요청 범위 혼선 | 외부 네트워크 표면으로 공식 등재 완료 |
 | Google Forms 문의 링크 | setup/footer/header 링크 | 사용자 클릭 외부 이동 | 개인정보 문구에 "클릭 시 외부 이동" 명시 |
 | 20줄 미만 대화 파일 거부 | `validateChatFile` | 짧은 실제 내보내기 거부 가능 | 요구사항으로 인정할지 결정 |
@@ -114,7 +114,7 @@
 | Windows 첨부파일 매핑을 공식화할 것인가? | 텍스트 지원과 첨부파일 지원을 혼동할 수 있다 | 실제 export 구조 확인 전까지 공식 범위 밖으로 둠 |
 | CSP 같은 브라우저 보안 정책을 둘 것인가? | inline script/style과 정적 파일 분리 경계 때문에 정책 설계가 필요하다 | 우선 위협 모델 문서화 후 적용 검토 |
 | Python CSV 파서를 유지할 것인가? | 브라우저 파서와 기능 차이가 커질 수 있다 | 보조 iOS-only 도구로 명시 |
-| JS/vendor를 언제 분리할 것인가? | 유지보수성은 좋아지지만 테스트 하네스와 파일 경로가 함께 바뀐다 | 빌드 없는 정적 파일 분리만 허용하고 단계별 검토 |
+| vendor 업데이트 절차를 어떻게 관리할 것인가? | 로컬 vendor 파일은 CDN 드리프트를 줄이지만 출처/버전/무결성 기록이 필요하다 | `THIRD_PARTY` 또는 dependency manifest 추가를 검토 |
 | 테스트 도구를 앱 런타임 밖에 둘 것인가? | 하네스 구현에 파일 추가가 필요하다 | 앱 런타임과 하네스는 별도 레이어로 유지 |
 
 ## 변경 프로토콜

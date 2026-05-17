@@ -322,6 +322,22 @@
   * `python3 harness/scripts/check_doc_drift.py` 통과
   * `git diff --check` 통과
 
+## 2-1-18단계: 앱 JS와 JSZip vendor 정적 자산 분리 (2026-05-17)
+* 결정:
+  * 앱 JavaScript는 `assets/scripts/app.js`로 분리하되 빌드 산출물은 만들지 않음
+  * JSZip 3.10.1은 `assets/vendor/jszip-3.10.1.min.js` 로컬 vendor 파일로 고정
+  * `index.html`은 HTML 진입점으로 유지하고 vendor script → app script 순서로 로드
+* 변경:
+  * `index.html` 내부 앱 스크립트를 `assets/scripts/app.js`로 이동
+  * 인라인 JSZip을 `assets/vendor/jszip-3.10.1.min.js`로 이동
+  * [harness/scripts/parse_with_index.mjs](harness/scripts/parse_with_index.mjs)가 `assets/scripts/app.js`를 직접 읽도록 갱신
+  * README/AGENTS/harness 문서와 doc drift checker에 앱 JS/JSZip vendor 경로 반영
+* 검증:
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
+  * `git diff --check` 및 Python 유틸 import smoke 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

@@ -65,8 +65,11 @@ def main() -> int:
     index = read("index.html")
 
     style_assets = sorted(set(re.findall(r'href="(assets/styles/[^"]+\.css)"', index)))
+    app_script_assets = sorted(set(re.findall(r'src="(assets/scripts/[^"]+\.js)"', index)))
+    vendor_script_assets = sorted(set(re.findall(r'src="(assets/vendor/[^"]+\.js)"', index)))
     styles = "\n".join(read(asset) for asset in style_assets if exists(asset))
-    runtime = index + "\n" + styles
+    scripts = "\n".join(read(asset) for asset in [*app_script_assets, *vendor_script_assets] if exists(asset))
+    runtime = index + "\n" + styles + "\n" + scripts
 
     check_markdown_links(errors)
 
@@ -78,7 +81,7 @@ def main() -> int:
     )
     check("iOS / Android / Windows 카카오톡 내보내기 파일 지원" in agents, "AGENTS must state iOS / Android / Windows support", errors)
 
-    if "MESSAGE_WINDOWS" in index or "DATE_HEADER_WINDOWS" in index:
+    if "MESSAGE_WINDOWS" in runtime or "DATE_HEADER_WINDOWS" in runtime:
         check("Windows 데스크톱 텍스트 내보내기는 공식 지원" in agents, "AGENTS must state Windows text export support", errors)
         check("Windows | 공식 지원" in domain, "DOMAIN_RULES must classify Windows as official support", errors)
         check("Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원" in decisions, "DECISIONS must adopt Windows text support", errors)
@@ -86,11 +89,27 @@ def main() -> int:
         check(exists("test/parser-golden/windows-minimal.json"), "Windows support requires parser golden expected", errors)
         check(exists("test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt"), "Windows support requires fixture txt", errors)
 
-    if "JSZip v3.10.1" in index:
-        check("JSZip은 `index.html`에 인라인" in readme, "README must say JSZip is inlined", errors)
-        check("JSZip 인라인" in agents, "AGENTS must say JSZip is inlined", errors)
-        check("JSZip 인라인" in manifest, "MANIFEST must track JSZip inline dependency", errors)
-        check("JSZip 3.10.1 인라인" in decisions, "DECISIONS must record JSZip inline status", errors)
+    if app_script_assets:
+        check("assets/scripts" in readme, "README must document app script asset directory", errors)
+        check("assets/scripts/app.js" in agents, "AGENTS must document app script path", errors)
+        check("assets/scripts/app.js" in manifest, "MANIFEST must classify app script as runtime static asset", errors)
+        check("assets/scripts/app.js" in decisions, "DECISIONS must record app script asset policy", errors)
+        for asset in app_script_assets:
+            check(exists(asset), f"app script referenced by index.html is missing: {asset}", errors)
+
+    if vendor_script_assets:
+        check("assets/vendor" in readme, "README must document vendor script asset directory", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in agents, "AGENTS must document JSZip vendor path", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in manifest, "MANIFEST must classify JSZip vendor asset", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in decisions, "DECISIONS must record JSZip vendor asset policy", errors)
+        for asset in vendor_script_assets:
+            check(exists(asset), f"vendor script referenced by index.html is missing: {asset}", errors)
+
+    if "JSZip v3.10.1" in runtime:
+        check("JSZip은 `assets/vendor/jszip-3.10.1.min.js`" in readme, "README must say JSZip is local vendor", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in agents, "AGENTS must say JSZip is local vendor", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in manifest, "MANIFEST must track JSZip local vendor dependency", errors)
+        check("JSZip 3.10.1은 `assets/vendor/jszip-3.10.1.min.js`" in decisions, "DECISIONS must record JSZip local vendor status", errors)
 
     if style_assets:
         check("assets/styles" in readme, "README must document stylesheet asset directory", errors)

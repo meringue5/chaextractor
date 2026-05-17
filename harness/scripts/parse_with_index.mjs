@@ -4,16 +4,8 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const indexHtml = fs.readFileSync(path.join(repoRoot, 'index.html'), 'utf8');
-const jsZipMarker = '<!-- JSZip';
-const appHtml = indexHtml.slice(0, indexHtml.indexOf(jsZipMarker));
-const scripts = [...appHtml.matchAll(/<script>([\s\S]*?)<\/script>/g)];
-
-if (scripts.length === 0) {
-  throw new Error('Could not find app script in index.html');
-}
-
-const appScript = scripts[scripts.length - 1][1];
+const appScriptPath = path.join(repoRoot, 'assets/scripts/app.js');
+const appScript = fs.readFileSync(appScriptPath, 'utf8');
 const input = JSON.parse(fs.readFileSync(0, 'utf8'));
 
 function escapeHtml(text) {
@@ -273,10 +265,10 @@ windowObject.indexedDB = context.indexedDB;
 windowObject.URL = context.URL;
 
 vm.createContext(context);
-vm.runInContext(appScript, context, { filename: 'index.html' });
+vm.runInContext(appScript, context, { filename: 'assets/scripts/app.js' });
 
 if (!windowObject.__CHAEXTRACTOR_TEST__) {
-  throw new Error('index.html did not expose __CHAEXTRACTOR_TEST__');
+  throw new Error('assets/scripts/app.js did not expose __CHAEXTRACTOR_TEST__');
 }
 
 if (input.mode === 'modalEscape') {
