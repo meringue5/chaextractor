@@ -278,6 +278,11 @@
             background: #43a047;
         }
 
+        .file-btn.disabled {
+            opacity: 0.55;
+            pointer-events: none;
+        }
+
         .file-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
@@ -296,10 +301,31 @@
             background: rgba(74, 144, 217, 0.08);
         }
 
+        .drop-zone.disabled {
+            opacity: 0.65;
+        }
+
         .drop-message {
             color: var(--text-secondary, #888);
             font-size: 13px;
             margin-bottom: 10px;
+        }
+
+        .capability-warning {
+            display: none;
+            margin: 12px 0 16px;
+            padding: 12px 14px;
+            border: 1px solid rgba(255, 152, 0, 0.35);
+            border-radius: 8px;
+            background: rgba(255, 193, 7, 0.12);
+            color: var(--text-primary);
+            font-size: 13px;
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        .capability-warning.active {
+            display: block;
         }
 
         .drop-or {
@@ -1348,6 +1374,7 @@
                         <input type="file" id="folderInput" webkitdirectory multiple accept="*/*">
                     </div>
                 </div>
+                <div class="capability-warning" id="capabilityWarning" role="status" hidden></div>
                 <ul class="hint"><li><strong>iOS:</strong> ZIP 파일 선택</li><li><strong>Android:</strong> KakaoTalk &gt; Chats &gt; 대화폴더 진입 → <strong>폴더 안의 모든 파일 선택</strong> (우측 상단 메뉴 → 전체선택)</li><li><strong>Windows:</strong> 데스크톱 내보내기 TXT 파일 선택</li></ul>
                 <div class="file-name" id="zipName"></div>
 
@@ -1657,9 +1684,79 @@
         const progressContainer = document.getElementById('progressContainer');
         const progressFill = document.getElementById('progressFill');
         const progressText = document.getElementById('progressText');
+        const dropZone = document.getElementById('dropZone');
+        const capabilityWarning = document.getElementById('capabilityWarning');
         const sidebar = document.querySelector('.sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        // ========== 브라우저 기능 제한 안내 ==========
+        function getBrowserCapabilityStatus(scope = window) {
+            const urlApi = scope.URL || (typeof URL !== 'undefined' ? URL : null);
+            return {
+                file: typeof scope.File !== 'undefined',
+                blob: typeof scope.Blob !== 'undefined',
+                indexedDB: typeof scope.indexedDB !== 'undefined',
+                objectURL: !!(urlApi && typeof urlApi.createObjectURL === 'function')
+            };
+        }
+
+        function buildCapabilityMessages(status) {
+            const messages = [];
+            if (!status.file) {
+                messages.push('File API가 없어 파일 선택 업로드를 사용할 수 없습니다. 최신 Chrome, Edge, Firefox, Safari에서 다시 열어주세요.');
+            }
+            if (!status.blob || !status.objectURL) {
+                messages.push('Blob URL 기능이 없어 첨부파일 미리보기와 파일 링크가 제한됩니다.');
+            }
+            if (!status.indexedDB) {
+                messages.push('IndexedDB가 없어 캐시 없이 동작합니다. 같은 파일을 다시 열면 재파싱합니다.');
+            }
+            return messages;
+        }
+
+        function applyBrowserCapabilityStatus(status = getBrowserCapabilityStatus()) {
+            const messages = buildCapabilityMessages(status);
+            const critical = !status.file || !status.blob || !status.objectURL;
+
+            if (messages.length > 0) {
+                capabilityWarning.textContent = messages.join(' ');
+                capabilityWarning.hidden = false;
+                capabilityWarning.classList.add('active');
+            } else {
+                capabilityWarning.textContent = '';
+                capabilityWarning.hidden = true;
+                capabilityWarning.classList.remove('active');
+            }
+
+            zipInput.disabled = critical;
+            folderInput.disabled = critical;
+            zipBtn.classList.toggle('disabled', critical);
+            folderBtn.classList.toggle('disabled', critical);
+            dropZone.classList.toggle('disabled', critical);
+
+            return {
+                supported: messages.length === 0,
+                critical,
+                messages,
+                status
+            };
+        }
+
+        function buildCapabilityTestSnapshot() {
+            return {
+                warningActive: capabilityWarning.classList.contains('active'),
+                warningHidden: capabilityWarning.hidden,
+                warningText: capabilityWarning.textContent,
+                zipInputDisabled: zipInput.disabled,
+                folderInputDisabled: folderInput.disabled,
+                zipButtonDisabled: zipBtn.classList.contains('disabled'),
+                folderButtonDisabled: folderBtn.classList.contains('disabled'),
+                dropZoneDisabled: dropZone.classList.contains('disabled')
+            };
+        }
+
+        applyBrowserCapabilityStatus();
 
         // ========== 공통 모달 함수 ==========
         let lastModalTrigger = null;
@@ -1967,7 +2064,6 @@
         }
 
         // ========== 드래그 앤 드롭 ==========
-        const dropZone = document.getElementById('dropZone');
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('drag-over');
@@ -3548,6 +3644,9 @@
                 applyFont,
                 openSidebar,
                 closeSidebar,
+                applyBrowserCapabilityStatus,
+                getBrowserCapabilityStatus,
+                getCapabilitySnapshot: buildCapabilityTestSnapshot,
                 openModal,
                 closeActiveModal,
                 handleModalKeydown,

@@ -202,6 +202,10 @@ UI 렌더링:
 - `updateSettingsUI()` — 설정 모달 활성 버튼 표시
 - `applyLeaderFilter()` — 리더 발언만 표시/전체 표시 토글
 
+브라우저 기능 제한:
+- `getBrowserCapabilityStatus()` — `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 지원 확인
+- `applyBrowserCapabilityStatus(status)` — 미지원 기능 안내와 업로드 제한 상태 반영
+
 모달:
 - `openModal(modalId)` / `closeModal(modalId)` — 모달 열기/닫기
 

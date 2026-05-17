@@ -43,12 +43,12 @@
 | H-006 Escape 모달 닫기와 키보드 접근성 보강 | `index.html`, `harness/scripts/check_modal_escape.py` | 반영 |
 | H-007 cache hit 날짜 정렬 회귀 고정 | `index.html`, `harness/scripts/check_cache_date_sort.py` | 반영 |
 | H-009 주요 UI 흐름 smoke 추가 | `harness/scripts/check_ui_smoke.py`, `harness/scripts/parse_with_index.mjs` | 반영 |
+| H-010 브라우저 기능 제한 안내 구현 | `index.html`, `harness/scripts/check_capability_notice.py` | 반영 |
 
 ## 우선순위 백로그
 
 | ID | 우선순위 | 영역 | 작업 | 완료 기준 |
 |---|---|---|---|---|
-| H-010 | P1 | Capability | 브라우저 기능 제한 안내 구현 | `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 미지원 시 복구 가능한 메시지 표시 |
 | H-011 | P1 | Cache/privacy | 캐시 삭제 UX와 Blob URL 해제 정책 구현 | 설정에서 캐시 삭제 가능, 새 업로드 시 Blob URL 정리 |
 | H-012 | P1 | Attachment | Android 일반 파일/PDF 매핑 결정 및 구현 | URL 인코딩 파일명 fixture와 expected 추가 |
 | H-014 | P1 | Attachment | Windows 첨부파일 매핑 조사 및 결정 | 실제 Windows 첨부파일 export 구조와 fixture 확보 |

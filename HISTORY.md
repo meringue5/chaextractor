@@ -217,6 +217,17 @@
 * 검증:
   * `python3 harness/scripts/check_ui_smoke.py` 통과
 
+## 2-1-10단계: 브라우저 기능 제한 안내 구현 (2026-05-17)
+* 대상 백로그:
+  * H-010 브라우저 기능 제한 안내 구현
+* 변경:
+  * 초기 업로드 영역에 기능 제한 안내 영역 추가
+  * `File`/`Blob`/`URL.createObjectURL` 미지원 시 업로드 컨트롤 비활성화
+  * `IndexedDB` 미지원 시 캐시 없이 동작한다는 복구 가능한 안내 표시
+  * [harness/scripts/check_capability_notice.py](harness/scripts/check_capability_notice.py) 추가
+* 검증:
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

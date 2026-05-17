@@ -143,8 +143,13 @@ const localStorage = {
   }
 };
 
+function FakeFile() {}
+function FakeBlob() {}
+
 const windowObject = {
   __CHAEXTRACTOR_ENABLE_TEST_API__: true,
+  File: FakeFile,
+  Blob: FakeBlob,
   addEventListener() {},
   removeEventListener() {},
   scrollTo() {},
@@ -190,6 +195,9 @@ const context = {
     }
   },
   window: windowObject,
+  File: FakeFile,
+  Blob: FakeBlob,
+  indexedDB: {},
   localStorage,
   performance: { now: () => 0 },
   URL: { createObjectURL: () => 'blob:test' },
@@ -203,6 +211,8 @@ const context = {
 context.globalThis = context;
 windowObject.document = context.document;
 windowObject.localStorage = localStorage;
+windowObject.indexedDB = context.indexedDB;
+windowObject.URL = context.URL;
 
 vm.createContext(context);
 vm.runInContext(appScript, context, { filename: 'index.html' });
@@ -299,6 +309,16 @@ if (input.mode === 'uiSmoke') {
     afterSettingsModal,
     afterSidebarOpen,
     afterSidebarClose
+  }, null, 2));
+  process.exit(0);
+}
+
+if (input.mode === 'capabilityNotice') {
+  const api = windowObject.__CHAEXTRACTOR_TEST__;
+  const result = api.applyBrowserCapabilityStatus(input.status);
+  process.stdout.write(JSON.stringify({
+    result,
+    snapshot: api.getCapabilitySnapshot()
   }, null, 2));
   process.exit(0);
 }
