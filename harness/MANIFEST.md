@@ -89,7 +89,7 @@
 | UI | 꿀팁, 리더 필터, 설정, 테마/폰트 유지 | UI smoke에서 주요 함수 흐름 부분 검증 |
 | 접근성 | 키보드 주요 기능, 포커스, 대비 | 모달 Escape 닫기는 `check_modal_escape.py`로 검증 |
 | 기능 제한 | `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 미지원 안내 | capability notice 검증 |
-| 성능 | 50만 메시지 10초 내 파싱 목표 | 수동 이력만 있음 |
+| 성능 | 50만 메시지 10초 내 파싱 목표 | 합성 1만 자동 smoke, 50만 수동 측정 절차 |
 
 ## 구현으로만 존재하는 것
 

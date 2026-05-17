@@ -46,6 +46,7 @@ python3 harness/scripts/check_cache_date_sort.py
 python3 harness/scripts/check_ui_smoke.py
 python3 harness/scripts/check_capability_notice.py
 python3 harness/scripts/check_cache_privacy.py
+python3 harness/scripts/check_performance_smoke.py
 PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"
 ```
 
@@ -61,6 +62,14 @@ PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; p
 
 `check_cache_privacy.py`는 새 업로드 전 Blob URL 해제, 런타임 첨부 상태 초기화, 설정 모달 캐시 삭제가 호출하는 IndexedDB clear 경로를 검사한다.
 
+`check_performance_smoke.py`는 합성 Android 로그 1만 메시지를 `index.html` 실제 파서로 파싱하고 3초 예산 안에 메시지/날짜 수가 맞는지 검사한다.
+
+50만 메시지 수동 측정:
+
+```bash
+python3 harness/scripts/check_performance_smoke.py --messages 500000 --budget-ms 10000
+```
+
 ## 예정 명령
 
-- performance smoke: 합성 대용량 로그 파싱 시간과 날짜 단위 렌더링 부담
+- 날짜 단위 렌더링 부담을 별도 측정하는 실제 브라우저 성능 smoke

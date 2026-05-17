@@ -269,6 +269,17 @@
 * 검증:
   * `python3 harness/scripts/run_parser_golden.py test/parser-golden/windows-attachments-unsupported.json` 통과
 
+## 2-1-14단계: 합성 성능 smoke 추가 (2026-05-17)
+* 대상 백로그:
+  * H-013 합성 대용량 성능 smoke 추가
+* 변경:
+  * [harness/scripts/check_performance_smoke.py](harness/scripts/check_performance_smoke.py) 추가
+  * Node VM helper에 합성 Android 로그 생성과 실제 `index.html` 파서 시간 측정 모드 추가
+  * 1만 메시지 자동 smoke와 50만 메시지 수동 측정 명령 문서화
+* 검증:
+  * `python3 harness/scripts/check_performance_smoke.py` 통과: 10,000 메시지, 15.5ms
+  * `python3 harness/scripts/check_performance_smoke.py --messages 500000 --budget-ms 10000` 통과: 500,000 메시지, 502.7ms
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

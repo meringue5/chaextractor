@@ -403,6 +403,51 @@ if (input.mode === 'cachePrivacy') {
   process.exit(0);
 }
 
+function buildSyntheticAndroidChat(messageCount) {
+  const lines = [
+    'Synthetic Android chat',
+    '저장한 날짜 : 2026년 4월 1일 오전 9:00',
+    '',
+    '',
+    ''
+  ];
+
+  for (let i = 0; i < messageCount; i++) {
+    const day = (i % 10) + 1;
+    const hour24 = i % 24;
+    const ampm = hour24 < 12 ? '오전' : '오후';
+    const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+    const minute = String(i % 60).padStart(2, '0');
+    const user = i % 17 === 0 ? '채상욱 리더' : `사용자${i % 20}`;
+    const content = i % 50 === 0 ? '이모티콘' : `합성 메시지 ${i}`;
+    lines.push(`2026년 4월 ${day}일 ${ampm} ${hour12}:${minute}, ${user} : ${content}`);
+  }
+
+  return lines.join('\n');
+}
+
+if (input.mode === 'performanceSmoke') {
+  const api = windowObject.__CHAEXTRACTOR_TEST__;
+  const messageCount = input.messageCount || 10000;
+  const content = buildSyntheticAndroidChat(messageCount);
+  const start = process.hrtime.bigint();
+  const result = api.parseChat(content, {
+    platform: 'android',
+    attachments: [],
+    mapAttachments: false
+  });
+  const elapsedMs = Number(process.hrtime.bigint() - start) / 1_000_000;
+
+  process.stdout.write(JSON.stringify({
+    requestedMessageCount: messageCount,
+    elapsedMs,
+    messageCount: result.messageCount,
+    dateCount: result.dateCount,
+    typeCounts: result.typeCounts
+  }, null, 2));
+  process.exit(0);
+}
+
 let result = windowObject.__CHAEXTRACTOR_TEST__.parseChat(input.content, {
   platform: input.platform,
   attachments: input.attachments || [],
