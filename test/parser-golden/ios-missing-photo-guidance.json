@@ -1,0 +1,39 @@
+{
+  "id": "ios-missing-photo-guidance",
+  "description": "iOS 사진 메시지의 첨부파일이 없을 때 원본 대화에서 내려받은 뒤 다시 내보내라는 안내를 렌더링",
+  "platform": "ios",
+  "renderDate": "2026-04-08",
+  "input": {
+    "text": "test/fixtures/ios-missing-photo/Talk_2026.4.8 16_20-1.txt",
+    "attachments": []
+  },
+  "expected": {
+    "detectedPlatform": "ios",
+    "messageCount": 1,
+    "dateCount": 1,
+    "dates": ["2026-04-08"],
+    "typeCounts": {
+      "photo": 1
+    },
+    "attachmentRefCount": 1,
+    "attachmentMappedCount": 0,
+    "leaderCountByDate": {
+      "2026-04-08": 0
+    },
+    "messages": [
+      {
+        "index": 0,
+        "user": "테스터",
+        "message_type": "photo",
+        "attachment_path": ""
+      }
+    ],
+    "renderedMessageCount": 1,
+    "renderedHtmlContains": [
+      "사진 (파일 없음)",
+      "missing-attachment-tooltip",
+      "카카오톡 원본 대화에서 해당 사진을 한 번 열어 기기에 내려받은 뒤",
+      "<summary>도움말</summary>"
+    ]
+  }
+}

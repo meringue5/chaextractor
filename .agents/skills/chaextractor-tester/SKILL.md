@@ -26,6 +26,7 @@ Run these when relevant and safe:
 ```bash
 git diff --check
 python3 harness/scripts/check_doc_drift.py
+python3 harness/scripts/check_diagnostic_report.py
 PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"
 python3 harness/scripts/run_parser_golden.py
 npm run test:browser

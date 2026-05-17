@@ -354,6 +354,493 @@
   * `npm run test:browser` 통과: 4 passed, 2 skipped
   * 기존 deterministic 하네스와 문서 검사 통과
 
+## 2-1-20단계: 꿀팁 모달을 오른쪽 링크 사이드바로 대체 (2026-05-17)
+* 결정:
+  * 꿀팁은 모달이 아니라 메인 화면 오른쪽 링크 사이드바에서 상시 제공
+  * 초기 화면에서는 꿀팁 모달 버튼을 제거하고 문의/제보 외부 링크만 유지
+  * 모바일에서는 대화 화면, 좌측 탐색 사이드바, 우측 링크 사이드바 중 하나만 화면을 점유하도록 좌우 패널을 상호 배제
+* 변경:
+  * [harness/REQUIREMENTS.md](harness/REQUIREMENTS.md)에 우측 링크 패널과 모바일 상호 배제 요구사항 반영
+  * [index.html](index.html)에서 `#setupTipsBtn`, `#tipsBtn`, `#tipsModal` 제거 및 `#linkSidebar`/`#linkSidebarToggle` 추가
+  * [assets/styles/app.css](assets/styles/app.css)에 데스크톱 우측 링크 패널과 모바일 우측 슬라이드 패널 스타일 추가
+  * [assets/scripts/app.js](assets/scripts/app.js)에 `openLinkSidebar`, `closeLinkSidebar`, `closeMobilePanels` 추가
+  * README/AGENTS/harness 문서와 Node/Playwright UI smoke를 새 화면 구조에 맞게 갱신
+* 검증:
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+  * Codex 인앱 브라우저에서 `#setupTipsBtn`/`#tipsModal` 제거와 `#linkSidebar .link-item` 5개 존재 확인
+  * `git diff --check` 통과
+
+## 2-1-21단계: 링크 사이드바 유용한 팁 추가 (2026-05-17)
+* 결정:
+  * 현재 링크 수와 사용처에서는 HTML 정적 목록을 유지
+  * 링크가 크게 늘거나 여러 화면에서 재사용될 때 `LINK_GROUPS` 같은 JS 데이터 목록 렌더링을 검토
+* 변경:
+  * 오른쪽 링크 사이드바에 `유용한 팁` 그룹 추가
+  * `ETF Checker` 링크(`https://www.etfcheck.co.kr`) 추가
+  * AGENTS/README/harness 문서와 browser smoke 링크 개수 기대값 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+
+## 2-1-22단계: 오류 진단 리포트와 GitHub 버그 제보 폼 추가 (2026-05-17)
+* 결정:
+  * Google Forms 문의 흐름 대신 GitHub Issue Form 기반 버그 제보 흐름을 사용
+  * 앱이 JS 오류와 파일 처리 실패를 감지하면 대화 원문 없이 진단 리포트를 준비
+  * 진단 리포트에는 파일명 원문, 사용자명, 첨부파일 내용, 대화 본문을 자동 포함하지 않고 파일 수/크기/확장자/처리 단계/스택만 기록
+* 변경:
+  * [index.html](index.html)에 `#reportIssueModal`, `#diagnosticToast`, 버그 제보 버튼 추가
+  * [assets/scripts/app.js](assets/scripts/app.js)에 `window.error`, `unhandledrejection`, 업로드 처리 실패 진단 수집과 GitHub Issue Form URL 생성 추가
+  * [assets/styles/app.css](assets/styles/app.css)에 오류 보고 모달과 진단 토스트 스타일 추가
+  * [.github/ISSUE_TEMPLATE/bug_report.yml](.github/ISSUE_TEMPLATE/bug_report.yml)와 `config.yml` 추가
+  * [harness/scripts/check_diagnostic_report.py](harness/scripts/check_diagnostic_report.py) 추가
+  * README/AGENTS/harness 문서와 Playwright smoke를 오류 보고 흐름에 맞게 갱신
+* 검증:
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py`, `check_cache_date_sort.py`, `check_ui_smoke.py`, `check_capability_notice.py`, `check_cache_privacy.py`, `check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+  * `git diff --check` 통과
+
+## 2-1-23단계: 왕관 사용자 필터 대상 입력 추가 (2026-05-17)
+* 결정:
+  * 왕관 버튼의 기본 필터 대상은 `채상욱 리더`로 유지하되, 사용자가 런타임에서 대상 사용자명을 직접 입력할 수 있게 함
+  * 필터 대상 사용자명은 사용자/대화 데이터가 될 수 있으므로 localStorage에 저장하지 않고 현재 세션 UI 상태로만 사용
+  * 대상 변경 시 하이라이트, 스크롤 마커, 날짜별 비중, 대화 헤더의 필터 카운트를 같은 기준으로 재계산
+* 변경:
+  * [index.html](index.html)에 `#leaderFilterPanel`, `#leaderFilterInput`, 적용/전체 버튼 추가
+  * [assets/scripts/app.js](assets/scripts/app.js)에 필터 대상 사용자 상태, 대상 변경 재계산, 적용/해제 UI 흐름 추가
+  * [assets/styles/app.css](assets/styles/app.css)에 왕관 필터 입력 패널 스타일 추가
+  * README/AGENTS/harness 문서와 Node/Playwright UI smoke를 사용자 지정 필터 흐름에 맞게 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-24단계: 1995 테마 추가 (2026-05-17)
+* 참조:
+  * PJW48의 이야기 굵은체 복각 페이지를 참고해 1990년대 PC통신/이야기 감성을 짙은 푸른 화면과 흰 글씨 중심의 변형 다크 테마로 반영
+* 변경:
+  * [index.html](index.html) 설정 모달에 `1995` 테마 버튼과 `이야기` 폰트 버튼 추가
+  * [assets/styles/app.css](assets/styles/app.css)에 `IyagiGGC` 웹폰트, `[data-theme="1995"]`, `[data-font="iyagi"]` 스타일 추가
+  * [assets/scripts/app.js](assets/scripts/app.js)에서 `1995` 테마 선택 시 `iyagi` 폰트가 자동 적용되도록 테마별 폰트 전환 갱신
+  * README/AGENTS/harness 문서와 Node/Playwright UI smoke를 1995 테마 기준에 맞게 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-25단계: 설정 모달 테마/폰트 미리보기 보강 (2026-05-17)
+* 변경:
+  * 설정 모달의 폰트 버튼이 각 폰트(`기본`, `RIDI바탕`, `Neo둥근모Pro`, `이야기`)로 직접 렌더링되도록 `iyagi` 미리보기 누락 보강
+  * 테마 버튼이 각 테마의 배경색, 글자색, 자동 폰트 분위기를 보여주도록 미리보기 스타일 추가
+  * 선택된 버튼은 배경을 덮지 않고 테두리와 체크 표시로만 활성 상태를 표시하도록 조정
+  * Playwright smoke에 1995 테마/이야기 폰트 미리보기 스타일 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-26단계: 1995 테마 텍스트 UI 조정 (2026-05-17)
+* 결정:
+  * 1995 테마는 구조를 바꾸지 않고 CSS만으로 PC통신 텍스트 UI 감성을 강화
+  * 접근성, 클릭 영역, 키보드 흐름, 모바일 패널 구조는 기존 요구사항을 유지
+* 변경:
+  * 1995 테마에서 카드/말풍선/그림자/둥근 박스 표현을 줄이고 짙은 남청색 텍스트 화면 중심으로 조정
+  * 메시지는 박스형 말풍선 대신 `[사용자] > 내용`, `@ 시간`, 필터 대상 발언 `*` 표식처럼 보이게 변경
+  * 링크/버튼은 `>`, `::` 같은 짧은 텍스트 표지를 쓰되 구조 구분선은 낮은 대비 단색으로 정리
+  * Playwright smoke에 1995 테마 말풍선 제거와 헤더/프롬프트 표식 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-27단계: 1995 테마 주변 UI 안정화 (2026-05-17)
+* 변경:
+  * 본문 메시지의 PC통신 프롬프트 감성은 유지
+  * 사이드바, 헤더, 캘린더, 검색, 링크 그룹의 점선 구분을 낮은 대비 단색 구분으로 정리
+  * 선택 상태에서 레이아웃을 밀던 `>` pseudo 표식을 제거하고 얕은 배경 강조로 변경
+  * 업로드 단계 여백을 복원해 박스 제거 후 내용물이 붙거나 탈출해 보이는 문제를 완화
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-28단계: 1995 테마 Windows 3.1 컨트롤 혼합 (2026-05-17)
+* 결정:
+  * 1995 테마의 전체 바탕과 대화 화면은 이야기/PC통신 남청색 화면을 유지
+  * 사이드바, 링크 패널, 설정 모달, 입력/버튼/목록 등 도구 박스는 Windows 3.1 회색 3D 컨트롤로 표현
+  * 대화명 잘림은 툴팁 대신 1995 테마에서 줄바꿈 가능한 이름 컬럼으로 처리
+* 변경:
+  * [assets/styles/app.css](assets/styles/app.css)에 Windows 3.1 컨트롤 색상/raised border/title bar 오버라이드 추가
+  * 1995 테마에서 대화 영역은 남청색과 이야기 폰트를 유지하고, 주변 패널은 Windows 컨트롤 폰트/색상으로 분리
+  * 1995 테마의 데스크톱 사용자명은 `white-space: normal`, `overflow-wrap: anywhere`로 줄바꿈 허용
+  * Playwright smoke에 Windows 3.1 패널 배경, 대화 영역 배경, 사용자명 줄바꿈 스타일 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-29단계: macOS CSV 내보내기 지원 추가 (2026-05-17)
+* 확인:
+  * macOS 카카오톡 데스크톱 내보내기 파일은 UTF-8 BOM이 있는 CSV이며, 헤더는 `Date,User,Message`
+  * 날짜는 `YYYY-MM-DD HH:mm:ss` 24시간 형식
+  * 삭제 메시지와 관리자 숨김 메시지는 `Date`/`User`가 비어 있는 시스템 행으로 확인
+  * 제공된 실제 파일에는 카카오톡 앱 버전 정보가 포함되어 있지 않고, 파일명에는 내보내기 시각만 포함
+* 결정:
+  * macOS 데스크톱 CSV 텍스트 내보내기 파싱을 공식 지원으로 승격
+  * macOS 첨부파일 매핑은 실제 첨부파일 포함 export 구조 확인 전까지 공식 범위 밖으로 유지
+* 변경:
+  * 초기 업로드 버튼 문구를 `파일(zip, txt, csv)`로 정리하고 CSV 선택 허용
+  * [assets/scripts/app.js](assets/scripts/app.js)에 macOS CSV 감지, CSV 레코드 파서, macOS timestamp 파서, 시스템 행 제외 로직 추가
+  * [test/fixtures/macos-csv/](test/fixtures/macos-csv/)와 [test/parser-golden/macos-csv.json](test/parser-golden/macos-csv.json) 추가
+  * README/AGENTS/harness 문서를 macOS CSV 공식 지원과 데스크톱 첨부파일 미지원 경계에 맞게 갱신
+* 검증:
+  * macOS 실제 CSV 샘플 구조를 원문 없이 요약 확인
+  * 실제 macOS CSV 샘플 파싱 요약: `macos`, 54,537 메시지, 224일, 첨부파일 매핑 0건
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `git diff --check` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-30단계: 1995 테마 컨트롤 폰트와 초기 화면 음각선 조정 (2026-05-17)
+* 결정:
+  * 1995 테마의 Windows 3.1식 컨트롤 박스는 형태만 3.1 컨트롤을 차용하고, 글꼴은 대화 화면과 같은 이야기 폰트를 사용
+  * 초기 화면 업로드 드롭존의 dashed 테두리는 1995 테마에서 Windows 3.1식 음각 solid 선으로 대체
+* 변경:
+  * [assets/styles/app.css](assets/styles/app.css)의 1995 테마 컨트롤 박스 font-family를 `var(--font-family)`로 변경
+  * 1995 테마 `.drop-zone`에 sunken border와 inset shadow 적용
+  * Playwright smoke에 컨트롤 박스 이야기 폰트와 드롭존 solid/inset 색상 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-31단계: 초기 화면 힌트 목록과 드롭존 음각선 조정 (2026-05-17)
+* 결정:
+  * 초기 화면의 힌트 목록은 불렛이 박스 밖으로 밀리지 않도록 목록 들여쓰기를 유지
+  * 1995 테마 드롭존은 면 전체가 눌린 판처럼 보이지 않게 하고, 주변 테두리만 음각선처럼 표현
+* 변경:
+  * [assets/styles/app.css](assets/styles/app.css)의 `.hint` 목록 들여쓰기와 긴 경로 줄바꿈 보강
+  * 1995 테마 `.drop-zone`의 inset shadow 제거, sunken border 색상만 유지
+  * Playwright smoke에 힌트 목록 들여쓰기와 드롭존 border-only 스타일 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-32단계: 1995 테마 기본값 전환 (2026-05-17)
+* 결정:
+  * 주 사용층에 맞춰 최초 진입 기본 테마를 `system`에서 `1995`로 변경
+  * 1995 기본 테마에서는 이야기 폰트(`iyagi`)를 자동 적용
+* 변경:
+  * [index.html](index.html)의 초기 HTML 속성을 `data-theme="1995" data-font="iyagi"`로 변경
+  * [assets/scripts/app.js](assets/scripts/app.js)의 저장된 설정이 없을 때 기본 테마/폰트를 `1995`/`iyagi`로 변경
+  * README/AGENTS/harness 문서에 1995 기본 테마 결정을 반영
+  * Node UI smoke와 Playwright smoke에 기본 테마 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-33단계: 초기 화면 하늘색 외곽선 제거 (2026-05-17)
+* 변경:
+  * 1995 기본 초기 화면의 가이드 이미지/히어로 이미지 외곽선을 하늘색 테마 border에서 Windows 3.1식 회색 음각선으로 변경
+  * 가이드 섹션 전체 외곽선을 만들던 `border-style` 상속을 제거하고, 하단 구분선만 회색 그림자/하이라이트 선으로 정리
+  * Playwright smoke에 초기 화면 가이드 이미지와 섹션 상/좌/우 border 제거 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-34단계: 누락 사진 복구 안내 추가 (2026-05-17)
+* 결정:
+  * `사진 (파일 없음)`은 앱 오류처럼 보이지 않도록, 카카오톡 원본 대화에서 사진을 열어 기기에 내려받은 뒤 다시 내보내라는 복구 안내를 함께 제공
+  * 데스크톱은 hover 툴팁, 모바일은 `도움말` 펼침으로 같은 안내를 확인할 수 있게 함
+* 변경:
+  * 초기 업로드 힌트에 사진이 비어 보일 때의 재내보내기 안내 추가
+  * [assets/scripts/app.js](assets/scripts/app.js)에 누락 사진 안내 렌더러 추가
+  * [assets/styles/app.css](assets/styles/app.css)에 누락 사진 툴팁/도움말 스타일 추가
+  * [test/fixtures/ios-missing-photo/](test/fixtures/ios-missing-photo/)와 [test/parser-golden/ios-missing-photo-guidance.json](test/parser-golden/ios-missing-photo-guidance.json) 추가
+  * README/AGENTS/harness 문서를 누락 사진 안내 요구사항에 맞게 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * 인앱 브라우저에서 초기 업로드 힌트 렌더링 확인
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-35단계: 갈무리 TXT 내보내기 추가 (2026-05-17)
+* 결정:
+  * LLM 요약 호환성을 우선해 갈무리 1차 범위는 TXT 복사/다운로드로 한정
+  * 이미지와 첨부파일 내용, base64 인코딩 포함은 후속 검토로 분리
+  * 갈무리 TXT는 사용자가 명시적으로 복사하거나 다운로드할 때만 생성하며 자동 외부 전송하지 않음
+* 변경:
+  * 대화 헤더 오른쪽에 `갈무리` 버튼 추가
+  * [index.html](index.html)에 갈무리 모달, 현재 날짜/전체 대화 범위 선택, 사용자 필터 적용 옵션 추가
+  * [assets/scripts/app.js](assets/scripts/app.js)에 LLM 요약용 TXT 생성, 복사, 다운로드 로직 추가
+  * [assets/styles/app.css](assets/styles/app.css)에 갈무리 버튼/모달/1995 테마 스타일 추가
+  * README/AGENTS/harness 문서에 갈무리 TXT 요구사항과 개인정보 경계 반영
+  * Node UI smoke에 갈무리 TXT 생성과 사용자 필터 반영 검증 추가
+* 검증:
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `git diff --check` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-36단계: 초기 화면 히어로 이미지 제거와 1995 로딩바 조정 (2026-05-17)
+* 결정:
+  * 처리 완료 후 표시하던 `assets/og-image.png` 히어로 이미지는 초기 화면에서 제거하고, `assets/og-image.png`는 Open Graph 메타 이미지로만 유지
+  * 1995 테마의 진행률 바는 그라데이션 대신 청록색 단색 fill과 조금 두꺼운 Windows 3.1식 음각 프레임으로 표시
+* 변경:
+  * [index.html](index.html)에서 `#heroImage` 제거
+  * [assets/scripts/app.js](assets/scripts/app.js)의 처리 완료 후 히어로 이미지 표시 코드 제거
+  * [assets/styles/app.css](assets/styles/app.css)에 1995 전용 진행률 바 두께/색상 오버라이드 추가
+  * README/AGENTS/harness 문서에서 히어로 이미지 요구사항과 설명 제거
+  * Playwright smoke에 `#heroImage` 제거와 1995 진행률 바 스타일 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-37단계: 1995 창 여닫기 pseudo-애니메이션 적용 (2026-05-17)
+* 결정:
+  * 1995 테마에서는 모바일 사이드바와 모달/이미지 팝업 내용 자체를 늘리지 않고, 빈 사각형 테두리 잔상이 버튼 지점에서 목표 창 위치까지 stepped 방식으로 펼쳐진 뒤 실제 창 내용을 표시
+  * 닫을 때는 실제 창 내용을 먼저 숨긴 뒤 같은 빈 사각형 테두리 잔상을 버튼 지점으로 축소
+  * 모바일 사이드바 토글 버튼도 Windows 3.1 회색 3D 버튼으로 통일
+* 변경:
+  * [assets/styles/app.css](assets/styles/app.css)에 1995 전용 토글 버튼 raised/sunken 스타일과 `.win31-ghost-box` 테두리 잔상 keyframes 추가
+  * [assets/scripts/app.js](assets/scripts/app.js)에 클릭 지점과 창 위치를 계산해 빈 ghost box를 생성/제거하는 1995 전용 열림/닫힘 처리 추가
+  * Playwright smoke에 1995 모달/모바일 사이드바 ghost box와 토글 버튼 3D 스타일 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-38단계: 일반 사용자용 계정 없는 제보 경로 복원 (2026-05-17)
+* 결정:
+  * 일반 사용자가 GitHub 계정 없이 제보할 수 있어야 하므로, 앱의 1차 버그 제보 경로는 Google Form으로 둔다.
+  * GitHub Issue Form은 계정이 있는 개발자용 보조 채널로만 문서화한다.
+* 변경:
+  * 오류 보고 모달의 제보 버튼을 Google Form으로 연결하고 버튼 문구를 `계정 없이 제보 열기`로 변경
+  * 진단 리포트 URL에는 진단 본문을 자동 첨부하지 않고, 사용자가 복사해서 폼에 붙여넣는 방식으로 유지
+  * README/AGENTS/harness 문서를 Google Form 1차 제보 경로와 GitHub 보조 채널 기준으로 갱신
+  * `check_diagnostic_report.py`와 `check_doc_drift.py`를 Google Form 제보 경로 기준으로 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-39단계: 1995 메인 화면 하늘색 테두리 제거 (2026-05-17)
+* 변경:
+  * 메인 대화 화면의 `chat-header` 하단선과 스크롤 마커 오른쪽선에 남아 있던 하늘색 계열 border를 어두운 남청색 선으로 변경
+  * 초기 1995 텍스트 스타일 블록에 남아 있던 주변 패널/검색 입력 border 색을 Windows 3.1 회색 계열로 정리
+  * Playwright smoke에 1995 메인 화면 경계선 색상 회귀 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-40단계: 1995 창 잔상 단선/촘촘함 조정 (2026-05-17)
+* 변경:
+  * 1995 창 여닫기 ghost box에서 겹선 `::before`/`::after`, outline, shadow를 제거하고 3px 단선 테두리로 정리
+  * 창 잔상 이동을 `steps(4)`에서 `steps(8)`로 늘려 박스 사이 간격을 절반 수준으로 조정
+  * Playwright smoke에 ghost box 단선 두께, outline/shadow 제거, 촘촘한 step timing 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-41단계: 1995 창 잔상 프레임 복구 (2026-05-17)
+* 변경:
+  * 단일 ghost box 이동 방식 대신 9개의 중간 사각형 프레임을 순차 표시해 실제 잔상처럼 보이도록 복구
+  * 각 프레임은 3px 단선 테두리를 유지하되, Windows 3.1 느낌의 얕은 그림자를 되살려 밋밋한 박스 느낌을 완화
+  * Playwright smoke에 ghost frame 개수, 순차 delay, 단선/그림자 스타일 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-42단계: 1995 박스 영역 잔여 아웃라인 제거 (2026-05-17)
+* 변경:
+  * 1995 테마에서 `calendar`, `search-box`, `link-group` 컨테이너에 남아 있던 바깥 border를 제거
+  * 링크/버튼 같은 실제 컨트롤의 Windows 3.1 양각/음각 스타일은 유지
+  * Playwright smoke에 섹션 컨테이너 border 제거 회귀 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-43단계: 1995 대화 뷰어 패널 아웃라인 제거와 버튼 입체감 복원 (2026-05-17)
+* 변경:
+  * 도킹된 좌우 사이드 패널에 전체 Windows 3.1 박스 프레임이 다시 적용되던 스타일을 제거하고, 내부 경계선만 남김
+  * `sidebar-header`에 `border-style: solid`만 남아 사방 박스처럼 그려지던 잔여 아웃라인 제거
+  * 대화 뷰어 헤더는 하단 구분선만 남기고 상/좌/우 border는 제거
+  * 잘못 추가했던 `대화 뷰어` 타이틀바 버튼 평면화 오버라이드를 제거
+  * 필터/설정 버튼의 Windows 3.1식 raised border를 복원
+  * Playwright smoke에 좌우 사이드 패널의 전체 박스 프레임 제거, 대화 뷰어 헤더 상/좌/우 border 제거, 설정 버튼 raised border 색상 회귀 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-44단계: Google Form 응답 시트 연결과 진단 리포트 사전입력 (2026-05-17)
+* 변경:
+  * Google Form 응답을 새 Google Sheets `머니버스 대화 뷰어 버그/기능개선 제보(응답)`에 연결
+  * 응답 시트에 `상태`, `우선순위`, `담당`, `처리 메모`, `관련 링크`, `회신일` 운영 컬럼과 상태/우선순위 드롭다운 추가
+  * Google Form 사전입력 필드 확인: `entry.315233821` = 제보 유형, `entry.1161180918` = 내용, `emailAddress` = 이메일
+  * 오류 보고 버튼이 `제보 유형=버그 제보`와 안전 진단 리포트를 Google Form 내용 칸에 자동 입력하도록 변경
+  * README/AGENTS/harness 문서를 사전입력 제보 흐름과 응답 시트 기준으로 갱신
+* 검증:
+  * Chrome 로그인 세션에서 사전입력 URL이 제보 유형과 내용 칸을 채우는 것 확인
+  * Google Sheets 응답 시트 `A1:K8`에서 기존 응답, 상태/우선순위 운영 컬럼 확인
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `git diff --check` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-45단계: 1995 캘린더 위아래 음각 구분선 적용 (2026-05-17)
+* 변경:
+  * 1995 테마에서 캘린더 위쪽 기존 구분선(`search-box` 하단)과 캘린더 아래쪽 기존 구분선을 Windows 3.1식 음각선으로 변경
+  * 캘린더를 별도 박스로 감싸는 추가 outline 없이 기존 레이아웃의 수평 구분선만 유지
+  * Playwright smoke에 캘린더 위/아래 음각 구분선 회귀 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-46단계: 1995 사용자 필터 패널 하늘색 outline 제거 (2026-05-17)
+* 변경:
+  * 1995 테마에서 사용자 필터 패널의 border를 Windows 3.1식 회색 sunken border로 고정
+  * 사용자 필터 입력 focus outline을 하늘색에서 검정 점선 focus로 변경
+  * 사용자 필터 해제 버튼 문구를 `전체`에서 `해제`로 변경
+  * Playwright smoke에 필터 패널 border 색상, 입력 focus outline, `해제` 버튼 문구 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-47단계: 설정 모달 이야기 폰트 라벨 변경 (2026-05-17)
+* 변경:
+  * 설정 모달의 `iyagi` 폰트 버튼 라벨을 `이야기`에서 `PJW48 이야기`로 변경
+  * README의 테마/폰트 설명도 `PJW48 이야기` 표기로 갱신
+  * Playwright smoke에 `PJW48 이야기` 폰트 버튼 라벨 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-48단계: 1995 리더 메시지 진노랑 강조 (2026-05-17)
+* 변경:
+  * 1995 테마에서 `채상욱 리더` 메시지의 이름, 시간, 본문, 링크, `*` 표식을 모두 진노랑으로 통일
+  * 기존 연노랑 리더 텍스트 색상을 더 선명한 `#ffd400`으로 조정
+  * Playwright smoke에 리더 메시지 이름/본문/시간 색상 회귀 검증 추가
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-49단계: 오류 진단 리포트 디버깅 정황 강화 (2026-05-17)
+* 결정:
+  * 버그 제보의 우선 목표는 빠른 원인 파악이므로, 진단 리포트는 파일명/경로/크기, ZIP 내부 구조, 후보 대화 파일의 앞부분 샘플 라인과 패턴 검증 결과를 포함한다.
+  * Google Form 내용 칸에 자동 입력된 리포트는 제출 전 사용자가 확인하고 수정할 수 있다.
+* 변경:
+  * 진단 리포트에 입력 파일 샘플, ZIP 내부 파일 샘플, 대화 파일 후보별 검증 결과, 실패 이유, 샘플 라인, 파싱 결과 요약을 추가
+  * `유효한 대화 파일 없음` 오류 메시지에 TXT/CSV 후보 수와 지원 형식 불일치 정황을 포함
+  * 오류 보고 모달/README/AGENTS/harness 문서를 디버깅 정황 중심 제보 기준으로 갱신
+  * `check_diagnostic_report.py`를 파일명/검증 정황/샘플 라인이 실제 리포트와 사전입력 URL에 들어가는지 확인하도록 변경
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `git diff --check` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-50단계: 1995 초기 화면 배경 청록색 적용 (2026-05-17)
+* 변경:
+  * 1995 테마의 초기 화면 바깥 배경을 Windows 3.1 데스크톱 느낌의 청록색(`#008080`)으로 변경
+  * 1995 진행률 바 fill 색상과 같은 색을 사용해 초기 화면의 PC통신/Windows 3.1 혼합 톤을 맞춤
+* 검증:
+  * `git diff --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
+## 2-1-51단계: 오류 감지 즉시 보고 모달 전환과 Form URL 축소 (2026-05-17)
+* 변경:
+  * JS 오류/파일 처리 실패를 감지하면 오른쪽 하단 진단 토스트를 표시하지 않고 오류 보고 모달을 즉시 열도록 변경
+  * Google Form 사전입력에는 전체 진단 리포트 대신 URL 길이 제한을 피한 오류 요약만 넣도록 변경
+  * 오류 보고 모달에 `TXT 다운로드` 버튼을 추가하고, 제보 열기 버튼은 Google Form을 열면서 전체 진단 리포트 TXT 다운로드도 시도
+  * 오류 보고 모달/README/AGENTS/harness 문서를 즉시 모달 전환과 요약 사전입력 기준으로 갱신
+  * `check_diagnostic_report.py`가 토스트 미표시, 모달 즉시 표시, 사전입력 URL 길이 제한, 진단 TXT 파일명을 검증하도록 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `git diff --cached --check` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 4 passed, 2 skipped
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

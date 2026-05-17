@@ -73,21 +73,33 @@ def main() -> int:
 
     check_markdown_links(errors)
 
-    check("iOS / Android / Windows" in readme, "README must publicly support iOS / Android / Windows", errors)
-    check(
-        not re.search(r"macOS[^.\n]{0,30}지원", readme),
-        "README must not advertise macOS support before fixtures exist",
-        errors,
-    )
-    check("iOS / Android / Windows 카카오톡 내보내기 파일 지원" in agents, "AGENTS must state iOS / Android / Windows support", errors)
+    check("iOS / Android / Windows / macOS" in readme, "README must publicly support iOS / Android / Windows / macOS", errors)
+    check("iOS / Android / Windows / macOS 카카오톡 내보내기 파일 지원" in agents, "AGENTS must state iOS / Android / Windows / macOS support", errors)
 
     if "MESSAGE_WINDOWS" in runtime or "DATE_HEADER_WINDOWS" in runtime:
         check("Windows 데스크톱 텍스트 내보내기는 공식 지원" in agents, "AGENTS must state Windows text export support", errors)
         check("Windows | 공식 지원" in domain, "DOMAIN_RULES must classify Windows as official support", errors)
         check("Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원" in decisions, "DECISIONS must adopt Windows text support", errors)
-        check("Windows 첨부파일 매핑" in manifest, "MANIFEST must keep Windows attachment mapping unresolved", errors)
+        check(
+            "Windows 첨부파일 매핑" in manifest or "Windows/macOS 첨부파일 매핑" in manifest,
+            "MANIFEST must keep Windows attachment mapping unresolved",
+            errors,
+        )
         check(exists("test/parser-golden/windows-minimal.json"), "Windows support requires parser golden expected", errors)
         check(exists("test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt"), "Windows support requires fixture txt", errors)
+
+    if "DATETIME_MACOS_CSV" in runtime or "parseMacOSCsvChat" in runtime:
+        check("macOS 데스크톱 CSV" in readme, "README must document macOS CSV support", errors)
+        check("macOS 데스크톱 CSV 텍스트 내보내기는 공식 지원" in agents, "AGENTS must state macOS CSV text export support", errors)
+        check("macOS | 공식 지원" in domain, "DOMAIN_RULES must classify macOS as official support", errors)
+        check("macOS는 데스크톱 CSV 텍스트 내보내기 파싱을 공식 지원" in decisions, "DECISIONS must adopt macOS CSV support", errors)
+        check("Windows/macOS 첨부파일 매핑" in manifest, "MANIFEST must keep desktop attachment mapping unresolved", errors)
+        check(exists("test/parser-golden/macos-csv.json"), "macOS support requires parser golden expected", errors)
+        check(
+            exists("test/fixtures/macos-csv/KakaoTalk_Chat_[테스트방]_2026-05-18-12-03-00.csv"),
+            "macOS support requires CSV fixture",
+            errors,
+        )
 
     if app_script_assets:
         check("assets/scripts" in readme, "README must document app script asset directory", errors)
@@ -124,6 +136,30 @@ def main() -> int:
         check("폰트 CDN" in agents, "AGENTS must mention font CDN", errors)
         check("cdn.jsdelivr.net/gh/neodgm" in manifest, "MANIFEST must list NeoDunggeunmo CDN surface", errors)
         check("cdn.jsdelivr.net/gh/projectnoonnu" in manifest, "MANIFEST must list RIDIBatang CDN surface", errors)
+        check("cdn.jsdelivr.net/gh/JuwanPark/IyagiGGC" in manifest, "MANIFEST must list IyagiGGC CDN surface", errors)
+
+    if "reportIssueModal" in runtime or "diagnosticState" in runtime:
+        check("오류 진단 리포트" in readme, "README must document diagnostic report behavior", errors)
+        check("오류 진단 리포트" in agents, "AGENTS must document diagnostic report UI", errors)
+        check("진단 리포트는 오류 재현" in manifest, "MANIFEST must classify diagnostic report debugging boundary", errors)
+        check("오류 보고" in read("harness/REQUIREMENTS.md"), "REQUIREMENTS must include diagnostic issue reporting", errors)
+        check("대화 파일 검증 결과" in read("harness/REQUIREMENTS.md"), "REQUIREMENTS must require diagnostic validation details", errors)
+        check("Google Form 내용 칸에 자동 입력" in readme, "README must document prefilled Google Form reporting", errors)
+        check("docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform" in runtime, "runtime must open Google Form for ordinary bug reporting", errors)
+        check("entry.315233821" in runtime and "entry.1161180918" in runtime, "runtime must prefill Google Form report fields", errors)
+        check("진단 리포트 사전입력 Google Form" in manifest, "MANIFEST must list prefilled Google Form surface", errors)
+        check("python3 harness/scripts/check_diagnostic_report.py" in testing, "TESTING must document diagnostic report check", errors)
+        check("python3 harness/scripts/check_diagnostic_report.py" in tester_skill, "tester skill must include diagnostic report check", errors)
+        check("GitHub Issue Form은 개발자용 보조 채널" in read("harness/DECISIONS.md"), "DECISIONS must keep GitHub as a developer fallback, not primary reporting", errors)
+
+    if "captureModal" in runtime or "buildCaptureText" in runtime:
+        requirements = read("harness/REQUIREMENTS.md")
+        check("갈무리 TXT" in readme, "README must document capture TXT behavior", errors)
+        check("갈무리 TXT" in agents, "AGENTS must document capture TXT UI", errors)
+        check("갈무리 TXT" in requirements, "REQUIREMENTS must include capture TXT feature", errors)
+        check("갈무리 TXT" in manifest, "MANIFEST must classify capture TXT privacy boundary", errors)
+        check("갈무리 내보내기" in decisions, "DECISIONS must record capture TXT scope", errors)
+        check("갈무리 TXT 생성" in testing, "TESTING must document capture TXT smoke coverage", errors)
 
     guide_assets = sorted(set(re.findall(r'src="(assets/guide/[^"]+)"', index)))
     if guide_assets:

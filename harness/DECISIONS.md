@@ -17,21 +17,25 @@
 | JSZip 3.10.1은 `assets/vendor/jszip-3.10.1.min.js` 로컬 vendor 파일로 둔다. | 채택 | CDN 버전 드리프트 없이 GitHub Pages와 오프라인 보관에서 동일 동작 |
 | Playwright browser smoke는 선택 실행 개발 하네스로 둔다. | 채택 | 실제 브라우저 자산 로드, 파일 업로드, 모바일 UI는 Node VM만으로 검증하기 어려움 |
 | 가이드 스크린샷은 `assets/guide/*.png` 개별 파일로 둔다. | 채택 | 내용 이미지라 스프라이트보다 alt/lazy loading/cache/replacement가 유리 |
-| Open Graph와 hero 이미지는 `assets/og-image.png`에 둔다. | 채택 | 런타임 정적 이미지 자산 위치 일관화 |
+| Open Graph 이미지는 `assets/og-image.png`에 둔다. | 채택 | 런타임 정적 이미지 자산 위치 일관화 |
 | 하네스, fixture, 문서, 테스트 도구는 앱 런타임 밖의 보조 파일로 둔다. | 채택 | 앱 런타임과 개발 검증 레이어 분리 |
 | 대화 원문과 첨부파일은 클라이언트 로컬에서 처리한다. | 채택 | 개인정보 표준 |
-| iOS, Android, Windows는 공식 지원 플랫폼으로 유지한다. | 채택 | README/AGENTS 약속, parser golden fixture |
+| iOS, Android, Windows, macOS는 공식 지원 플랫폼으로 유지한다. | 채택 | README/AGENTS 약속, parser golden fixture |
 | Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원한다. | 채택 | `windows-minimal` fixture/expected 추가 |
-| macOS는 규칙 확인 전까지 지원 대상으로 홍보하지 않는다. | 보류 | 실제 내보내기 구조 미확인 |
+| macOS는 데스크톱 CSV 텍스트 내보내기 파싱을 공식 지원한다. | 채택 | 실제 CSV 형식 확인 후 `macos-csv` fixture/expected 추가 |
 | `tools/parse_kakao_chat.py`는 보조 iOS CSV 파서로 취급한다. | 채택 | 브라우저 앱과 범위 분리 |
 | 첨부파일 로드는 순차 처리와 진행률 표시를 유지한다. | 채택 | 2026-02-05 성능 테스트에서 순차 처리가 병렬보다 빠름 |
 | 날짜 목록은 최신 날짜부터 표시한다. | 채택 | UI/UX 개선 이력 |
-| 리더 비중 계산은 파싱 시점에 사전 계산한다. | 채택 | 렌더링 비용 완화 |
-| 테마별 폰트 자동 전환을 제공한다. | 채택 | Light=RIDI바탕, Dark=Neo둥근모Pro, 수동 선택 시 자동 전환 비활성화 |
+| 필터 대상 사용자 비중은 기본 대상 기준으로 계산하고, 사용자가 필터 대상을 바꾸면 재계산한다. | 채택 | 기본값은 `채상욱 리더`, 사용자 입력은 런타임 UI 상태로만 사용 |
+| 갈무리 내보내기 1차 범위는 TXT 복사/다운로드로 둔다. | 채택 | LLM 요약 호환성을 우선하고 이미지/base64 포함은 후속 검토로 분리 |
+| 버그 제보 1차 경로는 GitHub Issue가 아니라 Google Form으로 둔다. | 채택 | 일반 사용자가 GitHub 계정 없이 제보할 수 있어야 함. 진단 리포트는 오류 메시지, 파일명/경로/크기, ZIP 구조, 후보 대화 파일 검증 결과와 샘플 라인을 내용 칸에 사전 입력하고, GitHub Issue Form은 개발자용 보조 채널 |
+| 기본 테마는 1995로 둔다. | 채택 | 주 사용층에 맞춰 PC통신/이야기 감성을 첫 화면 기본 경험으로 제공 |
+| 테마별 폰트 자동 전환을 제공한다. | 채택 | Light=RIDI바탕, Dark=Neo둥근모Pro, 1995=IyagiGGC, 수동 선택 시 자동 전환 비활성화 |
 | IndexedDB 캐시는 로컬 편의 기능이며 민감 데이터로 취급한다. | 채택 | 설정 모달에서 캐시 삭제 제공 |
 | Blob URL은 새 업로드 전 해제한다. | 채택 | 런타임 첨부 URL 메모리/개인정보 잔류 최소화 |
 | Android 일반 파일/PDF는 URL 인코딩/디코딩 비교로 직접 매핑한다. | 채택 | `android-files` parser golden fixture |
 | Windows 첨부파일 매핑은 실제 export 샘플 확보 전까지 미지원으로 둔다. | 보류 | `windows-attachments-unsupported` fixture로 현 범위 고정 |
+| macOS 첨부파일 매핑은 실제 export 샘플 확보 전까지 미지원으로 둔다. | 보류 | macOS CSV 텍스트 파싱과 첨부파일 지원 혼동 방지 |
 | 하네스 리뷰의 미반영 항목은 `harness/BACKLOG.md`에서 추적한다. | 채택 | 리뷰 문서는 스냅샷, 백로그는 실행 대기열 |
 
 ## 문서화로 정정한 결정
@@ -51,7 +55,7 @@
 
 | 질문 | 기본 입장 | 결정에 필요한 증거 |
 |---|---|---|
-| Windows 첨부파일 매핑을 지원할 것인가? | 보류 | 실제 첨부파일 export 구조와 fixture |
+| Windows/macOS 첨부파일 매핑을 지원할 것인가? | 보류 | 실제 첨부파일 export 구조와 fixture |
 | CSP를 도입할 것인가? | 보류 | inline script/style과 정적 파일 분리 경계 검토 |
 | 20줄 미만 대화 파일을 허용할 것인가? | 보류 | 최소 대화 fixture와 사용자 오류 메시지 기준 |
 

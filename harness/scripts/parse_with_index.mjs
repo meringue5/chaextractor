@@ -60,6 +60,7 @@ function createElement(tagName = 'div') {
     attributes: {},
     classList: createClassList(),
     disabled: false,
+    hidden: false,
     value: '',
     files: [],
     appendChild(child) {
@@ -72,6 +73,8 @@ function createElement(tagName = 'div') {
     focus() {
       documentActiveElement = this;
     },
+    select() {},
+    remove() {},
     scrollIntoView() {},
     querySelector() {
       return null;
@@ -117,6 +120,9 @@ function getElementById(id) {
   if (!elementsById.has(id)) {
     const el = createElement('div');
     el.id = id;
+    if (id === 'diagnosticToast') {
+      el.hidden = true;
+    }
     elementsById.set(id, el);
   }
   return elementsById.get(id);
@@ -138,6 +144,7 @@ const localStorage = {
 function FakeFile() {}
 function FakeBlob() {}
 const revokedObjectUrls = [];
+let mobileMatches = false;
 
 function createSuccessRequest(resultValue) {
   const request = { result: resultValue };
@@ -196,9 +203,9 @@ const windowObject = {
   addEventListener() {},
   removeEventListener() {},
   scrollTo() {},
-  matchMedia() {
+  matchMedia(query) {
     return {
-      matches: false,
+      matches: mobileMatches && String(query).includes('max-width: 900px'),
       addEventListener() {},
       removeEventListener() {}
     };
@@ -273,7 +280,7 @@ if (!windowObject.__CHAEXTRACTOR_TEST__) {
 
 if (input.mode === 'modalEscape') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
-  const modalIds = ['tipsModal', 'settingsModal'];
+  const modalIds = ['settingsModal', 'captureModal', 'reportIssueModal'];
   const results = [];
 
   for (const modalId of modalIds) {
@@ -309,6 +316,45 @@ if (input.mode === 'modalEscape') {
   process.exit(0);
 }
 
+if (input.mode === 'diagnosticReport') {
+  const api = windowObject.__CHAEXTRACTOR_TEST__;
+  const invalidChatContent = [
+    'KakaoTalk Export',
+    '채팅방 이름: 머니버스',
+    '내보내기 시각: 2026-05-17',
+    '이 줄은 지원하는 날짜/메시지 패턴이 아닙니다.',
+    '사진',
+    '오류 재현용 짧은 파일'
+  ].join('\n');
+  api.recordDiagnosticInput([
+    { name: 'private-chat-name.txt', size: 2048 },
+    { name: '20260517_120000.jpeg', size: 4096 }
+  ], 'testInput');
+  api.updateDiagnosticProcessing({
+    route: 'folder',
+    chatCandidateCount: 1,
+    attachmentCandidateCount: 1,
+    attachmentExtensions: ['jpeg:1']
+  });
+  api.recordDiagnosticChatCandidate(api.buildDiagnosticChatCandidate(
+    'private-chat-name.txt',
+    'testInput',
+    api.analyzeChatFileContent(invalidChatContent),
+    { size: 2048, entryPath: 'Talk/private-chat-name.txt' }
+  ));
+  api.setDiagnosticStage('test-processing');
+  api.captureDiagnosticError(new Error('synthetic diagnostic failure in private-chat-name.txt'), {
+    type: 'test-error',
+    stage: 'test-processing',
+    filename: 'http://127.0.0.1/assets/scripts/app.js',
+    line: 123,
+    column: 4
+  });
+  api.openDiagnosticReportModal();
+  process.stdout.write(JSON.stringify(api.getDiagnosticSnapshot(), null, 2));
+  process.exit(0);
+}
+
 if (input.mode === 'cacheDateSort') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
   api.restoreCachedChatData(input.cachedData || {});
@@ -330,11 +376,19 @@ if (input.mode === 'uiSmoke') {
   api.selectDate(input.selectDate || parseResult.dates[0]);
   const afterSelect = api.getUiSnapshot();
 
+  api.openCaptureModal();
+  const afterCaptureModal = api.getCaptureSnapshot();
+
   api.renderDateList(input.searchQuery || '');
   const afterSearch = api.getUiSnapshot();
 
-  api.setLeaderFilterForTest(true);
+  api.setLeaderFilterForTest(true, '테스터');
   const afterLeaderFilter = api.getUiSnapshot();
+  api.openCaptureModal();
+  const afterFilteredCaptureModal = api.getCaptureSnapshot();
+
+  api.applyTheme('1995');
+  const afterTheme1995 = api.getUiSnapshot();
 
   api.applyTheme('dark');
   api.applyFont('ridi');
@@ -349,16 +403,36 @@ if (input.mode === 'uiSmoke') {
   api.closeSidebar();
   const afterSidebarClose = api.getUiSnapshot();
 
+  mobileMatches = true;
+  api.openSidebar();
+  const afterMobileSidebarOpen = api.getUiSnapshot();
+
+  api.openLinkSidebar();
+  const afterMobileLinkSidebarOpen = api.getUiSnapshot();
+
+  api.openSidebar();
+  const afterMobileSidebarReopen = api.getUiSnapshot();
+
+  api.closeMobilePanels();
+  const afterMobilePanelsClose = api.getUiSnapshot();
+
   process.stdout.write(JSON.stringify({
     parseResult,
     afterInit,
     afterSelect,
+    afterCaptureModal,
     afterSearch,
     afterLeaderFilter,
+    afterFilteredCaptureModal,
+    afterTheme1995,
     afterSettings,
     afterSettingsModal,
     afterSidebarOpen,
-    afterSidebarClose
+    afterSidebarClose,
+    afterMobileSidebarOpen,
+    afterMobileLinkSidebarOpen,
+    afterMobileSidebarReopen,
+    afterMobilePanelsClose
   }, null, 2));
   process.exit(0);
 }

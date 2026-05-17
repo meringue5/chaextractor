@@ -37,7 +37,9 @@
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
 | 대화 원문, 첨부파일, 파싱 결과는 외부 서버로 자동 전송하지 않는다. | 구현은 클라이언트 로컬 처리 중심 | doc drift checker로 문구 일부 점검 |
-| 사용자가 명시적으로 클릭한 외부 링크는 허용하되, 대화 데이터가 URL/query/body로 포함되면 안 된다. | 꿀팁 링크와 문의/제보 링크가 있음 | 링크 목록 매니페스트와 회귀 체크 |
+| 갈무리 TXT는 사용자가 명시적으로 복사/다운로드할 때만 생성하며 외부 서버로 자동 전송하지 않는다. 첨부파일 내용과 이미지 base64는 포함하지 않는다. | 선택 날짜/전체 대화 TXT 생성, 첨부파일은 텍스트 표식만 포함 | Node UI smoke |
+| 오류 진단 리포트는 오류 재현과 파싱 실패 원인 확인에 필요한 정황을 포함한다. | JS 오류/처리 실패 시 오류 메시지, 환경, 단계, 파일명/경로/크기, ZIP 내부 파일, 후보 대화 파일 검증 결과와 샘플 라인, 스택을 요약하고 TXT 다운로드를 제공 | `check_diagnostic_report.py`로 파일명/검증 정황 포함 점검 |
+| 사용자가 명시적으로 클릭한 외부 링크는 허용한다. 오류 보고 Google Form 사전입력 URL에는 URL 길이 제한을 피한 디버깅용 요약 리포트가 들어갈 수 있다. | 링크 사이드바와 진단 리포트 사전입력 Google Form 버그 제보 링크가 있음 | 링크 목록 매니페스트와 회귀 체크 |
 | 자동 외부 요청은 문서화되어야 한다. | 폰트 CDN 요청이 자동 발생함 | doc drift checker로 문서화 여부 점검 |
 | IndexedDB 캐시는 로컬 캐시이며 민감 데이터로 취급한다. | 30일 정리 로직과 설정 모달 캐시 삭제 UX가 있음 | `check_cache_privacy.py`로 clear 경로 점검 |
 | localStorage에는 UI 설정만 저장한다. | theme/font/fontAutoSwitch만 사용 | 설정 키 allowlist 체크 |
@@ -48,9 +50,12 @@
 |---|---|---:|---|
 | 폰트 | `cdn.jsdelivr.net/gh/neodgm/...` | 예 | NeoDunggeunmo Pro |
 | 폰트 | `cdn.jsdelivr.net/gh/projectnoonnu/...` | 예 | RIDIBatang |
+| 폰트 | `cdn.jsdelivr.net/gh/JuwanPark/IyagiGGC/...` | 예 | 1995 테마용 IyagiGGC |
 | 공개 메타 | `meringue5.github.io/chaextractor/assets/og-image.png` | 아니오 | 소셜/크롤러용 메타 |
-| 꿀팁 링크 | `moneybus-labs.github.io`, `github.com`, `drive.google.com` | 아니오 | 사용자 클릭 |
-| 문의/제보 | `docs.google.com/forms/...` | 아니오 | 사용자 클릭 |
+| 링크 사이드바 | `moneybus-labs.github.io`, `github.com`, `drive.google.com`, `www.etfcheck.co.kr` | 아니오 | 사용자 클릭 |
+| 버그 제보 | `docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform` | 아니오 | 사용자 클릭, Google Form. 안전 진단 리포트만 내용 칸에 사전 입력 |
+| 제보 응답 관리 | `docs.google.com/spreadsheets/d/1WZ1aLchiTDKcwKf6kDZt2CH_dv5oS8gWKds_oYOIbPI/edit` | 아니오 | Google Form 응답 스프레드시트, 타임스탬프/이메일/운영 상태 추적 |
+| 개발자용 제보 보조 채널 | `github.com/meringue5/chaextractor/issues/new` | 아니오 | 문서화된 보조 채널, GitHub 로그인 필요 |
 
 ### 보안 표준
 
@@ -61,17 +66,17 @@
 | `innerHTML` 사용 시 사용자 입력은 반드시 escape 후 삽입한다. | 파일명/첨부 ref raw 삽입 경로 보강 완료 | 새 `innerHTML` 경로 추가 시 security fixture 확장 |
 | `target="_blank"` 외부 링크는 `rel="noopener"`를 사용한다. | 현재 주요 외부 링크에 적용됨 | 링크 lint 가능 |
 | Blob URL은 새 업로드/정리 시 해제 가능해야 한다. | 새 업로드 전 런타임 첨부 Blob URL 해제 | `check_cache_privacy.py`로 revoke 경로 점검 |
-| 오류는 복구 가능하게 사용자에게 표시한다. | 업로드 오류 메시지는 있음 | 오류 taxonomy와 fixture 필요 |
+| 오류는 복구 가능하게 사용자에게 표시한다. | 업로드 오류 메시지와 오류 보고 모달 즉시 표시 | `check_diagnostic_report.py`와 오류 taxonomy fixture |
 
 ### 아키텍처 표준
 
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
-| 앱은 서버 없이 실행 가능한 빌드 없는 정적 앱이다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` 앱 로직, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타/hero 이미지 | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
+| 앱은 서버 없이 실행 가능한 빌드 없는 정적 앱이다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` 앱 로직, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타 이미지 | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
 | 런타임 정적 자산은 소스와 배포본이 같은 파일이어야 한다. | 별도 빌드 산출물 없음 | doc drift checker와 파일 경로 존재 점검 |
 | 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 3.10.1 로컬 vendor, 폰트 CDN | doc drift checker로 일부 점검 |
-| 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소/Windows 최소 fixture parser golden 시작 | macOS 확장 시 fixture 추가 |
-| 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 텍스트 파서는 공식 지원으로 승격, Windows 첨부파일/macOS는 미결정 | 미결정 항목은 README에 홍보하지 않음 |
+| 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소/Windows 최소/macOS CSV fixture parser golden 시작 | 새 플랫폼 확장 시 fixture 추가 |
+| 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 텍스트 파서와 macOS CSV 파서는 공식 지원으로 승격, Windows/macOS 첨부파일은 미결정 | 미결정 항목은 README에 홍보하지 않음 |
 | 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | project skill, parser golden/doc drift, 선택 실행 Playwright browser smoke 하네스 시작 | 로컬 표준 명령 유지 |
 
 ## 요구사항으로 정의된 것
@@ -80,14 +85,14 @@
 
 | 영역 | 요구사항 | 현재 검증 수준 |
 |---|---|---|
-| 입력 | ZIP 또는 폴더 입력으로 대화 로그와 첨부파일 파싱 | parser golden, Node UI smoke, browser smoke에서 Windows TXT 업로드 검증 |
-| 플랫폼 | iOS/Android/Windows 내보내기 지원 | Android 실제 ZIP/iOS 최소/Windows 최소/Windows 첨부 미지원 fixture golden 검증 |
+| 입력 | ZIP/TXT/CSV 또는 폴더 입력으로 대화 로그와 첨부파일 파싱 | parser golden, Node UI smoke, browser smoke에서 Windows TXT 업로드 검증 |
+| 플랫폼 | iOS/Android/Windows/macOS 내보내기 지원 | Android 실제 ZIP/iOS 최소/Windows 최소/macOS CSV/Windows 첨부 미지원 fixture golden 검증 |
 | 파싱 | 날짜 그룹화, 시스템 메시지 제외, 연속 텍스트 병합 | parser golden 부분 검증 |
 | 메시지 타입 | text/photo/file/emoticon 분리 | parser golden 부분 검증 |
-| 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음 | parser golden: iOS PDF/사진, Android hash/일반 파일, 누락 첨부 검증 |
+| 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음, 누락 사진 복구 안내 | parser golden: iOS PDF/사진, Android hash/일반 파일, 누락 첨부/누락 사진 안내 검증 |
 | 검색 | 전체 메시지 대상, 날짜 목록/결과 반영 | Node UI smoke와 browser smoke에서 날짜 목록 필터 검증 |
-| 통계 | 날짜별 메시지 수, 참여자, 리더 발언 수, 사진 수 | parser golden이 타입/리더 수 일부 검증 |
-| UI | 꿀팁, 리더 필터, 설정, 테마/폰트 유지 | Node UI smoke와 browser smoke에서 주요 흐름 부분 검증 |
+| 통계 | 날짜별 메시지 수, 참여자, 필터 대상 사용자 발언 수, 사진 수 | parser golden이 타입/기본 대상 수 일부 검증 |
+| UI | 오른쪽 링크 사이드바, 사용자 지정 필터, 갈무리 TXT, 설정, 테마/폰트 유지 | Node UI smoke와 browser smoke에서 주요 흐름 부분 검증 |
 | 접근성 | 키보드 주요 기능, 포커스, 대비 | 모달 Escape 닫기는 `check_modal_escape.py`로 검증 |
 | 기능 제한 | `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 미지원 안내 | capability notice 검증 |
 | 성능 | 50만 메시지 10초 내 파싱 목표 | 합성 1만 자동 smoke, 50만 수동 측정 절차 |
@@ -100,18 +105,17 @@
 |---|---|---|---|
 | JSZip 로컬 vendor | `assets/vendor/jszip-3.10.1.min.js` | 런타임 의존성 설명이 드리프트될 수 있음 | doc drift checker로 점검 |
 | 폰트 CDN 자동 요청 | CSS `@font-face` | 개인정보 문구와 외부 요청 범위 혼선 | 외부 네트워크 표면으로 공식 등재 완료 |
-| Google Forms 문의 링크 | setup/footer/header 링크 | 사용자 클릭 외부 이동 | 개인정보 문구에 "클릭 시 외부 이동" 명시 |
 | 20줄 미만 대화 파일 거부 | `validateChatFile` | 짧은 실제 내보내기 거부 가능 | 요구사항으로 인정할지 결정 |
 | 캐시 키 전략 | 파일명/크기/mtime 중심 | 폴더/첨부 변경 감지 부족 가능 | 캐시 정책 표준화 |
 | 검색 결과 하이라이트 부재 | 검색은 `renderDateList`에만 연결 | AGENTS와 불일치 | 구현 또는 요구사항 수정 |
-| Windows 첨부파일 매핑 | 텍스트 파싱은 지원하나 첨부파일 패턴은 미확정. 현재 직접 매핑하지 않도록 fixture로 고정 | Windows 사용자 기대 혼선 | 실제 샘플 확보 후 정식화 |
+| Windows/macOS 첨부파일 매핑 | 텍스트/CSV 파싱은 지원하나 첨부파일 패턴은 미확정. 현재 직접 매핑하지 않도록 fixture로 고정 | 데스크톱 사용자 기대 혼선 | 실제 샘플 확보 후 정식화 |
 
 ## 미결정 항목
 
 | 질문 | 왜 중요한가 | 권장 기본값 |
 |---|---|---|
 | 외부 폰트 CDN을 허용할 것인가? | "외부 전송 없음" 문구와 충돌할 수 있다 | 허용하되 대화 데이터 외부 전송 없음으로 표현 정밀화 |
-| Windows 첨부파일 매핑을 공식화할 것인가? | 텍스트 지원과 첨부파일 지원을 혼동할 수 있다 | 실제 export 구조 확인 전까지 공식 범위 밖으로 둠 |
+| Windows/macOS 첨부파일 매핑을 공식화할 것인가? | 데스크톱 텍스트/CSV 지원과 첨부파일 지원을 혼동할 수 있다 | 실제 export 구조 확인 전까지 공식 범위 밖으로 둠 |
 | CSP 같은 브라우저 보안 정책을 둘 것인가? | inline script/style과 정적 파일 분리 경계 때문에 정책 설계가 필요하다 | 우선 위협 모델 문서화 후 적용 검토 |
 | Python CSV 파서를 유지할 것인가? | 브라우저 파서와 기능 차이가 커질 수 있다 | 보조 iOS-only 도구로 명시 |
 | vendor 업데이트 절차를 어떻게 관리할 것인가? | 로컬 vendor 파일은 CDN 드리프트를 줄이지만 출처/버전/무결성 기록이 필요하다 | `THIRD_PARTY` 또는 dependency manifest 추가를 검토 |

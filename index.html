@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" data-font="neodgm">
+<html lang="ko" data-theme="1995" data-font="iyagi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -71,17 +71,17 @@
             <div class="setup-step" id="step1">
                 <label><span class="icon">📦</span> 내보내기 한 카카오톡 대화 선택</label>
                 <div class="drop-zone" id="dropZone">
-                    <div class="drop-message">📥 ZIP/TXT 파일 또는 폴더를 여기에 끌어다 놓으세요</div>
+                    <div class="drop-message">ZIP/TXT/CSV 파일 또는 폴더를 여기에 끌어다 놓으세요</div>
                     <div class="drop-or">또는</div>
                     <div class="file-btn-group">
-                        <label class="file-btn" id="zipBtn">📁 ZIP/TXT 파일 🍏🪟</label>
-                        <input type="file" id="zipInput" accept=".zip,.txt">
-                        <label class="file-btn" id="folderBtn">📂 폴더 🤖</label>
+                        <label class="file-btn" id="zipBtn">파일(zip, txt, csv)</label>
+                        <input type="file" id="zipInput" accept=".zip,.txt,.csv">
+                        <label class="file-btn" id="folderBtn">폴더</label>
                         <input type="file" id="folderInput" webkitdirectory multiple accept="*/*">
                     </div>
                 </div>
                 <div class="capability-warning" id="capabilityWarning" role="status" hidden></div>
-                <ul class="hint"><li><strong>iOS:</strong> ZIP 파일 선택</li><li><strong>Android:</strong> KakaoTalk &gt; Chats &gt; 대화폴더 진입 → <strong>폴더 안의 모든 파일 선택</strong> (우측 상단 메뉴 → 전체선택)</li><li><strong>Windows:</strong> 데스크톱 내보내기 TXT 파일 선택</li></ul>
+                <ul class="hint"><li><strong>iOS:</strong> ZIP 파일 선택</li><li><strong>Android:</strong> KakaoTalk &gt; Chats &gt; 대화폴더 진입 → <strong>폴더 안의 모든 파일 선택</strong> (우측 상단 메뉴 → 전체선택)</li><li><strong>Windows:</strong> 데스크톱 내보내기 TXT 파일 선택</li><li><strong>macOS:</strong> 데스크톱 내보내기 CSV 파일 선택</li><li><strong>사진이 비어 보이면:</strong> 카카오톡 원본 대화에서 사진을 열어 기기에 내려받은 뒤 다시 내보내세요.</li></ul>
                 <div class="file-name" id="zipName"></div>
 
                 <div class="progress-container" id="progressContainer">
@@ -92,13 +92,11 @@
                 </div>
             </div>
 
-            <img src="assets/og-image.png" alt="머니버스 대화 뷰어" class="hero-image" id="heroImage" style="display: none;">
             <button class="start-btn" id="startBtn" disabled style="display: none;">대화 보기 시작</button>
 
             <!-- 하단 버튼 그룹 -->
             <div class="setup-footer-btns">
-                <button type="button" class="tips-open-btn" id="setupTipsBtn">💡 머니버스 꿀팁</button>
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform?usp=dialog" target="_blank" rel="noopener" class="tips-open-btn">🐛 문의/제보</a>
+                <button type="button" class="footer-link-btn" id="reportIssueFooterBtn">버그 제보</button>
             </div>
         </div>
     </div>
@@ -110,10 +108,16 @@
                 <div class="sidebar-header-top">
                     <h2>대화 뷰어</h2>
                     <div class="header-btns">
-                        <button type="button" class="header-btn" id="tipsBtn" title="꿀팁">💡</button>
-                        <button type="button" class="header-btn" id="leaderFilterBtn" title="채상욱 리더 대화만 보기">👑</button>
-                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform?usp=dialog" target="_blank" rel="noopener" class="header-btn" title="문의/버그 제보">🐛</a>
+                        <button type="button" class="header-btn" id="leaderFilterBtn" title="필터 사용자 대화만 보기" aria-controls="leaderFilterPanel" aria-expanded="false" aria-pressed="false">👑</button>
                         <button type="button" class="header-btn" id="settingsBtn" title="설정">⚙️</button>
+                    </div>
+                </div>
+                <div class="leader-filter-panel" id="leaderFilterPanel" role="group" aria-label="사용자 필터" hidden>
+                    <label for="leaderFilterInput">필터 사용자</label>
+                    <div class="leader-filter-controls">
+                        <input type="text" id="leaderFilterInput" value="채상욱 리더" autocomplete="off" spellcheck="false">
+                        <button type="button" id="leaderFilterApplyBtn">적용</button>
+                        <button type="button" id="leaderFilterClearBtn">해제</button>
                     </div>
                 </div>
                 <div class="stats" id="stats"></div>
@@ -140,11 +144,15 @@
         <div class="chat-area">
             <div class="scroll-markers" id="scrollMarkers"></div>
             <div class="chat-header">
-                <div>
+                <div class="chat-header-title">
                     <h3 id="chatTitle">날짜를 선택하세요</h3>
                     <div class="info" id="chatInfo"></div>
                 </div>
-                <button class="sidebar-toggle" id="sidebarToggle" aria-label="날짜 패널 열기">&gt;</button>
+                <div class="chat-header-actions">
+                    <button type="button" class="capture-btn" id="captureBtn">갈무리</button>
+                    <button class="sidebar-toggle" id="sidebarToggle" aria-label="날짜 패널 열기">&gt;</button>
+                    <button class="link-sidebar-toggle" id="linkSidebarToggle" aria-label="링크 패널 열기">&lt;</button>
+                </div>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <div class="empty-state">
@@ -153,29 +161,69 @@
                 </div>
             </div>
         </div>
+
+        <aside class="link-sidebar" id="linkSidebar" aria-label="링크 모음">
+            <div class="link-sidebar-header">
+                <h2>링크</h2>
+            </div>
+            <div class="link-sidebar-body">
+                <section class="link-group">
+                    <h3 class="link-group-header">춤추는 토끼 171879</h3>
+                    <div class="link-list">
+                        <a href="https://moneybus-labs.github.io/hidden-gems/" target="_blank" rel="noopener" class="link-item">머니버스 하지 마라 19계명</a>
+                        <a href="https://github.com/moneybus-labs/books/blob/main/머니버스톡.md" target="_blank" rel="noopener" class="link-item">머니버스 톡 추천 도서</a>
+                        <a href="https://github.com/moneybus-labs/books/blob/main/채부심북스.md" target="_blank" rel="noopener" class="link-item">채부심 북스 추천 도서</a>
+                    </div>
+                </section>
+                <section class="link-group">
+                    <h3 class="link-group-header">우드워커</h3>
+                    <div class="link-list">
+                        <a href="https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view" target="_blank" rel="noopener" class="link-item">액티브 ETF 구성 변화 앱</a>
+                    </div>
+                </section>
+                <section class="link-group">
+                    <h3 class="link-group-header">유용한 팁</h3>
+                    <div class="link-list">
+                        <a href="https://www.etfcheck.co.kr" target="_blank" rel="noopener" class="link-item">ETF Checker</a>
+                    </div>
+                </section>
+                <section class="link-group">
+                    <h3 class="link-group-header">피드백</h3>
+                    <div class="link-list">
+                        <button type="button" class="link-item link-button" id="reportIssueLinkBtn">버그 제보</button>
+                    </div>
+                </section>
+            </div>
+        </aside>
     </div>
 
-    <!-- 꿀팁 모달 -->
-    <div class="modal-overlay" id="tipsModal" role="dialog" aria-modal="true" aria-labelledby="tipsModalTitle" aria-hidden="true">
-        <div class="modal-box">
+    <!-- 갈무리 모달 -->
+    <div class="modal-overlay" id="captureModal" role="dialog" aria-modal="true" aria-labelledby="captureModalTitle" aria-hidden="true">
+        <div class="modal-box capture-modal-box">
             <div class="modal-header">
-                <h3 id="tipsModalTitle">💡 머니버스 꿀팁</h3>
-                <button class="modal-close-btn" data-modal="tipsModal" aria-label="꿀팁 모달 닫기">✕</button>
+                <h3 id="captureModalTitle">갈무리</h3>
+                <button class="modal-close-btn" data-modal="captureModal" aria-label="갈무리 모달 닫기">✕</button>
             </div>
-            <div class="tips-group">
-                <div class="tips-group-header">🐰 춤추는 토끼 171879</div>
-                <div class="tips-links">
-                    <a href="https://moneybus-labs.github.io/hidden-gems/" target="_blank" rel="noopener" class="tip-link-btn">머니버스 하지 마라 15계명</a>
-                    <a href="https://github.com/moneybus-labs/books/blob/main/머니버스톡.md" target="_blank" rel="noopener" class="tip-link-btn">머니버스 톡 추천 도서</a>
-                    <a href="https://github.com/moneybus-labs/books/blob/main/채부심북스.md" target="_blank" rel="noopener" class="tip-link-btn">채부심 북스 추천 도서</a>
-                </div>
+            <div class="capture-controls" role="group" aria-label="갈무리 범위">
+                <label>
+                    <input type="radio" name="captureScope" id="captureScopeCurrent" value="current" checked>
+                    현재 날짜
+                </label>
+                <label>
+                    <input type="radio" name="captureScope" id="captureScopeAll" value="all">
+                    전체 대화
+                </label>
             </div>
-            <div class="tips-group">
-                <div class="tips-group-header">🪵 우드워커</div>
-                <div class="tips-links">
-                    <a href="https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view" target="_blank" rel="noopener" class="tip-link-btn">액티브 ETF 구성 변화 앱</a>
-                </div>
+            <label class="capture-filter-option">
+                <input type="checkbox" id="captureUseLeaderFilter">
+                사용자 필터 적용
+            </label>
+            <div class="report-actions">
+                <button type="button" class="report-action-btn primary" id="copyCaptureBtn">TXT 복사</button>
+                <button type="button" class="report-action-btn" id="downloadCaptureBtn">TXT 다운로드</button>
             </div>
+            <textarea id="captureText" class="diagnostic-report-text capture-output-text" readonly spellcheck="false" aria-label="갈무리 TXT"></textarea>
+            <div class="report-status" id="captureStatus" role="status" aria-live="polite"></div>
         </div>
     </div>
 
@@ -191,6 +239,7 @@
                 <div class="settings-options">
                     <button data-theme="light" class="theme-btn">☀️ 라이트</button>
                     <button data-theme="dark" class="theme-btn">🌙 다크</button>
+                    <button data-theme="1995" class="theme-btn">▣ 1995</button>
                     <button data-theme="system" class="theme-btn">💻 시스템</button>
                 </div>
             </div>
@@ -200,6 +249,7 @@
                     <button data-font="default" class="font-btn">기본</button>
                     <button data-font="ridi" class="font-btn">RIDI바탕</button>
                     <button data-font="neodgm" class="font-btn">Neo둥근모Pro</button>
+                    <button data-font="iyagi" class="font-btn">PJW48 이야기</button>
                 </div>
             </div>
             <div class="settings-group">
@@ -212,11 +262,44 @@
         </div>
     </div>
 
+    <!-- 오류 보고 모달 -->
+    <div class="modal-overlay" id="reportIssueModal" role="dialog" aria-modal="true" aria-labelledby="reportIssueModalTitle" aria-hidden="true">
+        <div class="modal-box report-modal-box">
+            <div class="modal-header">
+                <h3 id="reportIssueModalTitle">오류 보고</h3>
+                <button class="modal-close-btn" data-modal="reportIssueModal" aria-label="오류 보고 모달 닫기">✕</button>
+            </div>
+            <p class="report-help">
+                진단 리포트에는 오류 메시지, 처리 단계, 파일명/확장자/크기, 대화 파일 검증 결과가 들어갑니다.
+                Google Form에는 오류 요약을 자동 입력하고, 전체 리포트는 아래에서 확인/복사하거나 TXT로 다운로드할 수 있습니다.
+            </p>
+            <div class="report-actions">
+                <button type="button" class="report-action-btn primary" id="copyDiagnosticBtn">진단 리포트 복사</button>
+                <button type="button" class="report-action-btn" id="downloadDiagnosticBtn">TXT 다운로드</button>
+                <button type="button" class="report-action-btn" id="openIssueBtn">오류 요약으로 제보 열기</button>
+            </div>
+            <textarea id="diagnosticReportText" class="diagnostic-report-text" readonly spellcheck="false" aria-label="진단 리포트"></textarea>
+            <div class="report-status" id="diagnosticCopyStatus" role="status" aria-live="polite"></div>
+        </div>
+    </div>
+
     <!-- 이미지 모달 -->
     <div class="modal" id="imageModal" role="dialog" aria-modal="true" aria-label="이미지 확대" aria-hidden="true">
         <button type="button" class="modal-close" id="modalClose" aria-label="이미지 모달 닫기">×</button>
         <img id="modalImage" src="" alt="확대된 첨부 이미지">
     </div>
+
+    <div class="diagnostic-toast" id="diagnosticToast" role="status" aria-live="polite" hidden>
+        <div class="diagnostic-toast-copy">
+            <strong>문제가 감지됐습니다</strong>
+            <span id="diagnosticToastMessage">진단 리포트를 준비했습니다.</span>
+        </div>
+        <div class="diagnostic-toast-actions">
+            <button type="button" id="diagnosticToastDetails">리포트 보기</button>
+            <button type="button" id="diagnosticToastIssue">오류 보고</button>
+        </div>
+    </div>
+
     <script src="assets/vendor/jszip-3.10.1.min.js"></script>
     <script src="assets/scripts/app.js"></script>
 </body>
