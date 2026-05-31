@@ -54,7 +54,7 @@ test('static shell loads local assets and vendor script', async ({ page }) => {
   await expect(page.locator('#heroImage')).toHaveCount(0);
   await expect(page.locator('#setupTipsBtn')).toHaveCount(0);
   await expect(page.locator('#tipsModal')).toHaveCount(0);
-  await expect(page.locator('#linkSidebar .link-item')).toHaveCount(12);
+  await expect(page.locator('#linkSidebar .link-item')).toHaveCount(23);
   const setupThemeStyles = await page.evaluate(() => {
     const guideImage = getComputedStyle(document.querySelector('.guide-item img'));
     const guideSection = getComputedStyle(document.querySelector('.guide-section'));
@@ -143,7 +143,7 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   await expect(page.locator('#stats')).toContainText('8개 메시지');
   await expect(page.locator('.date-item')).toHaveCount(2);
   await expect(page.locator('#linkSidebar')).toBeVisible();
-  await expect(page.locator('#linkSidebar .link-item')).toHaveCount(12);
+  await expect(page.locator('#linkSidebar .link-item')).toHaveCount(23);
   await expect(page.locator('#captureBtn')).toBeDisabled();
   await expect(page.locator('#captureModal')).not.toHaveClass(/open/);
 

@@ -100,12 +100,25 @@ KBS 라디오 - 채상욱의 경제쇼 https://www.youtube.com/playlist?list=PL3
 머니버스 하지 마라 21계명 https://moneybus-labs.github.io/hidden-gems/
 머니버스 톡 추천 도서 https://github.com/moneybus-labs/books/blob/main/머니버스톡.md
 채부심 북스 추천 도서 https://github.com/moneybus-labs/books/blob/main/채부심북스.md
+Fillbook https://fillbook.ludicflow.com/ko/
+
+### 개발자: 게임하는 판다 192331
+Active ETFs Reports https://activetfs.github.io/reports
 
 ### 개발자: 우드워커
 액티브 ETF 구성 변화 시각화 앱 https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view
 
 ## 유용한 팁
 ETF Checker https://www.etfcheck.co.kr
+미스터그레이 텔레그램 https://t.me/mistergray_11
+Y스트리트 ETF Tracker https://ystreet.co.kr/etf-tracker/
+FUNETF ETF 비교 https://m.funetf.co.kr/product/comparison/etf?itemIds=KR70015B0004,KR7426030003,KR7133690008,KR7475070009,KR7456600006
+Why Not Sell Report https://www.whynotsellreport.com/
+Hyperliquid SKHYNIX https://app.hyperliquid.xyz/trade/xyz:SKHYNIX
+chrisryugj/korean-law-mcp https://github.com/chrisryugj/korean-law-mcp
+Excel KOSPI https://excelkospi.pages.dev/
+KOSPD 1일 맵 https://www.kospd.com/maps/1day
+액티브 ETF 텔레그램 https://t.me/activeetf
 
 ## 버그 제보
 Google Form https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform

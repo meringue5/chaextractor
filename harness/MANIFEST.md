@@ -52,7 +52,7 @@
 | 폰트 | `cdn.jsdelivr.net/gh/projectnoonnu/...` | 예 | RIDIBatang |
 | 폰트 | `cdn.jsdelivr.net/gh/JuwanPark/IyagiGGC/...` | 예 | 1995 테마용 IyagiGGC |
 | 공개 메타 | `meringue5.github.io/chaextractor/assets/og-image.png` | 아니오 | 소셜/크롤러용 메타 |
-| 링크 사이드바 | `moneybus-labs.github.io`, `github.com`, `drive.google.com`, `www.etfcheck.co.kr`, `www.youtube.com`, `contents.premium.naver.com`, `fanding.kr` | 아니오 | 사용자 클릭 |
+| 링크 사이드바 | `moneybus-labs.github.io`, `github.com`, `drive.google.com`, `www.etfcheck.co.kr`, `www.youtube.com`, `contents.premium.naver.com`, `fanding.kr`, `fillbook.ludicflow.com`, `activetfs.github.io`, `t.me`, `ystreet.co.kr`, `m.funetf.co.kr`, `www.whynotsellreport.com`, `app.hyperliquid.xyz`, `excelkospi.pages.dev`, `www.kospd.com` | 아니오 | 사용자 클릭 |
 | 버그 제보 | `docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform` | 아니오 | 사용자 클릭, Google Form. 안전 진단 리포트만 내용 칸에 사전 입력 |
 | 제보 응답 관리 | `docs.google.com/spreadsheets/d/1WZ1aLchiTDKcwKf6kDZt2CH_dv5oS8gWKds_oYOIbPI/edit` | 아니오 | Google Form 응답 스프레드시트, 타임스탬프/이메일/운영 상태 추적 |
 | 개발자용 제보 보조 채널 | `github.com/meringue5/chaextractor/issues/new` | 아니오 | 문서화된 보조 채널, GitHub 로그인 필요 |

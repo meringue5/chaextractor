@@ -899,6 +899,18 @@
   * `python3 harness/scripts/check_doc_drift.py` 통과
   * `npm run test:browser` 통과: 6 passed, 2 skipped
 
+## 2-1-57단계: 오른쪽 링크 사이드바 자료 확장 (2026-05-31)
+* 변경:
+  * `춤추는 토끼 171879` 그룹에 Fillbook 링크 추가
+  * `게임하는 판다 192331` 그룹을 `춤추는 토끼 171879` 다음에 추가하고 Active ETFs Reports 링크 등록
+  * `유용한 팁` 그룹에 텔레그램, ETF tracker/비교, 리포트, Hyperliquid, MCP, KOSPI/KOSPD 자료 링크 추가
+  * AGENTS/README/harness 외부 링크 표면과 smoke 링크 개수 기대값 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 6 passed, 2 skipped
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트
