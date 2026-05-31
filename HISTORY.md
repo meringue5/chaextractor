@@ -911,6 +911,16 @@
   * `python3 harness/scripts/check_ui_smoke.py` 통과
   * `npm run test:browser` 통과: 6 passed, 2 skipped
 
+## 2-1-58단계: 유용한 팁 ePulse 링크 추가 (2026-05-31)
+* 변경:
+  * 오른쪽 링크 사이드바의 `유용한 팁` 그룹에 ePulse 링크(`https://ibare.github.io/epulse/`) 추가
+  * AGENTS 콘텐츠 데이터, harness 외부 링크 표면, browser smoke 링크 개수 기대값 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 6 passed, 2 skipped
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

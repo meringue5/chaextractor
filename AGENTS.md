@@ -119,6 +119,7 @@ chrisryugj/korean-law-mcp https://github.com/chrisryugj/korean-law-mcp
 Excel KOSPI https://excelkospi.pages.dev/
 KOSPD 1일 맵 https://www.kospd.com/maps/1day
 액티브 ETF 텔레그램 https://t.me/activeetf
+ePulse https://ibare.github.io/epulse/
 
 ## 버그 제보
 Google Form https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform
