@@ -938,6 +938,15 @@
   * `python3 harness/scripts/check_ui_smoke.py` 통과
   * `npm run test:browser` 통과: 7 passed, 3 skipped
 
+## 2-1-60단계: ePulse 링크 표시명 풀네임 정정 (2026-05-31)
+* 변경:
+  * `유용한 팁` 그룹의 ePulse 표시명을 페이지 title 기준 `ePulse - 경제 인과관계 학습 시뮬레이터`로 정정
+  * AGENTS 콘텐츠 데이터의 ePulse 항목명도 같은 표시명으로 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트
