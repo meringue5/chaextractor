@@ -10,6 +10,7 @@ let dates = [];
 let leaderCountByDate = {};  // 날짜별 필터 대상 사용자 메시지 수
 let currentMonth = new Date();
 let selectedDate = null;
+let renderedChatDate = null;
 let leaderFilterActive = false;
 let leaderFilterTarget = DEFAULT_LEADER_FILTER_TARGET;
 
@@ -905,6 +906,24 @@ function buildDiagnosticTestSnapshot() {
 }
 
 // ========== 갈무리 TXT ==========
+function isCaptureReady() {
+    return !!(
+        selectedDate &&
+        renderedChatDate === selectedDate &&
+        Array.isArray(messagesByDate[selectedDate]) &&
+        messagesByDate[selectedDate].length > 0
+    );
+}
+
+function updateCaptureButtonState() {
+    if (!captureBtn) return false;
+    const ready = isCaptureReady();
+    captureBtn.disabled = !ready;
+    captureBtn.setAttribute('aria-disabled', String(!ready));
+    captureBtn.title = ready ? '갈무리' : '날짜를 선택하면 갈무리할 수 있습니다';
+    return ready;
+}
+
 function getCaptureScope() {
     if (captureScopeCurrent && captureScopeCurrent.checked && selectedDate) {
         return 'current';
@@ -1064,12 +1083,17 @@ function buildCaptureFilename() {
 }
 
 function openCaptureModal() {
+    if (!isCaptureReady()) {
+        updateCaptureButtonState();
+        return { ok: false, reason: 'date-not-selected' };
+    }
+
     if (captureScopeCurrent) {
-        captureScopeCurrent.disabled = !selectedDate;
-        captureScopeCurrent.checked = !!selectedDate;
+        captureScopeCurrent.disabled = false;
+        captureScopeCurrent.checked = true;
     }
     if (captureScopeAll) {
-        captureScopeAll.checked = !selectedDate;
+        captureScopeAll.checked = false;
     }
     if (captureUseLeaderFilter) {
         captureUseLeaderFilter.checked = leaderFilterActive;
@@ -1079,6 +1103,7 @@ function openCaptureModal() {
     }
     updateCaptureText();
     openModal('captureModal');
+    return { ok: true };
 }
 
 async function copyCaptureText() {
@@ -1133,6 +1158,7 @@ function buildCaptureTestSnapshot() {
     updateCaptureText();
     return {
         captureModalOpen: isModalOpen('captureModal'),
+        ready: isCaptureReady(),
         scope: getCaptureScope(),
         useLeaderFilter: !!(captureUseLeaderFilter && captureUseLeaderFilter.checked),
         text: captureText ? captureText.value : '',
@@ -3391,12 +3417,13 @@ startBtn.addEventListener('click', () => {
 
 // ========== 앱 초기화 ==========
 function initApp() {
+    selectedDate = null;
+    renderedChatDate = null;
+
     const users = new Set(messages.map(m => m.user));
     document.getElementById('stats').textContent =
         `${messages.length.toLocaleString()}개 메시지 · ${users.size}명 · ${dates.length}일`;
-    if (captureBtn) {
-        captureBtn.disabled = messages.length === 0;
-    }
+    updateCaptureButtonState();
 
     if (dates.length > 0) {
         // 오늘 날짜와 가장 가까운 날짜로 달력 이동 (선택은 하지 않음)
@@ -3639,6 +3666,11 @@ function renderMissingPhotoAttachment(reason) {
 // ========== 대화 렌더링 ==========
 function renderChat(date) {
     const msgs = messagesByDate[date];
+    if (!Array.isArray(msgs) || msgs.length === 0) {
+        renderedChatDate = null;
+        updateCaptureButtonState();
+        return;
+    }
 
     const dateObj = new Date(date);
     const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
@@ -3747,6 +3779,9 @@ function renderChat(date) {
     if (leaderFilterActive) {
         applyLeaderFilter();
     }
+
+    renderedChatDate = date;
+    updateCaptureButtonState();
 }
 
 // ========== 스크롤 마커 렌더링 ==========
@@ -3992,6 +4027,7 @@ function buildUiTestSnapshot() {
     return {
         stats: document.getElementById('stats').textContent,
         selectedDate,
+        renderedChatDate,
         currentMonth: `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`,
         dateListCount: document.getElementById('dateList').children.length,
         calendarCellCount: document.getElementById('calendarGrid').children.length,
@@ -4001,6 +4037,7 @@ function buildUiTestSnapshot() {
         chatTitle: document.getElementById('chatTitle').textContent,
         chatInfo: document.getElementById('chatInfo').textContent,
         captureButtonDisabled: captureBtn ? captureBtn.disabled : null,
+        captureReady: isCaptureReady(),
         captureModalOpen: isModalOpen('captureModal'),
         leaderFilterActive,
         leaderFilterTarget,
