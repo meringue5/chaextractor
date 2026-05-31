@@ -54,7 +54,7 @@ test('static shell loads local assets and vendor script', async ({ page }) => {
   await expect(page.locator('#heroImage')).toHaveCount(0);
   await expect(page.locator('#setupTipsBtn')).toHaveCount(0);
   await expect(page.locator('#tipsModal')).toHaveCount(0);
-  await expect(page.locator('#linkSidebar .link-item')).toHaveCount(6);
+  await expect(page.locator('#linkSidebar .link-item')).toHaveCount(23);
   const setupThemeStyles = await page.evaluate(() => {
     const guideImage = getComputedStyle(document.querySelector('.guide-item img'));
     const guideSection = getComputedStyle(document.querySelector('.guide-section'));
@@ -143,13 +143,16 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   await expect(page.locator('#stats')).toContainText('8개 메시지');
   await expect(page.locator('.date-item')).toHaveCount(2);
   await expect(page.locator('#linkSidebar')).toBeVisible();
-  await expect(page.locator('#linkSidebar .link-item')).toHaveCount(6);
+  await expect(page.locator('#linkSidebar .link-item')).toHaveCount(23);
+  await expect(page.locator('#captureBtn')).toBeDisabled();
+  await expect(page.locator('#captureModal')).not.toHaveClass(/open/);
 
   await page.locator('.date-item', { hasText: '2026/03/01' }).click();
   await expect(page.locator('#chatTitle')).toContainText('2026년 3월 1일');
   await expect(page.locator('#chatMessages .message')).toHaveCount(5);
   await expect(page.locator('#chatMessages')).toContainText('안녕하세요');
   await expect(page.locator('#chatMessages')).toContainText('이어서 말합니다');
+  await expect(page.locator('#captureBtn')).toBeEnabled();
   await page.locator('#captureBtn').click();
   await expect(page.locator('#captureModal')).toHaveClass(/open/);
   await expect(page.locator('#captureText')).toHaveValue(/# 카카오톡 대화 갈무리/);

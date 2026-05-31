@@ -858,6 +858,59 @@
   * `python3 harness/scripts/check_ui_smoke.py` 통과
   * `npm run test:browser` 통과: 6 passed, 2 skipped
 
+## 2-1-53단계: 채상욱 리더 필수 링크 추가와 21계명 문구 반영 (2026-05-31)
+* 변경:
+  * 오른쪽 링크 사이드바의 `머니버스 하지 마라 19계명` 표시를 `머니버스 하지 마라 21계명`으로 갱신
+  * `채상욱 리더 필수 링크` 그룹을 추가하고 채국장TV, 채부심, 네이버 프리미엄콘텐츠 아파트 연구소, KBS 라디오 경제쇼 플레이리스트를 등록
+  * AGENTS/README/harness 문서와 browser smoke 링크 개수 기대값 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+
+## 2-1-54단계: 채상욱 리더 필수 링크 팬딩 커뮤니티 추가 (2026-05-31)
+* 변경:
+  * `채상욱 리더 필수 링크` 그룹 첫 항목에 머니버스 본진 커뮤니티(`https://fanding.kr/@chae_moneybus/`) 추가
+  * 같은 그룹 마지막 항목에 주식부자(`https://fanding.kr/@jusigbuja/`) 추가
+  * AGENTS/harness 외부 링크 표면과 browser smoke 링크 개수 기대값 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+
+## 2-1-55단계: 1995 좌측 사이드바 헤더 여백 정리 (2026-05-31)
+* 변경:
+  * 1995 테마에서 좌측 `대화 뷰어` 제목 바의 바깥 padding을 제거해 오른쪽 `링크` 제목 바와 같은 밀도로 표시
+  * 제목 바의 최소 높이와 헤더 버튼 크기를 조정하고 통계 줄 padding을 별도로 정리
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+
+## 2-1-56단계: 갈무리 버튼 날짜 선택 전 비활성화 (2026-05-31)
+* 변경:
+  * 갈무리 버튼을 날짜 선택과 해당 날짜 대화 렌더링이 끝난 뒤에만 활성화하도록 변경
+  * `renderedChatDate` 상태와 `isCaptureReady()`/`updateCaptureButtonState()`를 추가해 파일 파싱 직후 모달이 열리지 않도록 방어
+  * Node UI smoke와 Playwright browser smoke에 날짜 선택 전 갈무리 비활성/모달 미오픈, 날짜 선택 후 활성 검증 추가
+  * README/AGENTS/harness 요구사항에 갈무리 활성화 조건 반영
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `npm run test:browser` 통과: 6 passed, 2 skipped
+
+## 2-1-57단계: 오른쪽 링크 사이드바 자료 확장 (2026-05-31)
+* 변경:
+  * `춤추는 토끼 171879` 그룹에 Fillbook 링크 추가
+  * `게임하는 판다 192331` 그룹을 `춤추는 토끼 171879` 다음에 추가하고 Active ETFs Reports 링크 등록
+  * `유용한 팁` 그룹에 텔레그램, ETF tracker/비교, 리포트, Hyperliquid, MCP, KOSPI/KOSPD 자료 링크 추가
+  * AGENTS/README/harness 외부 링크 표면과 smoke 링크 개수 기대값 갱신
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 6 passed, 2 skipped
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

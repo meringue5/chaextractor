@@ -64,7 +64,7 @@
 - ZIP/TXT/CSV 파일 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다.
 - iOS/Android/Windows/macOS 카카오톡 내보내기 파일을 공식 지원한다.
 - 날짜별 탐색, 검색, 통계, 기본값 `채상욱 리더`인 사용자 하이라이트/필터, 기본값 1995 테마, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
-- 선택 날짜 또는 전체 대화를 LLM 요약에 붙여넣기 좋은 TXT로 정리하는 갈무리 복사/다운로드를 제공한다.
+- 날짜 선택과 대화 렌더링 이후 선택 날짜 또는 전체 대화를 LLM 요약에 붙여넣기 좋은 TXT로 정리하는 갈무리 복사/다운로드를 제공한다.
 - 시스템 메시지는 제외하고, 동일 사용자 연속 텍스트는 병합한다.
 - 사진/파일/이모티콘은 텍스트와 별도 타입으로 유지한다.
 - 누락 첨부파일은 앱 중단 없이 복구 가능한 상태로 표시하며, 사진 파일 누락은 원본 대화에서 사진을 열어 내려받은 뒤 다시 내보내도록 안내한다.
@@ -87,17 +87,38 @@
 
 # 앱 콘텐츠 데이터
 
+## 채상욱 리더 필수 링크
+머니버스 본진 커뮤니티 https://fanding.kr/@chae_moneybus/
+채국장TV https://www.youtube.com/@chaegookjang
+채부심 https://www.youtube.com/@chaeboosim
+채상욱의 아파트 가치&가격 연구소 https://contents.premium.naver.com/connectedground/aptresearch
+KBS 라디오 - 채상욱의 경제쇼 https://www.youtube.com/playlist?list=PL3EQvAYoWqpD90_7JZBJjxeTN5unZ4TAp
+주식부자 https://fanding.kr/@jusigbuja/
+
 ## 머니버스 꿀팁
 ### 개발자: 춤추는 토끼 171879
-머니버스 하지 마라 19계명 https://moneybus-labs.github.io/hidden-gems/
+머니버스 하지 마라 21계명 https://moneybus-labs.github.io/hidden-gems/
 머니버스 톡 추천 도서 https://github.com/moneybus-labs/books/blob/main/머니버스톡.md
 채부심 북스 추천 도서 https://github.com/moneybus-labs/books/blob/main/채부심북스.md
+Fillbook https://fillbook.ludicflow.com/ko/
+
+### 개발자: 게임하는 판다 192331
+Active ETFs Reports https://activetfs.github.io/reports
 
 ### 개발자: 우드워커
 액티브 ETF 구성 변화 시각화 앱 https://drive.google.com/file/d/1NIq8BKHki7ccSFCqTDEGDAxgL2iYOXDX/view
 
 ## 유용한 팁
 ETF Checker https://www.etfcheck.co.kr
+미스터그레이 텔레그램 https://t.me/mistergray_11
+Y스트리트 ETF Tracker https://ystreet.co.kr/etf-tracker/
+FUNETF ETF 비교 https://m.funetf.co.kr/product/comparison/etf?itemIds=KR70015B0004,KR7426030003,KR7133690008,KR7475070009,KR7456600006
+Why Not Sell Report https://www.whynotsellreport.com/
+Hyperliquid SKHYNIX https://app.hyperliquid.xyz/trade/xyz:SKHYNIX
+chrisryugj/korean-law-mcp https://github.com/chrisryugj/korean-law-mcp
+Excel KOSPI https://excelkospi.pages.dev/
+KOSPD 1일 맵 https://www.kospd.com/maps/1day
+액티브 ETF 텔레그램 https://t.me/activeetf
 
 ## 버그 제보
 Google Form https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform
@@ -146,7 +167,7 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
     - `.chat-header` — 날짜 제목 + 통계
       - `#chatTitle` — 날짜/요일
       - `#chatInfo` — 메시지 수, 참여자, 필터 대상 발언 수, 사진 수
-      - `#captureBtn` — 갈무리 TXT 모달 열기
+      - `#captureBtn` — 날짜 선택과 대화 렌더링 이후 활성화되는 갈무리 TXT 모달 열기
     - `#chatMessages` — 메시지 목록
   - `.link-sidebar` — 우측 링크 패널 (데스크톱 상시 표시, 모바일: 86vw 슬라이드)
     - `.link-sidebar-header` — 링크 패널 제목
@@ -228,7 +249,8 @@ UI 렌더링:
 - `focusDateForMonth(year, month)` — 월 이동 시 가장 가까운 날짜 자동 선택
 - `scrollToDateInList(date)` — 날짜 목록 스크롤 동기화
 - `showImage(url)` — 이미지 확대 모달
-- `openCaptureModal()` / `updateCaptureText()` — 현재 날짜/전체 대화 갈무리 TXT 생성
+- `isCaptureReady()` / `updateCaptureButtonState()` — 날짜 선택과 대화 렌더링 완료 기준으로 갈무리 버튼 활성화 제어
+- `openCaptureModal()` / `updateCaptureText()` — 날짜 선택/렌더링 완료 상태를 확인하고 현재 날짜/전체 대화 갈무리 TXT 생성
 - `buildCaptureText(scope, options)` — LLM 요약용 TXT 본문 생성 (첨부파일 내용/base64 제외)
 - `copyCaptureText()` / `downloadCaptureText()` — 갈무리 TXT 복사/다운로드
 
@@ -277,6 +299,7 @@ UI 렌더링:
 - `leaderCountByDate` — 날짜별 필터 대상 사용자 발언 수
 - `currentMonth` — 현재 캘린더 월
 - `selectedDate` — 선택된 날짜
+- `renderedChatDate` — 현재 대화창에 렌더 완료된 날짜
 - `leaderFilterActive` — 사용자 필터 상태
 - `leaderFilterTarget` — 현재 필터 대상 사용자명 (기본값: `채상욱 리더`)
 - `detectedPlatform` — 'ios', 'android', 'windows', 'macos'

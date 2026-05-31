@@ -1153,7 +1153,7 @@ body {
     white-space: nowrap;
 }
 
-.capture-btn:hover {
+.capture-btn:not(:disabled):hover {
     background: rgba(255, 255, 255, 0.2);
     border-color: rgba(255, 255, 255, 0.58);
 }
@@ -2207,6 +2207,10 @@ body {
     color: var(--text-primary);
 }
 
+[data-theme="1995"] .sidebar-header {
+    padding: 0;
+}
+
 [data-theme="1995"] .sidebar-header-top,
 [data-theme="1995"] .link-sidebar-header,
 [data-theme="1995"] .modal-header {
@@ -2214,12 +2218,28 @@ body {
     padding: 4px 6px;
     background: var(--win31-title);
     color: var(--win31-title-text);
+    min-height: 34px;
 }
 
 [data-theme="1995"] .sidebar-header-top h2,
 [data-theme="1995"] .link-sidebar-header h2,
 [data-theme="1995"] .modal-header h3 {
     color: var(--win31-title-text);
+}
+
+[data-theme="1995"] .sidebar-header .stats {
+    margin: 0;
+    padding: 7px 12px 9px;
+}
+
+[data-theme="1995"] .sidebar-header-top .header-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+}
+
+[data-theme="1995"] .sidebar-header-top .header-btns {
+    gap: 4px;
 }
 
 [data-theme="1995"] .sidebar-header h2::before,
@@ -2414,7 +2434,7 @@ body {
 [data-theme="1995"] .date-item:hover,
 [data-theme="1995"] .link-item:hover,
 [data-theme="1995"] .header-btn:hover,
-[data-theme="1995"] .capture-btn:hover,
+[data-theme="1995"] .capture-btn:not(:disabled):hover,
 [data-theme="1995"] .leader-filter-controls button:hover,
 [data-theme="1995"] .footer-link-btn:hover,
 [data-theme="1995"] .report-action-btn:hover,

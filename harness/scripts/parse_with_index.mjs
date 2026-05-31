@@ -372,6 +372,8 @@ if (input.mode === 'uiSmoke') {
 
   api.initApp();
   const afterInit = api.getUiSnapshot();
+  const beforeSelectCaptureAttempt = api.openCaptureModal();
+  const afterCaptureBeforeSelect = api.getUiSnapshot();
 
   api.selectDate(input.selectDate || parseResult.dates[0]);
   const afterSelect = api.getUiSnapshot();
@@ -419,6 +421,8 @@ if (input.mode === 'uiSmoke') {
   process.stdout.write(JSON.stringify({
     parseResult,
     afterInit,
+    beforeSelectCaptureAttempt,
+    afterCaptureBeforeSelect,
     afterSelect,
     afterCaptureModal,
     afterSearch,
