@@ -921,6 +921,23 @@
   * `python3 harness/scripts/check_ui_smoke.py` 통과
   * `npm run test:browser` 통과: 6 passed, 2 skipped
 
+## 2-1-59단계: GitHub Pages 캐시 우회 업데이트 감지 추가 (2026-05-31)
+* 결정:
+  * GitHub Pages에서 이미 캐시된 과거 `index.html`을 원격에서 100% 강제로 무효화할 수는 없지만, 앱이 로드된 뒤에는 같은 출처의 버전 매니페스트를 확인해 다음 배포부터 캐시 우회 새로고침을 시도한다.
+  * 대화 파일 업로드 전 상태에서만 자동 새로고침하고, sessionStorage로 같은 버전에 대한 반복 reload를 막는다.
+* 변경:
+  * `assets/version.json` 앱 버전 매니페스트 추가
+  * `meta[name="app-version"]`, CSS/JS query, JS fallback 버전을 `2026-05-31-update-check`로 갱신
+  * 앱 시작/탭 재활성화 시 `assets/version.json?v={현재버전}&t={timestamp}`를 확인하고 최신 버전이 다르면 `?appVersion={최신버전}&t={timestamp}`로 1회 reload
+  * README/AGENTS/harness 요구사항/매니페스트/결정/테스트 문서와 doc drift checker 갱신
+  * Playwright browser smoke에 version manifest 로드와 새 버전 감지 reload 검증 추가
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과: 7 passed, 3 skipped
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

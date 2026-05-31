@@ -28,7 +28,10 @@ const DEFAULT_THEME = '1995';
 const DEFAULT_1995_FONT = 'iyagi';
 const APP_STORAGE_VERSION_KEY = 'chaextractorAppVersion';
 const APP_VERSION = document.querySelector('meta[name="app-version"]')?.getAttribute('content')
-    || '2026-05-18-1995-default-reset';
+    || '2026-05-31-update-check';
+const APP_VERSION_MANIFEST_URL = 'assets/version.json';
+const APP_UPDATE_RELOAD_TARGET_KEY = 'chaextractorUpdateReloadTarget';
+const APP_UPDATE_QUERY_PARAM = 'appVersion';
 const THEME_1995_WINDOW_ANIMATION_MS = 240;
 const THEME_1995_GHOST_SIZE = 12;
 const THEME_1995_GHOST_FRAME_COUNT = 9;
@@ -180,6 +183,135 @@ const DB_CONFIG = {
     version: 1,
     storeName: 'parsedData'
 };
+
+// ========== 앱 버전 업데이트 확인 ==========
+function normalizeAppVersion(value) {
+    return String(value || '').trim();
+}
+
+function getUpdateManifestUrl() {
+    return `${APP_VERSION_MANIFEST_URL}?v=${encodeURIComponent(APP_VERSION)}&t=${Date.now()}`;
+}
+
+function getSessionStorageItem(key) {
+    try {
+        return window.sessionStorage ? window.sessionStorage.getItem(key) : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function setSessionStorageItem(key, value) {
+    try {
+        if (window.sessionStorage) {
+            window.sessionStorage.setItem(key, value);
+        }
+    } catch (error) {
+        // sessionStorage may be unavailable in private or restricted contexts.
+    }
+}
+
+function getAppUpdateFetch() {
+    if (window && typeof window.fetch === 'function') {
+        return window.fetch.bind(window);
+    }
+    if (typeof fetch === 'function') {
+        return fetch;
+    }
+    return null;
+}
+
+async function fetchLatestAppVersion() {
+    const fetchFn = getAppUpdateFetch();
+    if (!fetchFn) {
+        return null;
+    }
+
+    const response = await fetchFn(getUpdateManifestUrl(), { cache: 'no-store' });
+    if (!response || !response.ok || typeof response.json !== 'function') {
+        return null;
+    }
+
+    const manifest = await response.json();
+    return normalizeAppVersion(manifest && manifest.version);
+}
+
+function canAutoReloadForAppUpdate() {
+    return messages.length === 0 && (!app || !app.classList.contains('active'));
+}
+
+function getCacheBustReloadUrl(latestVersion) {
+    const locationRef = window && window.location;
+    const href = locationRef && locationRef.href ? locationRef.href : '';
+    if (!href) {
+        return '';
+    }
+
+    const hashIndex = href.indexOf('#');
+    const base = hashIndex === -1 ? href : href.slice(0, hashIndex);
+    const hash = hashIndex === -1 ? '' : href.slice(hashIndex);
+    const separator = base.includes('?') ? '&' : '?';
+    return `${base}${separator}${APP_UPDATE_QUERY_PARAM}=${encodeURIComponent(latestVersion)}&t=${Date.now()}${hash}`;
+}
+
+function reloadForAppUpdate(latestVersion) {
+    const reloadTarget = `${APP_VERSION}->${latestVersion}`;
+    if (getSessionStorageItem(APP_UPDATE_RELOAD_TARGET_KEY) === reloadTarget) {
+        return false;
+    }
+
+    const locationRef = window && window.location;
+    if (!locationRef || typeof locationRef.replace !== 'function') {
+        return false;
+    }
+
+    setSessionStorageItem(APP_UPDATE_RELOAD_TARGET_KEY, reloadTarget);
+    locationRef.replace(getCacheBustReloadUrl(latestVersion));
+    return true;
+}
+
+async function checkForAppUpdate({ autoReload = true } = {}) {
+    try {
+        const latestVersion = await fetchLatestAppVersion();
+        if (!latestVersion) {
+            return { ok: false, reason: 'version-unavailable', currentVersion: APP_VERSION };
+        }
+
+        if (latestVersion === APP_VERSION) {
+            return { ok: true, upToDate: true, currentVersion: APP_VERSION, latestVersion };
+        }
+
+        if (autoReload && canAutoReloadForAppUpdate()) {
+            return {
+                ok: true,
+                upToDate: false,
+                currentVersion: APP_VERSION,
+                latestVersion,
+                action: reloadForAppUpdate(latestVersion) ? 'reload' : 'reload-skipped'
+            };
+        }
+
+        return {
+            ok: true,
+            upToDate: false,
+            currentVersion: APP_VERSION,
+            latestVersion,
+            action: 'available'
+        };
+    } catch (error) {
+        return {
+            ok: false,
+            reason: error && error.message ? error.message : 'version-check-failed',
+            currentVersion: APP_VERSION
+        };
+    }
+}
+
+function scheduleAppUpdateCheck() {
+    setTimeout(() => {
+        checkForAppUpdate().catch(() => {});
+    }, 0);
+}
 
 // IndexedDB 초기화
 function initDB() {
@@ -2002,6 +2134,12 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 // 페이지 로드시 설정 초기화
 document.documentElement.setAttribute('data-ios-firefox', isIOSFirefox() ? 'true' : 'false');
 initSettings();
+scheduleAppUpdateCheck();
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        checkForAppUpdate({ autoReload: messages.length === 0 }).catch(() => {});
+    }
+});
 
 // ========== ZIP/TXT/CSV 파일 선택 ==========
 zipBtn.addEventListener('click', () => zipInput.click());
@@ -4101,6 +4239,15 @@ function buildUiTestSnapshot() {
     };
 }
 
+function buildAppVersionTestSnapshot() {
+    return {
+        currentVersion: APP_VERSION,
+        manifestUrl: APP_VERSION_MANIFEST_URL,
+        updateManifestUrl: getUpdateManifestUrl(),
+        reloadTarget: getSessionStorageItem(APP_UPDATE_RELOAD_TARGET_KEY)
+    };
+}
+
 if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
     window.__CHAEXTRACTOR_TEST__ = {
         parseChat(content, options = {}) {
@@ -4187,7 +4334,9 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
         openCaptureModal,
         updateCaptureText,
         buildCaptureText,
-        getCaptureSnapshot: buildCaptureTestSnapshot
+        getCaptureSnapshot: buildCaptureTestSnapshot,
+        checkForAppUpdate,
+        getAppVersionSnapshot: buildAppVersionTestSnapshot
     };
 }
 

@@ -55,7 +55,7 @@ python3 harness/scripts/check_performance_smoke.py
 PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"
 ```
 
-`check_doc_drift.py`는 Markdown 로컬 링크, 플랫폼 지원 범위, Windows 공식 지원 문서화, 앱 JS/JSZip 로컬 vendor 상태, 폰트 CDN 문서화, Python 도구 위치, Android 샘플 경로, parser golden 명령 문서화를 함께 검사한다.
+`check_doc_drift.py`는 Markdown 로컬 링크, 플랫폼 지원 범위, Windows 공식 지원 문서화, 앱 JS/JSZip 로컬 vendor/버전 매니페스트 상태, 폰트 CDN 문서화, Python 도구 위치, Android 샘플 경로, parser golden 명령 문서화를 함께 검사한다.
 
 `check_modal_escape.py`는 Node VM에서 실제 앱 모달 함수를 호출해 이미지/설정/갈무리/오류 보고 모달이 Escape 처리 후 닫히는지 검사한다.
 
@@ -82,6 +82,7 @@ python3 harness/scripts/check_performance_smoke.py --messages 500000 --budget-ms
 Playwright smoke는 정적 서버로 저장소 루트의 `index.html`을 열고 실제 브라우저에서 다음을 확인한다.
 
 - CSS, JSZip vendor, 앱 JS, 가이드 이미지 정적 자산 로드
+- `assets/version.json` 로드와 새 버전 감지 시 캐시 우회 새로고침
 - Windows TXT fixture 업로드와 시작 버튼 흐름
 - 날짜 목록, 날짜 선택, 검색 날짜 필터, 갈무리 TXT 모달, 사용자 지정 필터, 설정 모달 Escape 닫기, 데스크톱 링크 사이드바
 - 모바일 viewport의 좌우 사이드바 토글, 상호 배제, 오버레이 닫기

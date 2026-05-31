@@ -72,7 +72,8 @@
 
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
-| 앱은 서버 없이 실행 가능한 빌드 없는 정적 앱이다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` 앱 로직, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타 이미지 | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
+| 앱은 서버 없이 실행 가능한 빌드 없는 정적 앱이다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` 앱 로직, `assets/version.json` 앱 버전 매니페스트, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타 이미지 | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
+| 새 배포는 브라우저 캐시를 우회할 수 있어야 한다. | `meta[name="app-version"]`, CSS/JS query, `assets/version.json` 버전을 맞추고 앱 시작 시 같은 출처 version manifest를 cache-busting fetch로 확인한다 | Browser smoke |
 | 런타임 정적 자산은 소스와 배포본이 같은 파일이어야 한다. | 별도 빌드 산출물 없음 | doc drift checker와 파일 경로 존재 점검 |
 | 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 3.10.1 로컬 vendor, 폰트 CDN | doc drift checker로 일부 점검 |
 | 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소/Windows 최소/macOS CSV fixture parser golden 시작 | 새 플랫폼 확장 시 fixture 추가 |

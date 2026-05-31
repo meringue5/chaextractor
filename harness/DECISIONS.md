@@ -14,6 +14,7 @@
 | JS/vendor 분리는 빌드 산출물을 만들지 않는 범위에서 단계적으로 검토한다. | 채택 | 저장소 가독성과 Pages 직접 동작 균형 |
 | 앱 CSS는 `assets/styles/app.css`로 분리한다. | 채택 | 스타일 변경 가독성 개선, 빌드 없는 정적 배포 유지 |
 | 앱 JS는 `assets/scripts/app.js`로 분리한다. | 채택 | 파서/UI 로직 유지보수성 개선, 빌드 없는 정적 배포 유지 |
+| 앱 버전 매니페스트는 `assets/version.json`에 둔다. | 채택 | GitHub Pages 캐시 환경에서 새 배포 감지와 캐시 우회 새로고침 기준 제공 |
 | JSZip 3.10.1은 `assets/vendor/jszip-3.10.1.min.js` 로컬 vendor 파일로 둔다. | 채택 | CDN 버전 드리프트 없이 GitHub Pages와 오프라인 보관에서 동일 동작 |
 | Playwright browser smoke는 선택 실행 개발 하네스로 둔다. | 채택 | 실제 브라우저 자산 로드, 파일 업로드, 모바일 UI는 Node VM만으로 검증하기 어려움 |
 | 가이드 스크린샷은 `assets/guide/*.png` 개별 파일로 둔다. | 채택 | 내용 이미지라 스프라이트보다 alt/lazy loading/cache/replacement가 유리 |

@@ -37,6 +37,7 @@
 - **링크 사이드바**: 채상욱 리더 필수 링크, 머니버스 꿀팁, 게임하는 판다 링크, 유용한 팁, 버그 제보 링크를 대화 화면 오른쪽에서 확인
 - **오류 진단 리포트**: JS 오류와 처리 실패가 발생하면 오류 보고 창을 즉시 열고, 오류 메시지/처리 단계/파일명/경로/크기/ZIP 내부 파일/대화 파일 검증 결과와 샘플 라인을 복사하거나 TXT로 다운로드할 수 있는 리포트로 제공
 - **테마 & 폰트**: 기본값 1995 테마, 새 앱 버전 배포 시 테마/폰트 저장값 1회 초기화, Light / Dark / 1995 / System 전환, 테마별 자동 폰트 전환 (RIDI바탕 / Neo둥근모Pro / PJW48 이야기)
+- **배포 업데이트 감지**: 새 앱 버전이 배포되면 시작 화면에서 버전 매니페스트를 확인하고 캐시 우회 새로고침을 1회 시도
 - **모바일 반응형**: 스마트폰에서도 사용 가능 (좌우 사이드바 토글, 터치 친화적 UI)
 - **IndexedDB 캐시**: 같은 파일 재방문 시 빠른 로딩, 설정에서 로컬 캐시 삭제 가능
 - **브라우저 호환성**: Chrome, Firefox, Edge, Safari
@@ -49,6 +50,7 @@ chaextractor/
 ├── assets/og-image.png  # Open Graph 이미지
 ├── assets/styles/       # 앱 스타일시트
 ├── assets/scripts/      # 앱 JavaScript
+├── assets/version.json  # 앱 버전 매니페스트
 ├── assets/vendor/       # 로컬 vendor JavaScript (JSZip 등)
 ├── assets/guide/        # 사용 가이드 스크린샷 정적 자산
 ├── tools/               # 선택 유틸리티 (Python CSV 파서 등)
@@ -75,6 +77,7 @@ chaextractor/
 저장소 루트의 `index.html`과 `assets/` 정적 파일을 함께 호스팅하면 됩니다.
 GitHub Pages처럼 저장소 루트를 그대로 배포하는 방식이면 별도 빌드 없이 동작합니다.
 JSZip은 `assets/vendor/jszip-3.10.1.min.js` 로컬 vendor 파일로 제공되며, 폰트는 CDN에서 로드됩니다.
+새 배포 시 `meta[name="app-version"]`, CSS/JS query, `assets/version.json`의 `version` 값을 함께 올리면 브라우저가 시작 화면에서 최신 버전을 확인하고 캐시 우회 새로고침을 1회 시도합니다.
 
 오프라인으로 열 때도 `index.html`과 `assets/` 디렉터리를 함께 보관하면 됩니다.
 
@@ -96,6 +99,7 @@ npm run test:browser
 - 갈무리 TXT는 사용자가 직접 복사하거나 다운로드할 때만 생성되며, 첨부파일 내용과 이미지 base64를 포함하지 않습니다.
 - 오류 진단 리포트는 오류 재현과 파싱 실패 원인 확인을 위해 파일명, ZIP 내부 경로, 후보 대화 파일의 앞부분 샘플 라인, 브라우저/처리 상태를 포함할 수 있습니다.
 - 폰트 로드를 위한 CDN 요청은 발생할 수 있습니다.
+- 앱은 같은 출처의 `assets/version.json`을 캐시 우회 쿼리로 확인해 새 배포 여부를 감지합니다.
 - 링크 사이드바와 버그 제보 등 외부 링크는 사용자가 클릭했을 때만 열립니다.
 - 버그 제보는 Google Form으로 열리며, URL 길이 제한을 피한 오류 요약이 Google Form 내용 칸에 자동 입력됩니다. 전체 진단 리포트는 앱의 오류 보고 창에서 TXT로 다운로드해 폼에 첨부할 수 있습니다.
 

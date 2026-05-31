@@ -135,6 +135,14 @@ def main() -> int:
         for asset in style_assets:
             check(exists(asset), f"stylesheet referenced by index.html is missing: {asset}", errors)
 
+    if "assets/version.json" in runtime:
+        check("assets/version.json" in readme, "README must document app version manifest path", errors)
+        check("assets/version.json" in agents, "AGENTS must document app version manifest path", errors)
+        check("assets/version.json" in manifest, "MANIFEST must classify app version manifest as runtime static asset", errors)
+        check("assets/version.json" in decisions, "DECISIONS must record app version manifest policy", errors)
+        check("배포 업데이트" in read("harness/REQUIREMENTS.md"), "REQUIREMENTS must include deployment update behavior", errors)
+        check(exists("assets/version.json"), "app version manifest is missing: assets/version.json", errors)
+
     if "cdn.jsdelivr.net" in runtime:
         check("폰트는 CDN에서 로드" in readme, "README must document font CDN loading", errors)
         check("폰트 CDN" in agents, "AGENTS must mention font CDN", errors)

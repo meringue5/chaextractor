@@ -10,7 +10,7 @@
 # 프로젝트 개요
 카카오톡 오픈채팅방 대화 내역 뷰어. 빌드 없는 정적 앱, 서버 불필요, 클라이언트 사이드 처리.
 - 배포: https://meringue5.github.io/chaextractor/
-- 기술: HTML (`index.html`), CSS (`assets/styles/app.css`), JS (`assets/scripts/app.js`), JSZip local vendor (`assets/vendor/jszip-3.10.1.min.js`), `assets/guide` 정적 이미지, `assets/og-image.png`, IndexedDB (캐시), 폰트 CDN
+- 기술: HTML (`index.html`), CSS (`assets/styles/app.css`), JS (`assets/scripts/app.js`), 앱 버전 매니페스트 (`assets/version.json`), JSZip local vendor (`assets/vendor/jszip-3.10.1.min.js`), `assets/guide` 정적 이미지, `assets/og-image.png`, IndexedDB (캐시), 폰트 CDN
 - 개발 검증: Python/Node VM 하네스 + 선택 실행 Playwright browser smoke (`npm run test:browser`)
 - 플랫폼: iOS / Android / Windows / macOS 카카오톡 내보내기 파일 지원
 - TODO: Windows/macOS 첨부파일 매핑 지원 예정
@@ -129,9 +129,9 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 
 # 코드 구조: index.html + 정적 자산
 
-현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` 로드 → `assets/scripts/app.js` 로드. 앱 CSS/JS에는 `meta[name="app-version"]`과 같은 버전 query를 붙여 새 배포 시 브라우저 자산 캐시를 갱신한다.
+현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` 로드 → `assets/scripts/app.js` 로드. 앱 CSS/JS에는 `meta[name="app-version"]`과 같은 버전 query를 붙이고, `assets/version.json`을 캐시 우회 쿼리로 확인해 새 배포 시 브라우저 자산 캐시를 갱신한다.
 
-빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 로직은 `assets/scripts/app.js`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph 이미지는 `assets/og-image.png`에 둔다.
+빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 로직은 `assets/scripts/app.js`, 앱 버전 매니페스트는 `assets/version.json`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph 이미지는 `assets/og-image.png`에 둔다.
 
 브라우저 회귀 검증은 `harness/browser/`의 Playwright smoke를 선택 실행한다. 이 하네스는 정적 서버로 저장소 루트의 `index.html`을 열고, 앱 배포 파일을 빌드 없이 그대로 검증한다.
 
@@ -256,6 +256,7 @@ UI 렌더링:
 - `copyCaptureText()` / `downloadCaptureText()` — 갈무리 TXT 복사/다운로드
 
 설정/테마:
+- `checkForAppUpdate()` / `fetchLatestAppVersion()` — `assets/version.json`을 캐시 우회 쿼리로 확인하고 새 버전이면 업로드 전 상태에서 1회 자동 새로고침
 - `applyTheme(theme)` — light/dark/1995/system 테마 적용
 - `applyFont(font, isAutoSwitch)` — 폰트 적용, 자동 전환 관리
 - `resetVersionedSettings()` — 앱 버전 변경 시 테마/폰트 저장값을 1995 테마/이야기 폰트로 1회 초기화

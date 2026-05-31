@@ -7,6 +7,7 @@ const windowsFixture = path.join(
   repoRoot,
   'test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt'
 );
+const expectedAppVersion = '2026-05-31-update-check';
 
 function watchLocalRuntime(page) {
   const failures = [];
@@ -46,7 +47,7 @@ test('static shell loads local assets and vendor script', async ({ page }) => {
   await expect(page.locator('#setupScreen')).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', '1995');
   await expect(page.locator('html')).toHaveAttribute('data-font', 'iyagi');
-  await expect(page.locator('meta[name="app-version"]')).toHaveAttribute('content', /1995-default-reset/);
+  await expect(page.locator('meta[name="app-version"]')).toHaveAttribute('content', expectedAppVersion);
   await expect(page.locator('link[href^="assets/styles/app.css"]')).toHaveCount(1);
   await expect(page.locator('script[src="assets/vendor/jszip-3.10.1.min.js"]')).toHaveCount(1);
   await expect(page.locator('script[src^="assets/scripts/app.js"]')).toHaveCount(1);
@@ -95,6 +96,27 @@ test('static shell loads local assets and vendor script', async ({ page }) => {
   });
 
   await expect.poll(() => page.evaluate(() => typeof window.JSZip)).toBe('function');
+  const versionResponse = await page.request.get('/assets/version.json?smoke=1');
+  expect(versionResponse.ok()).toBe(true);
+  expect(await versionResponse.json()).toMatchObject({ version: expectedAppVersion });
+  expect(failures).toEqual([]);
+});
+
+test('new version manifest triggers cache-busting reload once', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'update reload flow runs in the desktop project');
+  const failures = watchLocalRuntime(page);
+  const latestVersion = 'test-newer-version';
+
+  await page.route('**/assets/version.json*', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ version: latestVersion })
+  }));
+
+  await openApp(page);
+  await expect.poll(() => new URL(page.url()).searchParams.get('appVersion')).toBe(latestVersion);
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('chaextractorUpdateReloadTarget')))
+    .toContain(latestVersion);
   expect(failures).toEqual([]);
 });
 
