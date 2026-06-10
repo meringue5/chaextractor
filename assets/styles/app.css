@@ -434,26 +434,59 @@ body {
 
 /* 다크 테마 */
 [data-theme="dark"] {
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #2d2d2d;
-    --bg-tertiary: #3d3d3d;
-    --panel-bg: #2d2d2d;
-    --panel-surface: #3d3d3d;
-    --panel-raised: #343434;
-    --panel-hover: #404040;
-    --panel-border: #404040;
-    --text-primary: #e0e0e0;
-    --text-secondary: #b0b0b0;
-    --text-muted: #808080;
-    --border-color: #404040;
-    --border-light: #505050;
-    --leader-bg: #3d3520;
-    --leader-border: #8b7355;
-    --leader-text: #ffd54f;
-    --chat-bg: #0d0d0d;
-    --scroll-marker-bg: #1a1a1a;
-    --calendar-hover: #3d3d3d;
-    --calendar-empty: #707070;
+    --bg-primary: #111316;
+    --bg-secondary: #25282d;
+    --bg-tertiary: #2f343b;
+    --panel-bg: #181a1e;
+    --panel-surface: #20242a;
+    --panel-raised: #2a2f36;
+    --panel-hover: #2f353d;
+    --panel-border: #30353c;
+    --panel-text: #a7b0bc;
+    --panel-text-strong: #b3bdc8;
+    --panel-text-muted: #737d89;
+    --text-primary: #e4e7eb;
+    --text-secondary: #aeb6bf;
+    --text-muted: #77818c;
+    --border-color: #30353c;
+    --border-light: #3a4048;
+    --leader-bg: #3b321d;
+    --leader-border: #a88c3d;
+    --leader-text: #f2d46b;
+    --chat-bg: #0d0f12;
+    --scroll-marker-bg: #181a1e;
+    --message-name: #8fc3d6;
+    --link-color: #79c7ee;
+    --calendar-hover: #2f353d;
+    --calendar-empty: #59616b;
+}
+
+[data-theme="dark"] .message.leader > .user-name {
+    color: var(--leader-text);
+}
+
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .link-sidebar {
+    color: var(--panel-text);
+}
+
+[data-theme="dark"] .link-item,
+[data-theme="dark"] .header-btn,
+[data-theme="dark"] .leader-filter-controls input,
+[data-theme="dark"] .leader-filter-controls button,
+[data-theme="dark"] .search-box input {
+    color: var(--panel-text-strong);
+}
+
+[data-theme="dark"] .sidebar-header .stats,
+[data-theme="dark"] .calendar-grid .weekday,
+[data-theme="dark"] .date-item .count,
+[data-theme="dark"] .link-group-header {
+    color: var(--panel-text-muted);
+}
+
+[data-theme="dark"] .search-box input::placeholder {
+    color: var(--panel-text-muted);
 }
 
 /* 1995 테마 */
@@ -477,7 +510,7 @@ body {
     --leader-border: #ffd400;
     --leader-text: #ffd400;
     --chat-bg: #071a33;
-    --scroll-marker-bg: #041126;
+    --scroll-marker-bg: #808080;
     --chat-header-bg: #031026;
     --chat-header-text: #f4f7ff;
     --message-name: #9ce7ff;
@@ -684,7 +717,7 @@ body {
 }
 
 [data-theme="1995"] .scroll-markers {
-    background: var(--bg-primary);
+    background: var(--scroll-marker-bg);
     border-right: 1px solid #14253c;
 }
 

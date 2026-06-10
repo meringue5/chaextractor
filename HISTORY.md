@@ -1334,6 +1334,28 @@
   * `python3 harness/scripts/check_ui_smoke.py` 통과
   * `npm run test:browser` 통과 (7 passed, 3 skipped)
 
+## 2-1-77단계: Dark 테마 표면 위계 조정 (2026-06-11)
+* 분류:
+  * implementation-only UI 스타일 조정. 기본 테마와 기능 범위 변경 없음.
+* 변경:
+  * Dark 테마의 대화 배경은 어둡게 유지하고, 좌우 패널은 본문보다 조금 밝은 낮은 조도 표면으로 분리
+  * Dark 테마 전용 `--panel-*` 토큰을 재조정해 패널/링크/검색/날짜 hover가 배경처럼 물러나도록 변경
+  * Dark 테마 좌우 패널 내부의 제목/링크/검색/날짜 보조 텍스트 밝기를 낮춰 대화 본문보다 덜 도드라지게 조정
+  * Dark 테마 전용 `--panel-text*` 토큰을 추가해 패널 텍스트가 메인 컨텐츠 텍스트보다 낮은 밝기 위계를 갖도록 정리
+  * Dark 테마 발화자 이름 색을 저채도 청록 계열로 명시해 대화 배경 위에서 읽히도록 개선
+  * Dark 테마 말풍선/경계선/스크롤 마커/링크/리더 강조 색을 같은 저채도 팔레트 안에서 정리
+  * 1995 테마 탐색 스크롤바 레일을 Redmond gray 계열로 조정해 좌측 패널 경계와 분리
+  * 1995 테마 모달/패널 보더 그림자는 기존 Windows 3.1식 양감 표현으로 유지
+  * 앱 버전 값을 `2026-06-11-1995-modal-scrollbar`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과 (7 passed, 3 skipped)
+  * Playwright 캡처 확인: `tmp/theme-readability/dark-panel-muted.png`
+  * Playwright 캡처 확인: `tmp/theme-readability/1995-modal-scrollbar.png`
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

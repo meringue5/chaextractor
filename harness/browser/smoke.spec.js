@@ -7,7 +7,7 @@ const windowsFixture = path.join(
   repoRoot,
   'test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt'
 );
-const expectedAppVersion = '2026-06-10-speaker-align';
+const expectedAppVersion = '2026-06-11-1995-modal-scrollbar';
 
 function watchLocalRuntime(page) {
   const failures = [];
@@ -301,6 +301,7 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
     const linkSidebar = getComputedStyle(document.querySelector('.link-sidebar'));
     const linkGroup = getComputedStyle(document.querySelector('.link-group'));
     const chatArea = getComputedStyle(document.querySelector('.chat-area'));
+    const settingsModalBox = getComputedStyle(document.querySelector('#settingsModal .modal-box'));
     const dropZone = getComputedStyle(document.querySelector('.drop-zone'));
     const hint = getComputedStyle(document.querySelector('.hint'));
     const userName = getComputedStyle(document.querySelector('#chatMessages .message .user-name.desktop-only'));
@@ -319,6 +320,7 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
       bubbleShadow: bubble.boxShadow,
       headerBorder: header.borderBottomStyle,
       headerBorderBottomColor: header.borderBottomColor,
+      scrollMarkersBackground: scrollMarkers.backgroundColor,
       scrollMarkersBorderRightColor: scrollMarkers.borderRightColor,
       sidebarBackground: sidebar.backgroundColor,
       sidebarColor: sidebar.color,
@@ -350,6 +352,7 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
       linkGroupBorderTop: linkGroup.borderTopStyle,
       linkGroupBorderBottom: linkGroup.borderBottomStyle,
       chatAreaBackground: chatArea.backgroundColor,
+      settingsModalBoxShadow: settingsModalBox.boxShadow,
       dropZoneBorder: dropZone.borderTopStyle,
       dropZoneBorderTopColor: dropZone.borderTopColor,
       dropZoneBorderBottomColor: dropZone.borderBottomColor,
@@ -371,6 +374,7 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   expect(pcThemeUi.bubbleShadow).toBe('none');
   expect(pcThemeUi.headerBorder).toBe('solid');
   expect(pcThemeUi.headerBorderBottomColor).toBe('rgb(20, 37, 60)');
+  expect(pcThemeUi.scrollMarkersBackground).toBe('rgb(128, 128, 128)');
   expect(pcThemeUi.scrollMarkersBorderRightColor).toBe('rgb(20, 37, 60)');
   expect(pcThemeUi.sidebarBackground).toBe('rgb(192, 192, 192)');
   expect(pcThemeUi.sidebarColor).toBe('rgb(0, 0, 0)');
@@ -402,6 +406,7 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   expect(pcThemeUi.linkGroupBorderTop).toBe('none');
   expect(pcThemeUi.linkGroupBorderBottom).toBe('none');
   expect(pcThemeUi.chatAreaBackground).toBe('rgb(7, 26, 51)');
+  expect(pcThemeUi.settingsModalBoxShadow).toBe('rgb(128, 128, 128) 1px 1px 0px 0px');
   expect(pcThemeUi.dropZoneBorder).toBe('solid');
   expect(pcThemeUi.dropZoneBorderTopColor).toBe('rgb(128, 128, 128)');
   expect(pcThemeUi.dropZoneBorderBottomColor).toBe('rgb(255, 255, 255)');
