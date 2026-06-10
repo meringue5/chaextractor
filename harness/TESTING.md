@@ -6,7 +6,7 @@
 
 ### Parser golden
 
-`assets/scripts/domain/chat-domain.js`와 `assets/scripts/app.js`의 실제 파서/도메인 함수를 Node VM에서 호출해 fixture expected와 비교한다.
+`assets/scripts/chat-core.js`, `assets/scripts/chat-domain.js`, `assets/scripts/app.js`의 실제 파서/도메인 함수를 Node VM에서 호출해 fixture expected와 비교한다.
 
 ```bash
 python3 harness/scripts/run_parser_golden.py

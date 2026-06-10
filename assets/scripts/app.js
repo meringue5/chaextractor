@@ -1,20 +1,19 @@
 import {
-    DELETED_MESSAGE,
     PATTERNS,
     classifyContent,
-    containsUrl,
     detectPlatform,
-    execPatternArray,
     isAttachmentFile,
-    isMacOSCsvContent,
     isMacOSCsvHeader,
-    isMacOSSystemMessage,
     parseAttachmentFilename,
     parseCsvRecords,
-    parseMacOSDateTime,
     testPatternArray,
     validateMacOSCsvFile
-} from './domain/chat-domain.js';
+} from './chat-domain.js';
+import {
+    parseKakaoChat as parseKakaoChatCore,
+    parseMergedChatFiles as parseMergedChatFilesCore,
+    sortDatesDescending
+} from './chat-core.js';
 
 // ========== 상태 관리 ==========
 const DEFAULT_LEADER_FILTER_TARGET = '채상욱 리더';
@@ -46,7 +45,7 @@ const DEFAULT_THEME = '1995';
 const DEFAULT_1995_FONT = 'iyagi';
 const APP_STORAGE_VERSION_KEY = 'chaextractorAppVersion';
 const APP_VERSION = document.querySelector('meta[name="app-version"]')?.getAttribute('content')
-    || '2026-06-07-local-server-esm';
+    || '2026-06-10-chat-domain-flat';
 const APP_VERSION_MANIFEST_URL = 'assets/version.json';
 const APP_UPDATE_RELOAD_TARGET_KEY = 'chaextractorUpdateReloadTarget';
 const APP_UPDATE_QUERY_PARAM = 'appVersion';
@@ -2535,20 +2534,6 @@ async function processFolderFiles(files) {
     cleanOldCache();
 }
 
-function addMessageToCollections(msg) {
-    messages.push(msg);
-
-    if (!messagesByDate[msg.date]) {
-        messagesByDate[msg.date] = [];
-        leaderCountByDate[msg.date] = 0;
-    }
-    messagesByDate[msg.date].push(msg);
-
-    if (isLeader(msg.user)) {
-        leaderCountByDate[msg.date]++;
-    }
-}
-
 function analyzeChatFileContent(content) {
     const lines = content.split('\n');
     const analysis = {
@@ -2666,383 +2651,25 @@ function validateChatFile(content) {
     return analysis.valid;
 }
 
-function parseMacOSCsvChat(content) {
-    const records = parseCsvRecords(content);
-    messages = [];
-    messagesByDate = {};
-    leaderCountByDate = {};
-    detectedPlatform = 'macos';
+function applyParsedChatResult(result) {
+    messages = result.messages || [];
+    messagesByDate = result.messagesByDate || {};
+    leaderCountByDate = result.leaderCountByDate || {};
+    dates = result.dates || sortDatesDescending(Object.keys(messagesByDate));
 
-    if (!isMacOSCsvHeader(records[0])) {
-        dates = [];
-        return;
+    if (result.detectedPlatform) {
+        detectedPlatform = result.detectedPlatform;
     }
-
-    let lastMessage = null;
-
-    for (let i = 1; i < records.length; i++) {
-        const row = records[i];
-        if (!row || row.length < 3) continue;
-
-        const parsedDate = parseMacOSDateTime(row[0]);
-        const user = String(row[1] || '').trim();
-        const contentText = row.slice(2).join(',').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-        if (!parsedDate || !user) {
-            continue;
-        }
-
-        if (isMacOSSystemMessage(contentText)) {
-            continue;
-        }
-
-        const { type, attachType, attachRef } = classifyContent(contentText);
-        const hasLink = containsUrl(contentText);
-        const isAttachment = ['photo', 'file', 'emoticon'].includes(type);
-
-        if (!isAttachment && lastMessage &&
-            lastMessage.user === user &&
-            lastMessage.date === parsedDate.date &&
-            lastMessage.message_type === 'text') {
-            lastMessage.content += '\n' + contentText;
-            if (hasLink) lastMessage.has_link = true;
-        } else {
-            const msg = {
-                datetime: parsedDate.datetime,
-                date: parsedDate.date,
-                time: parsedDate.time,
-                user,
-                message_type: type,
-                content: contentText,
-                has_attachment: !!attachType,
-                attachment_type: attachType,
-                attachment_ref: attachRef,
-                attachment_path: '',
-                has_link: hasLink
-            };
-
-            addMessageToCollections(msg);
-            lastMessage = msg;
-        }
-    }
-
-    dates = sortDatesDescending(Object.keys(messagesByDate));
 }
 
-// ========== 카카오톡 대화 파싱 (정규식 최적화) ==========
+// ========== 카카오톡 대화 파싱 ==========
 function parseKakaoChat(content) {
-    if (isMacOSCsvContent(content)) {
-        parseMacOSCsvChat(content);
-        return;
-    }
-
-    const lines = content.split('\n');
-    messages = [];
-    messagesByDate = {};
-    leaderCountByDate = {};
-
-    let currentDate = null;
-    let lastMessage = null;
-    let lineNum = 0;
-
-    // for 루프 사용 (배열 메서드보다 빠름)
-    for (let i = 0; i < lines.length; i++) {
-        const rawLine = lines[i];
-        lineNum++;
-        const line = rawLine.replace(/\r$/, '');
-
-        // 헤더 행 스킵 (1-5행)
-        if (lineNum <= 5) continue;
-
-        // 빈 줄 스킵
-        if (!line.trim()) continue;
-
-        // === 사전 필터링: 문자열 체크 먼저 (정규식 실행 70% 감소) ===
-        const firstChar = line[0];
-        const stripped = line.trim();
-
-        // Android 연속 사진: 파일명만 있는 줄 (사용자/시간 없음)
-        // hash는 숫자로 시작할 수 있으므로 날짜/숫자 분기보다 먼저 처리한다.
-        if (PATTERNS.ATTACHMENT_FILENAME_ANDROID.test(stripped) && lastMessage) {
-            const msg = {
-                datetime: lastMessage.datetime,
-                date: lastMessage.date,
-                time: lastMessage.time,
-                user: lastMessage.user,
-                message_type: 'photo',
-                content: stripped,
-                has_attachment: true,
-                attachment_type: 'photo',
-                attachment_ref: stripped,
-                attachment_path: '',
-                has_link: false
-            };
-            messages.push(msg);
-            if (!messagesByDate[msg.date]) {
-                messagesByDate[msg.date] = [];
-                leaderCountByDate[msg.date] = 0;
-            }
-            messagesByDate[msg.date].push(msg);
-            if (isLeader(msg.user)) leaderCountByDate[msg.date]++;
-            lastMessage = msg;
-            continue;
-        }
-
-        // Windows 날짜 구분선: --------------- 시작
-        if (firstChar === '-') {
-            const windowsDateMatch = execPatternArray(line, PATTERNS.DATE_HEADER_WINDOWS);
-            if (windowsDateMatch) {
-                const [, year, month, day] = windowsDateMatch;
-                currentDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-                continue;
-            }
-        }
-
-        // Windows 메시지: [사용자] [시간] 내용
-        if (firstChar === '[') {
-            const windowsMatch = execPatternArray(line, PATTERNS.MESSAGE_WINDOWS);
-            if (windowsMatch && currentDate) {
-                const [, user, ampm, hour, minute, content] = windowsMatch;
-
-                // 12시간 → 24시간 변환
-                let h = parseInt(hour);
-                if (ampm === '오후' && h !== 12) h += 12;
-                if (ampm === '오전' && h === 12) h = 0;
-
-                const dateStr = currentDate;
-                const timeStr = `${h.toString().padStart(2, '0')}:${minute}`;
-                const datetimeStr = `${dateStr} ${timeStr}`;
-
-                // 메시지 타입 분류
-                const { type, attachType, attachRef } = classifyContent(content);
-                const hasLink = containsUrl(content);
-
-                const isAttachment = ['photo', 'file', 'emoticon'].includes(type);
-
-                // 연속 발화 병합 (첨부파일 제외)
-                if (!isAttachment && lastMessage &&
-                    lastMessage.user === user &&
-                    lastMessage.date === dateStr &&
-                    lastMessage.message_type === 'text') {
-                    lastMessage.content += '\n' + content;
-                    if (hasLink) lastMessage.has_link = true;
-                } else {
-                    const msg = {
-                        datetime: datetimeStr,
-                        date: dateStr,
-                        time: timeStr,
-                        user: user,
-                        message_type: type,
-                        content: content,
-                        has_attachment: !!attachType,
-                        attachment_type: attachType,
-                        attachment_ref: attachRef,
-                        attachment_path: '',
-                        has_link: hasLink
-                    };
-
-                    messages.push(msg);
-
-                    if (!messagesByDate[dateStr]) {
-                        messagesByDate[dateStr] = [];
-                        leaderCountByDate[dateStr] = 0;
-                    }
-                    messagesByDate[dateStr].push(msg);
-
-                    // 필터 대상 사용자 메시지 카운트 (사전 계산)
-                    if (isLeader(user)) {
-                        leaderCountByDate[dateStr]++;
-                    }
-
-                    lastMessage = msg;
-                }
-                continue;
-            }
-        }
-
-        // 숫자로 시작하는 경우만 정규식 체크
-        if (firstChar >= '0' && firstChar <= '9') {
-            // 1. 날짜 헤더 ("2024년...")
-            if (line.includes('년 ')) {
-                const dateMatch = execPatternArray(line, PATTERNS.DATE_HEADER);
-                if (dateMatch) {
-                    const [, year, month, day] = dateMatch;
-                    currentDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-                    continue;
-                }
-                // Android 날짜 구분선: 시간만 있는 행 (사용자/내용 없음)
-                if (!line.includes(', ') && testPatternArray(line, PATTERNS.DATE_HEADER_ANDROID)) {
-                    continue;
-                }
-            }
-
-            // 2. 시스템 메시지 (iOS/Android 패턴)
-            if (line.includes('님이 들어왔습니다.') || line.includes('님이 나갔습니다.')) {
-                if (testPatternArray(line, PATTERNS.ENTER_LEAVE) || testPatternArray(line, PATTERNS.ENTER_LEAVE_ANDROID)) {
-                    continue;
-                }
-            }
-
-            // 3. 일반 메시지 (iOS/Android 패턴)
-            if (line.includes(', ') && line.includes(' : ')) {
-                // iOS 패턴 시도
-                let msgMatch = execPatternArray(line, PATTERNS.MESSAGE_IOS);
-                let year, month, day, hour, minute, user, content;
-
-                if (msgMatch) {
-                    // iOS 패턴 구분: 24시간 vs 12시간 형식
-                    if (msgMatch[4] === '오전' || msgMatch[4] === '오후') {
-                        // 12시간 형식: year, month, day, ampm, hour, minute, second(선택적), user, content
-                        const ampm = msgMatch[4];
-                        [, year, month, day, , hour, minute, , user, content] = msgMatch;
-                        // 24시간 형식으로 변환
-                        let h = parseInt(hour);
-                        if (ampm === '오후' && h !== 12) h += 12;
-                        if (ampm === '오전' && h === 12) h = 0;
-                        hour = h.toString();
-                    } else {
-                        // 24시간 형식: year, month, day, hour, minute, second(선택적), user, content
-                        [, year, month, day, hour, minute, , user, content] = msgMatch;
-                    }
-                } else {
-                    // Android 패턴 시도
-                    msgMatch = execPatternArray(line, PATTERNS.MESSAGE_ANDROID);
-                    if (msgMatch) {
-                        [, year, month, day, , hour, minute, user, content] = msgMatch;
-                        const ampm = msgMatch[4]; // 오전/오후
-                        // 24시간 형식으로 변환
-                        let h = parseInt(hour);
-                        if (ampm === '오후' && h !== 12) h += 12;
-                        if (ampm === '오전' && h === 12) h = 0;
-                        hour = h.toString().padStart(2, '0');
-                    }
-                }
-
-                if (msgMatch) {
-                    const dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-                    const timeStr = `${hour.padStart(2, '0')}:${minute}`;
-                    const datetimeStr = `${dateStr} ${timeStr}`;
-
-                    // 메시지 타입 분류
-                    const { type, attachType, attachRef } = classifyContent(content);
-                    const hasLink = containsUrl(content);
-
-                    const isAttachment = ['photo', 'file', 'emoticon'].includes(type);
-
-                    // 연속 발화 병합 (첨부파일 제외)
-                    if (!isAttachment && lastMessage &&
-                        lastMessage.user === user &&
-                        lastMessage.date === dateStr &&
-                        lastMessage.message_type === 'text') {
-                        lastMessage.content += '\n' + content;
-                        if (hasLink) lastMessage.has_link = true;
-                    } else {
-                        const msg = {
-                            datetime: datetimeStr,
-                            date: dateStr,
-                            time: timeStr,
-                            user: user,
-                            message_type: type,
-                            content: content,
-                            has_attachment: !!attachType,
-                            attachment_type: attachType,
-                            attachment_ref: attachRef,
-                            attachment_path: '',
-                            has_link: hasLink
-                        };
-
-                        messages.push(msg);
-
-                        if (!messagesByDate[dateStr]) {
-                            messagesByDate[dateStr] = [];
-                            leaderCountByDate[dateStr] = 0;
-                        }
-                        messagesByDate[dateStr].push(msg);
-
-                        // 필터 대상 사용자 메시지 카운트 (사전 계산)
-                        if (isLeader(user)) {
-                            leaderCountByDate[dateStr]++;
-                        }
-
-                        lastMessage = msg;
-                    }
-                } else {
-                    // 패턴 매칭 실패 - 이전 메시지 연속
-                    if (lastMessage && lastMessage.message_type === 'text') {
-                        lastMessage.content += '\n' + line;
-                        if (containsUrl(line)) {
-                            lastMessage.has_link = true;
-                        }
-                    }
-                }
-            } else {
-                // 이전 메시지 연속
-                if (lastMessage && lastMessage.message_type === 'text') {
-                    lastMessage.content += '\n' + line;
-                    if (containsUrl(line)) {
-                        lastMessage.has_link = true;
-                    }
-                }
-            }
-        } else if (firstChar === '메' && line === DELETED_MESSAGE) {
-            // 삭제 메시지 (문자열 정확 비교 - 정규식보다 10배 빠름)
-            continue;
-        } else {
-            // Windows 입장/퇴장 (타임스탬프 없음)
-            if (line.includes('님이 들어왔습니다.') || line.includes('님이 나갔습니다.')) {
-                if (testPatternArray(line, PATTERNS.ENTER_LEAVE_WINDOWS)) {
-                    continue;
-                }
-            }
-
-            if (lastMessage && lastMessage.message_type === 'text') {
-                // 기타 - 이전 메시지 연속
-                lastMessage.content += '\n' + line;
-                if (containsUrl(line)) {
-                    lastMessage.has_link = true;
-                }
-            }
-        }
-    }
-
-    dates = sortDatesDescending(Object.keys(messagesByDate)); // 최신 날짜부터 표시 (내림차순)
+    applyParsedChatResult(parseKakaoChatCore(content, { isLeader }));
 }
 
 // ========== 여러 대화 파일 병합 ==========
 function parseMergedChatFiles(chatContents) {
-    const allMessages = [];
-
-    // 각 파일을 파싱하고 메시지 수집
-    for (const content of chatContents) {
-        parseKakaoChat(content);
-        allMessages.push(...messages);
-    }
-
-    // 시간순으로 정렬
-    allMessages.sort((a, b) => {
-        const dtA = new Date(a.datetime);
-        const dtB = new Date(b.datetime);
-        return dtA - dtB;
-    });
-
-    // 전역 변수 재구성
-    messages = allMessages;
-    messagesByDate = {};
-    leaderCountByDate = {};
-
-    for (const msg of messages) {
-        if (!messagesByDate[msg.date]) {
-            messagesByDate[msg.date] = [];
-            leaderCountByDate[msg.date] = 0;
-        }
-        messagesByDate[msg.date].push(msg);
-
-        if (isLeader(msg.user)) {
-            leaderCountByDate[msg.date]++;
-        }
-    }
-
-    dates = sortDatesDescending(Object.keys(messagesByDate));
+    applyParsedChatResult(parseMergedChatFilesCore(chatContents, { isLeader }));
 }
 
 function decodeAttachmentName(filename) {
@@ -3123,10 +2750,6 @@ async function loadAndRenderAttachment(elementId, filename, type, ref) {
 // 캐시 키 생성
 function generateCacheKey(fileName, fileSize, lastModified) {
     return `${fileName}_${fileSize}_${lastModified || 0}`;
-}
-
-function sortDatesDescending(dateKeys) {
-    return [...new Set(dateKeys || [])].sort().reverse();
 }
 
 function restoreCachedChatData(cachedData) {

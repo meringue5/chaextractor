@@ -123,6 +123,10 @@ def main() -> int:
         check("assets/scripts/app.js" in agents, "AGENTS must document app script path", errors)
         check("assets/scripts/app.js" in manifest, "MANIFEST must classify app script as runtime static asset", errors)
         check("assets/scripts/app.js" in decisions, "DECISIONS must record app script asset policy", errors)
+        if "assets/scripts/chat-core.js" in app_runtime_assets:
+            check("assets/scripts/chat-core.js" in agents, "AGENTS must document chat core script path", errors)
+            check("assets/scripts/chat-core.js" in manifest, "MANIFEST must classify chat core as runtime static asset", errors)
+            check("assets/scripts/chat-core.js" in decisions, "DECISIONS must record chat core script policy", errors)
         for asset in app_runtime_assets:
             check(exists(asset), f"app script referenced by index.html is missing: {asset}", errors)
 

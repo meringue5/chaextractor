@@ -7,7 +7,7 @@ const windowsFixture = path.join(
   repoRoot,
   'test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt'
 );
-const expectedAppVersion = '2026-06-07-local-server-esm';
+const expectedAppVersion = '2026-06-10-chat-domain-flat';
 
 function watchLocalRuntime(page) {
   const failures = [];
@@ -39,7 +39,7 @@ async function uploadWindowsFixture(page) {
   await expect(page.locator('#app')).toHaveClass(/active/);
 }
 
-test('static shell loads local assets, vendor script, and domain module', async ({ page }) => {
+test('static shell loads local assets, vendor script, and chat modules', async ({ page }) => {
   const failures = watchLocalRuntime(page);
 
   await openApp(page);
@@ -56,7 +56,8 @@ test('static shell loads local assets, vendor script, and domain module', async 
     performance.getEntriesByType('resource').map(entry => new URL(entry.name).pathname)
   );
   expect(resourcePaths).toContain('/assets/scripts/app.js');
-  expect(resourcePaths).toContain('/assets/scripts/domain/chat-domain.js');
+  expect(resourcePaths).toContain('/assets/scripts/chat-core.js');
+  expect(resourcePaths).toContain('/assets/scripts/chat-domain.js');
   await expect(page.locator('img[src^="assets/guide/"]')).toHaveCount(6);
   await expect(page.locator('#heroImage')).toHaveCount(0);
   await expect(page.locator('#setupTipsBtn')).toHaveCount(0);

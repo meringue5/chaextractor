@@ -1065,6 +1065,39 @@
   * PowerShell 스크립트 실행 검증은 macOS 환경에 `pwsh`가 없으면 미실행
   * `npm run test:browser` 통과
 
+## 2-1-65단계: UI 없는 대화 파싱 코어 분리 (2026-06-10)
+* 분류:
+  * implementation-only 아키텍처 리팩터링. 사용자 기능/플랫폼 지원 범위 변경 없음.
+* 결정:
+  * 작은 앱 특성을 고려해 모듈을 과하게 세분화하지 않고, `chat-core.js` 단일 경계만 추가한다.
+  * `assets/scripts/chat-core.js`는 대화 파싱/병합 결과 객체를 반환하고, `assets/scripts/app.js`는 그 결과를 앱 전역 상태에 반영한다.
+  * 분리 목적은 파일 길이 축소가 아니라 플랫폼 파싱 규칙과 UI 상태 결합을 낮추는 것이다.
+* 변경:
+  * `parseKakaoChat`, macOS CSV 파싱, `parseMergedChatFiles`, 날짜 정렬을 `assets/scripts/chat-core.js`로 이동
+  * 파일 하나짜리 `domain/` 디렉터리를 제거하고 저수준 도메인 헬퍼 경로를 `assets/scripts/chat-domain.js`로 단순화
+  * `assets/scripts/app.js`는 `parseKakaoChatCore`, `parseMergedChatFilesCore` 결과를 `applyParsedChatResult`로 반영하도록 변경
+  * Node VM 하네스 `harness/scripts/parse_with_index.mjs`가 `chat-core.js` ES module import를 주입하도록 변경
+  * Playwright browser smoke가 `assets/scripts/chat-core.js` 리소스 로드를 확인하도록 변경
+  * AGENTS, harness MANIFEST, harness DECISIONS, harness TESTING, doc drift checker에 새 코어 경계 반영
+  * 앱 버전 값을 `2026-06-10-chat-domain-flat`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/chat-core.js` 통과
+  * `node --check assets/scripts/chat-domain.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

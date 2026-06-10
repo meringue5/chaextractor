@@ -5,28 +5,33 @@ import vm from 'node:vm';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const appScriptPath = path.join(repoRoot, 'assets/scripts/app.js');
-const chatDomainScriptPath = path.join(repoRoot, 'assets/scripts/domain/chat-domain.js');
+const chatDomainScriptPath = path.join(repoRoot, 'assets/scripts/chat-domain.js');
+const chatCoreScriptPath = path.join(repoRoot, 'assets/scripts/chat-core.js');
 const chatDomain = await import(pathToFileURL(chatDomainScriptPath));
-const appScript = fs.readFileSync(appScriptPath, 'utf8').replace(
-  /import\s+\{[\s\S]*?\}\s+from\s+['"]\.\/domain\/chat-domain\.js['"];\n\n/,
-  `const {
-    DELETED_MESSAGE,
+const chatCore = await import(pathToFileURL(chatCoreScriptPath));
+const appScript = fs.readFileSync(appScriptPath, 'utf8')
+  .replace(
+    /import\s+\{[\s\S]*?\}\s+from\s+['"]\.\/chat-domain\.js['"];\n/,
+    `const {
     PATTERNS,
     classifyContent,
-    containsUrl,
     detectPlatform,
-    execPatternArray,
     isAttachmentFile,
-    isMacOSCsvContent,
     isMacOSCsvHeader,
-    isMacOSSystemMessage,
     parseAttachmentFilename,
     parseCsvRecords,
-    parseMacOSDateTime,
     testPatternArray,
     validateMacOSCsvFile
-  } = __CHAEXTRACTOR_IMPORTS__.chatDomain;\n\n`
-);
+  } = __CHAEXTRACTOR_IMPORTS__.chatDomain;\n`
+  )
+  .replace(
+    /import\s+\{[\s\S]*?\}\s+from\s+['"]\.\/chat-core\.js['"];\n\n/,
+    `const {
+    parseKakaoChat: parseKakaoChatCore,
+    parseMergedChatFiles: parseMergedChatFilesCore,
+    sortDatesDescending
+  } = __CHAEXTRACTOR_IMPORTS__.chatCore;\n\n`
+  );
 const input = JSON.parse(fs.readFileSync(0, 'utf8'));
 
 function escapeHtml(text) {
@@ -236,7 +241,7 @@ const windowObject = {
 const fakeIndexedDB = createFakeIndexedDB();
 
 const context = {
-  __CHAEXTRACTOR_IMPORTS__: { chatDomain },
+  __CHAEXTRACTOR_IMPORTS__: { chatDomain, chatCore },
   console: {
     log() {},
     warn() {},
