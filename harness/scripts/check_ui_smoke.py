@@ -47,9 +47,9 @@ def main() -> int:
     failures: list[str] = []
 
     fail_if(payload["parseResult"]["messageCount"] != 8, failures, "fixture upload/parse did not produce 8 messages")
-    fail_if(payload["afterInit"]["theme"] != "1995", failures, "default theme was not 1995")
-    fail_if(payload["afterInit"]["font"] != "iyagi", failures, "default theme did not use Iyagi font")
-    fail_if(payload["afterInit"]["storedTheme"] != "1995", failures, "default theme was not persisted as 1995")
+    fail_if(payload["afterInit"]["theme"] != "light", failures, "default theme was not light")
+    fail_if(payload["afterInit"]["font"] != "ridi", failures, "default theme did not use RIDI font")
+    fail_if(payload["afterInit"]["storedTheme"] != "light", failures, "default theme was not persisted as light")
     fail_if(payload["afterInit"]["dateListCount"] != 2, failures, "date list did not render both dates")
     fail_if(payload["afterInit"]["calendarCellCount"] < 35, failures, "calendar grid did not render")
     fail_if(payload["afterInit"]["selectedDate"] is not None, failures, "date was selected during app init")

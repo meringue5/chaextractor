@@ -397,27 +397,32 @@ body {
     --message-gap: 12px;
 
     /* 테마 색상 변수 */
-    --bg-primary: #f5f5f5;
-    --bg-secondary: #ffffff;
-    --bg-tertiary: #f8f9fa;
-    --text-primary: #333;
-    --text-secondary: #666;
-    --text-muted: #999;
-    --border-color: #e0e0e0;
-    --border-light: #ccc;
+    --bg-primary: #f1f4ef;
+    --bg-secondary: #fbfcf8;
+    --bg-tertiary: #eef2ec;
+    --panel-bg: #d8d6cf;
+    --panel-surface: #e6e4dd;
+    --panel-raised: #f4f2ec;
+    --panel-hover: #cfccc4;
+    --panel-border: #c4c0b8;
+    --text-primary: #2f352f;
+    --text-secondary: #626a61;
+    --text-muted: #8b9488;
+    --border-color: #d8ded4;
+    --border-light: #c5cec1;
     --button-primary: #4a90d9;
     --button-hover: #3a7bc8;
-    --leader-bg: #fff8e1;
-    --leader-border: #ffd54f;
-    --leader-text: #8b6914;
-    --chat-bg: #e5ddd5;
-    --scroll-marker-bg: #f0f0f0;
+    --leader-bg: #fff4cf;
+    --leader-border: #edc95a;
+    --leader-text: #735e12;
+    --chat-bg: #e3e2dc;
+    --scroll-marker-bg: #d8d6cf;
     --chat-header-bg: #075e54;
     --chat-header-text: #fff;
     --message-name: #075e54;
     --link-color: #039be5;
-    --calendar-hover: #f0f0f0;
-    --calendar-empty: #ccc;
+    --calendar-hover: #cfccc4;
+    --calendar-empty: #aaa79f;
     --selected-text: #fff;
     --bubble-shadow: 0 1px 1px rgba(0,0,0,0.1);
     --surface-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -432,6 +437,11 @@ body {
     --bg-primary: #1a1a1a;
     --bg-secondary: #2d2d2d;
     --bg-tertiary: #3d3d3d;
+    --panel-bg: #2d2d2d;
+    --panel-surface: #3d3d3d;
+    --panel-raised: #343434;
+    --panel-hover: #404040;
+    --panel-border: #404040;
     --text-primary: #e0e0e0;
     --text-secondary: #b0b0b0;
     --text-muted: #808080;
@@ -451,6 +461,11 @@ body {
     --bg-primary: #06162d;
     --bg-secondary: #06162d;
     --bg-tertiary: #0a2140;
+    --panel-bg: #06162d;
+    --panel-surface: #0a2140;
+    --panel-raised: #06162d;
+    --panel-hover: #153c6b;
+    --panel-border: #3a5f8f;
     --text-primary: #f4f7ff;
     --text-secondary: #c7d8f2;
     --text-muted: #92a9c8;
@@ -703,7 +718,7 @@ body {
 }
 
 [data-theme="1995"] .message .user-name::after {
-    content: "] >";
+    content: "]";
     color: var(--button-primary);
 }
 
@@ -765,8 +780,8 @@ body {
 /* 사이드바 */
 .sidebar {
     width: 320px;
-    background: var(--bg-secondary);
-    border-right: 1px solid var(--border-color);
+    background: var(--panel-bg);
+    border-right: 1px solid var(--panel-border);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -775,7 +790,7 @@ body {
 .sidebar-header {
     padding: 16px;
     padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--panel-border);
 }
 
 .sidebar-header-top {
@@ -833,7 +848,7 @@ body {
     padding: 7px 9px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: var(--bg-secondary);
+    background: var(--panel-raised);
     color: var(--text-primary);
     font: inherit;
     font-size: 13px;
@@ -849,7 +864,7 @@ body {
     padding: 7px 9px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: var(--bg-tertiary);
+    background: var(--panel-surface);
     color: var(--text-primary);
     cursor: pointer;
     font: inherit;
@@ -858,13 +873,13 @@ body {
 }
 
 .leader-filter-controls button:hover {
-    background: var(--border-color);
+    background: var(--panel-hover);
 }
 
 /* 캘린더 */
 .calendar {
     padding: 16px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--panel-border);
 }
 
 .calendar-nav {
@@ -942,7 +957,7 @@ body {
 }
 
 .calendar-grid .day.selected::after {
-    background: var(--bg-secondary);
+    background: var(--panel-bg);
 }
 
 /* 날짜 목록 */
@@ -961,11 +976,11 @@ body {
 }
 
 .date-item:hover {
-    background: var(--bg-tertiary);
+    background: var(--panel-hover);
 }
 
 .date-item.selected {
-    background: var(--bg-tertiary);
+    background: var(--panel-hover);
     border-left: 3px solid var(--button-primary);
 }
 
@@ -997,8 +1012,8 @@ body {
 /* 링크 사이드바 */
 .link-sidebar {
     width: 280px;
-    background: var(--bg-secondary);
-    border-left: 1px solid var(--border-color);
+    background: var(--panel-bg);
+    border-left: 1px solid var(--panel-border);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -1007,7 +1022,7 @@ body {
 .link-sidebar-header {
     padding: 16px;
     padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--panel-border);
 }
 
 .link-sidebar-header h2 {
@@ -1023,7 +1038,7 @@ body {
 
 .link-group {
     padding: 12px 0;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--panel-border);
 }
 
 .link-group:first-child {
@@ -1051,9 +1066,9 @@ body {
 .link-item {
     display: block;
     padding: 10px 12px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--panel-border);
     border-radius: 8px;
-    background: var(--bg-tertiary);
+    background: var(--panel-surface);
     color: var(--text-primary);
     text-decoration: none;
     font-size: 13px;
@@ -1070,7 +1085,7 @@ body {
 
 .link-item:hover {
     border-color: var(--button-primary);
-    background: var(--bg-secondary);
+    background: var(--panel-raised);
     color: var(--button-primary);
 }
 
@@ -1166,8 +1181,8 @@ body {
 .sidebar-toggle,
 .link-sidebar-toggle {
     display: none;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
     color: var(--text-primary);
     border-radius: 8px;
     padding: 6px 10px;
@@ -1206,7 +1221,7 @@ body {
     font-size: 13px;
     font-weight: 600;
     color: var(--message-name);
-    text-align: left;
+    text-align: right;
     padding-top: 8px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1452,14 +1467,16 @@ body {
 /* 검색 */
 .search-box {
     padding: 12px 16px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--panel-border);
 }
 
 .search-box input {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--panel-border);
     border-radius: 6px;
+    background: var(--panel-raised);
+    color: var(--text-primary);
     font-size: 14px;
     font-family: inherit;
 }
@@ -1525,9 +1542,9 @@ body {
 .header-btn {
     width: 32px;
     height: 32px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--panel-border);
     border-radius: 6px;
-    background: var(--bg-tertiary);
+    background: var(--panel-surface);
     cursor: pointer;
     font-size: 16px;
     display: flex;
@@ -1537,7 +1554,7 @@ body {
 }
 
 .header-btn:hover {
-    background: var(--border-color);
+    background: var(--panel-hover);
 }
 
 .header-btns {
@@ -2077,6 +2094,9 @@ body {
 
     .message-bubble .user-name.mobile-only {
         display: block;
+        width: auto;
+        padding-top: 0;
+        text-align: left;
         font-size: 12px;
         font-weight: 600;
         color: #075e54;
@@ -2253,6 +2273,7 @@ body {
 [data-theme="1995"] .sidebar-header-top .header-btn {
     width: 28px;
     height: 28px;
+    background: var(--win31-face);
     font-size: 14px;
 }
 

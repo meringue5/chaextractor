@@ -7,7 +7,7 @@ const windowsFixture = path.join(
   repoRoot,
   'test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt'
 );
-const expectedAppVersion = '2026-06-10-auto-enter-viewer';
+const expectedAppVersion = '2026-06-10-speaker-align';
 
 function watchLocalRuntime(page) {
   const failures = [];
@@ -44,8 +44,8 @@ test('static shell loads local assets, vendor script, and chat modules', async (
   await openApp(page);
 
   await expect(page.locator('#setupScreen')).toBeVisible();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', '1995');
-  await expect(page.locator('html')).toHaveAttribute('data-font', 'iyagi');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('html')).toHaveAttribute('data-font', 'ridi');
   await expect(page.locator('meta[name="app-version"]')).toHaveAttribute('content', expectedAppVersion);
   await expect(page.locator('link[href^="assets/styles/app.css"]')).toHaveCount(1);
   await expect(page.locator('script[src="assets/vendor/jszip-3.10.1.min.js"]')).toHaveCount(1);
@@ -69,25 +69,23 @@ test('static shell loads local assets, vendor script, and chat modules', async (
     const progressFill = getComputedStyle(document.querySelector('.progress-bar .fill'));
     return {
       guideImageBorder: guideImage.borderTopStyle,
-      guideImageTopColor: guideImage.borderTopColor,
-      guideImageBottomColor: guideImage.borderBottomColor,
       guideSectionTop: guideSection.borderTopStyle,
       guideSectionRight: guideSection.borderRightStyle,
       guideSectionLeft: guideSection.borderLeftStyle,
+      guideSectionBottom: guideSection.borderBottomStyle,
       guideSectionBottomColor: guideSection.borderBottomColor,
       progressHeight: progressBar.height,
-      progressFillBackground: progressFill.backgroundColor
+      progressFillBackground: progressFill.backgroundImage
     };
   });
-  expect(setupThemeStyles.guideImageBorder).toBe('solid');
-  expect(setupThemeStyles.guideImageTopColor).toBe('rgb(128, 128, 128)');
-  expect(setupThemeStyles.guideImageBottomColor).toBe('rgb(255, 255, 255)');
+  expect(setupThemeStyles.guideImageBorder).toBe('none');
   expect(setupThemeStyles.guideSectionTop).toBe('none');
   expect(setupThemeStyles.guideSectionRight).toBe('none');
   expect(setupThemeStyles.guideSectionLeft).toBe('none');
-  expect(setupThemeStyles.guideSectionBottomColor).toBe('rgb(128, 128, 128)');
-  expect(Number.parseFloat(setupThemeStyles.progressHeight)).toBeGreaterThanOrEqual(16);
-  expect(setupThemeStyles.progressFillBackground).toBe('rgb(0, 128, 128)');
+  expect(setupThemeStyles.guideSectionBottom).toBe('solid');
+  expect(setupThemeStyles.guideSectionBottomColor).toBe('rgb(216, 222, 212)');
+  expect(Number.parseFloat(setupThemeStyles.progressHeight)).toBe(8);
+  expect(setupThemeStyles.progressFillBackground).toContain('linear-gradient');
 
   await page.locator('#reportIssueFooterBtn').click();
   await expect(page.locator('#reportIssueModal')).toHaveClass(/open/);
@@ -141,10 +139,10 @@ test('new app version resets stored theme once', async ({ page }) => {
   await expect(page).toHaveTitle(/머니버스 대화 뷰어/);
 
   const appVersion = await page.locator('meta[name="app-version"]').getAttribute('content');
-  await expect(page.locator('html')).toHaveAttribute('data-theme', '1995');
-  await expect(page.locator('html')).toHaveAttribute('data-font', 'iyagi');
-  await expect.poll(() => page.evaluate(() => localStorage.getItem('theme'))).toBe('1995');
-  await expect.poll(() => page.evaluate(() => localStorage.getItem('font'))).toBe('iyagi');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('html')).toHaveAttribute('data-font', 'ridi');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('theme'))).toBe('light');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('font'))).toBe('ridi');
   await expect.poll(() => page.evaluate(() => localStorage.getItem('fontAutoSwitch'))).toBe(null);
   await expect.poll(() => page.evaluate(() => localStorage.getItem('chaextractorAppVersion'))).toBe(appVersion);
 
@@ -216,12 +214,12 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
     };
   });
   expect(leaderFilterUi.clearText).toBe('해제');
-  expect(leaderFilterUi.panelBorderTopColor).toBe('rgb(128, 128, 128)');
-  expect(leaderFilterUi.panelBorderRightColor).toBe('rgb(255, 255, 255)');
-  expect(leaderFilterUi.panelBorderBottomColor).toBe('rgb(255, 255, 255)');
-  expect(leaderFilterUi.panelBorderLeftColor).toBe('rgb(128, 128, 128)');
-  expect(leaderFilterUi.inputOutlineStyle).toBe('dotted');
-  expect(leaderFilterUi.inputOutlineColor).toBe('rgb(0, 0, 0)');
+  expect(leaderFilterUi.panelBorderTopColor).toBe('rgb(237, 201, 90)');
+  expect(leaderFilterUi.panelBorderRightColor).toBe('rgb(237, 201, 90)');
+  expect(leaderFilterUi.panelBorderBottomColor).toBe('rgb(237, 201, 90)');
+  expect(leaderFilterUi.panelBorderLeftColor).toBe('rgb(237, 201, 90)');
+  expect(leaderFilterUi.inputOutlineStyle).toBe('solid');
+  expect(leaderFilterUi.inputOutlineColor).toBe('rgb(74, 144, 217)');
   await expect(page.locator('#chatMessages .message.leader')).toHaveCount(1);
   await expect(page.locator('#chatMessages .message:not(.leader)').first()).toBeHidden();
   await page.locator('#leaderFilterInput').fill('테스터');
@@ -257,15 +255,11 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
       modalHidden: document.querySelector('#settingsModal').classList.contains('win31-window-hidden')
     };
   });
-  expect(settingsGhost.exists).toBe(true);
-  expect(settingsGhost.frameCount).toBe(9);
-  expect(settingsGhost.dataFrameCount).toBe(9);
-  expect(settingsGhost.frameAnimationName).toContain('win31-ghost-frame-show');
-  expect(settingsGhost.frameAnimationDelay).toBe('0.03s');
-  expect(settingsGhost.borderTopWidth).toBe('3px');
-  expect(settingsGhost.outlineStyle).toBe('none');
-  expect(settingsGhost.boxShadow).not.toBe('none');
-  expect(settingsGhost.modalHidden).toBe(true);
+  expect(settingsGhost.exists).toBe(false);
+  expect(settingsGhost.frameCount).toBe(0);
+  expect(settingsGhost.dataFrameCount).toBe(0);
+  expect(settingsGhost.frameAnimationName).toBe('');
+  expect(settingsGhost.modalHidden).toBe(false);
   await expect(page.locator('#settingsModal')).toHaveClass(/open/);
   await expect(page.locator('#settingsModal')).not.toHaveClass(/win31-window-hidden/);
   const settingsPreview = await page.evaluate(() => {
@@ -294,6 +288,7 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   await page.locator('button[data-theme="1995"]').click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', '1995');
   await expect(page.locator('html')).toHaveAttribute('data-font', 'iyagi');
+  await page.waitForTimeout(100);
   const pcThemeUi = await page.evaluate(() => {
     const bubble = getComputedStyle(document.querySelector('#chatMessages .message-bubble'));
     const header = getComputedStyle(document.querySelector('.chat-header'));
@@ -364,6 +359,7 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
       leaderContentColor: leaderContent.color,
       leaderContentBeforeColor: leaderContentBefore.color,
       leaderTimeColor: leaderTime.color,
+      userNameTextAlign: userName.textAlign,
       userNameWhiteSpace: userName.whiteSpace,
       userNameOverflowWrap: userName.overflowWrap,
       userPrompt: userAfter.content
@@ -388,7 +384,7 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   expect(pcThemeUi.sidebarHeaderBorderBottom).toBe('solid');
   expect(pcThemeUi.sidebarHeaderBorderLeft).toBe('none');
   expect(pcThemeUi.sidebarHeaderShadow).toContain('rgb(255, 255, 255)');
-  expect(pcThemeUi.settingsHeaderBtnBackground).toBe('rgb(192, 192, 192)');
+  expect(pcThemeUi.settingsHeaderBtnBackground).toMatch(/^rgb\(20[0-9], 20[0-9], 20[0-5]\)$/);
   expect(pcThemeUi.settingsHeaderBtnBorder).toBe('solid');
   expect(pcThemeUi.settingsHeaderBtnBorderTopColor).toBe('rgb(255, 255, 255)');
   expect(pcThemeUi.settingsHeaderBtnBorderBottomColor).toBe('rgb(0, 0, 0)');
@@ -415,9 +411,11 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   expect(pcThemeUi.leaderContentColor).toBe('rgb(255, 212, 0)');
   expect(pcThemeUi.leaderContentBeforeColor).toBe('rgb(255, 212, 0)');
   expect(pcThemeUi.leaderTimeColor).toBe('rgb(255, 212, 0)');
+  expect(pcThemeUi.userNameTextAlign).toBe('right');
   expect(pcThemeUi.userNameWhiteSpace).toBe('normal');
   expect(pcThemeUi.userNameOverflowWrap).toBe('anywhere');
-  expect(pcThemeUi.userPrompt).toContain('>');
+  expect(pcThemeUi.userPrompt).toContain(']');
+  expect(pcThemeUi.userPrompt).not.toContain('>');
   await page.keyboard.press('Escape');
   await expect(page.locator('#settingsModal')).not.toHaveClass(/open/);
 
@@ -429,6 +427,16 @@ test('mobile smoke toggles mutually exclusive sidebars', async ({ page }, testIn
   const failures = watchLocalRuntime(page);
 
   await openApp(page);
+  await page.evaluate(() => {
+    const appVersion = document.querySelector('meta[name="app-version"]').getAttribute('content');
+    localStorage.setItem('chaextractorAppVersion', appVersion);
+    localStorage.setItem('theme', '1995');
+    localStorage.setItem('font', 'iyagi');
+    localStorage.removeItem('fontAutoSwitch');
+  });
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', '1995');
+  await expect(page.locator('html')).toHaveAttribute('data-font', 'iyagi');
   await uploadWindowsFixture(page);
 
   await expect(page.locator('#sidebarToggle')).toBeVisible();

@@ -386,6 +386,7 @@
   * `git diff --check` 통과
   * `python3 harness/scripts/check_doc_drift.py` 통과
   * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과 (7 passed, 3 skipped)
 
 ## 2-1-22단계: 오류 진단 리포트와 GitHub 버그 제보 폼 추가 (2026-05-17)
 * 결정:
@@ -1279,6 +1280,59 @@
 * 검증:
   * `node --check assets/scripts/app.js` 통과
   * `git diff --check` 통과
+
+## 2-1-74단계: 기본 테마 Light 전환 (2026-06-10)
+* 분류:
+  * requirement UI 기본값 변경. 대화 가독성을 우선해 최초 진입과 버전 변경 시 기본 테마를 Light/RIDI바탕으로 전환.
+* 변경:
+  * 초기 HTML 속성을 `data-theme="light" data-font="ridi"`로 변경
+  * 저장된 설정이 없거나 앱 버전이 바뀐 경우 기본 테마/폰트를 Light/RIDI바탕으로 초기화
+  * 과거 `default` 폰트 저장값 마이그레이션 대상을 현재 기본 폰트인 RIDI바탕으로 변경
+  * README, INSTRUCTIONS, harness 요구사항, Node UI smoke, browser smoke 기대값을 Light 기본값으로 갱신
+  * 앱 버전 값을 `2026-06-10-light-default`로 갱신
+* 가독성 확인:
+  * Windows 최소 fixture를 임의 로딩해 같은 날짜 화면을 Light/Dark/1995 테마로 캡처
+  * 캡처 산출물: `tmp/theme-readability/light.png`, `tmp/theme-readability/dark.png`, `tmp/theme-readability/1995.png`
+  * Light는 장식 밀도가 낮고 텍스트/패널 위계가 가장 조용해 장시간 대화 복기에 적합한 기본값으로 판단
+  * Dark는 저조도 옵션으로 유효하나 화면 대비가 강해 기본값보다는 선택 테마가 적합
+  * 1995는 개성이 강하고 대비는 높지만 픽셀 폰트와 OS풍 장식이 읽기 목적보다 분위기를 우선하므로 선택 테마가 적합
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+
+## 2-1-75단계: Light 테마 패널 위계 조정 (2026-06-10)
+* 분류:
+  * implementation-only UI 스타일 조정. 기본 테마와 기능 범위 변경 없음.
+* 변경:
+  * Light 테마의 순백 표면을 줄이고 대화 배경과 같은 온회색 계열의 중립 패널 팔레트로 조정
+  * 대화 말풍선처럼 읽기 영역의 밝은 표면은 유지하고, 좌우 사이드 패널은 `--panel-*` 토큰으로 분리
+  * 사이드바/링크 패널/검색/날짜 hover/링크 항목을 대화 배경보다 조금 낮은 명도와 같은 색상 계열로 맞춰 본문보다 뒤로 물러나게 조정
+  * 대화 배경, 구분선, 캘린더 hover/empty, 탐색 스크롤 마커 트랙, 리더 강조 배경을 장시간 읽기용으로 조금 부드럽게 조정
+  * 앱 버전 값을 `2026-06-10-neutral-track`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과 (7 passed, 3 skipped)
+  * Playwright 캡처 확인: `tmp/theme-readability/neutral-track.png`
+
+## 2-1-76단계: 발화자 이름 정렬과 1995 프롬프트 정리 (2026-06-10)
+* 분류:
+  * implementation-only UI 스타일 조정. 메시지 파싱/기능 범위 변경 없음.
+* 변경:
+  * 모든 테마의 데스크톱 발화자 이름 컬럼을 오른쪽 정렬해 대화 내용과 시각적으로 더 가깝게 표시
+  * 1995 테마의 발화자 이름 뒤 프롬프트에서 `>`를 제거하고 닫는 대괄호만 유지
+  * Playwright browser smoke에 1995 테마 발화자 오른쪽 정렬과 `>` 제거 회귀 검증 추가
+  * 앱 버전 값을 `2026-06-10-speaker-align`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과 (7 passed, 3 skipped)
 
 ## 테스트 이력
 

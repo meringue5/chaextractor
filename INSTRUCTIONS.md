@@ -74,7 +74,7 @@
 
 - ZIP/TXT/CSV 파일 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다.
 - iOS/Android/Windows/macOS 카카오톡 내보내기 파일을 공식 지원한다.
-- 날짜별 탐색, 검색, 통계, 기본값 `채상욱 리더`인 사용자 하이라이트/필터, 기본값 1995 테마, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
+- 날짜별 탐색, 검색, 통계, 기본값 `채상욱 리더`인 사용자 하이라이트/필터, 기본값 Light 테마, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
 - 날짜 선택과 대화 렌더링 이후 선택 날짜 또는 전체 대화를 LLM 요약에 붙여넣기 좋은 TXT로 정리하는 갈무리 복사/다운로드를 제공한다.
 - 시스템 메시지는 제외하고, 동일 사용자 연속 텍스트는 병합한다.
 - 사진/파일/이모티콘은 텍스트와 별도 타입으로 유지한다.
@@ -272,7 +272,7 @@ UI 렌더링:
 - `checkForAppUpdate()` / `fetchLatestAppVersion()` — `assets/version.json`을 캐시 우회 쿼리로 확인하고 새 버전이면 업로드 전 상태에서 1회 자동 새로고침
 - `applyTheme(theme)` — light/dark/1995/system 테마 적용
 - `applyFont(font, isAutoSwitch)` — 폰트 적용, 자동 전환 관리
-- `resetVersionedSettings()` — 앱 버전 변경 시 테마/폰트 저장값을 1995 테마/이야기 폰트로 1회 초기화
+- `resetVersionedSettings()` — 앱 버전 변경 시 테마/폰트 저장값을 Light 테마/RIDI바탕 폰트로 1회 초기화
 - `initSettings()` — 저장된 테마/폰트 로드 (localStorage)
 - `updateSettingsUI()` — 설정 모달 활성 버튼 표시
 - `applyLeaderFilter()` — 필터 대상 사용자 발언만 표시/전체 표시 토글

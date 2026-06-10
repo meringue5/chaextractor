@@ -45,11 +45,11 @@ const DIAGNOSTIC_CHAT_CANDIDATE_LIMIT = 20;
 const DIAGNOSTIC_ZIP_ENTRY_SAMPLE_LIMIT = 40;
 const DIAGNOSTIC_TEXT_SAMPLE_LINE_LIMIT = 12;
 const CHAT_FILE_PATTERN = /\.(txt|csv)$/i;
-const DEFAULT_THEME = '1995';
-const DEFAULT_1995_FONT = 'iyagi';
+const DEFAULT_THEME = 'light';
+const DEFAULT_FONT = 'ridi';
 const APP_STORAGE_VERSION_KEY = 'chaextractorAppVersion';
 const APP_VERSION = document.querySelector('meta[name="app-version"]')?.getAttribute('content')
-    || '2026-06-10-attachment-inventory';
+    || '2026-06-10-speaker-align';
 const APP_VERSION_MANIFEST_URL = 'assets/version.json';
 const APP_UPDATE_RELOAD_TARGET_KEY = 'chaextractorUpdateReloadTarget';
 const APP_UPDATE_QUERY_PARAM = 'appVersion';
@@ -1894,8 +1894,8 @@ function updateSettingsUI() {
     const storedFont = localStorage.getItem('font');
     const appliedFont = document.documentElement.getAttribute('data-font') || 'default';
     const currentFont = localStorage.getItem('fontAutoSwitch') === 'false'
-        ? (storedFont || DEFAULT_1995_FONT)
-        : (appliedFont || storedFont || DEFAULT_1995_FONT);
+        ? (storedFont || DEFAULT_FONT)
+        : (appliedFont || storedFont || DEFAULT_FONT);
 
     document.querySelectorAll('.theme-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.theme === currentTheme);
@@ -1911,7 +1911,7 @@ function resetVersionedSettings() {
     }
 
     localStorage.setItem('theme', DEFAULT_THEME);
-    localStorage.setItem('font', DEFAULT_1995_FONT);
+    localStorage.setItem('font', DEFAULT_FONT);
     localStorage.removeItem('fontAutoSwitch');
     localStorage.setItem(APP_STORAGE_VERSION_KEY, APP_VERSION);
 }
@@ -1920,13 +1920,13 @@ function initSettings() {
     resetVersionedSettings();
 
     const savedTheme = localStorage.getItem('theme') || DEFAULT_THEME;
-    let savedFont = localStorage.getItem('font') || DEFAULT_1995_FONT;
+    let savedFont = localStorage.getItem('font') || DEFAULT_FONT;
     const fontAutoSwitch = localStorage.getItem('fontAutoSwitch');
 
-    // 'default' 값을 'neodgm'으로 마이그레이션
+    // 과거 'default' 저장값은 현재 기본 폰트로 마이그레이션
     if (savedFont === 'default') {
-        savedFont = 'neodgm';
-        localStorage.setItem('font', 'neodgm');
+        savedFont = DEFAULT_FONT;
+        localStorage.setItem('font', DEFAULT_FONT);
     }
 
     // 테마 먼저 적용 (내부에서 폰트 자동 전환 처리)
