@@ -969,7 +969,7 @@
   * `python3 harness/scripts/check_cache_privacy.py` 통과
   * `python3 harness/scripts/check_performance_smoke.py` 통과
   * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
-  * `npm run test:browser` 통과
+  * `npm run test:browser` 통과 (8 passed, 4 skipped)
 
 ## 2-1-62단계: 저수준 대화 도메인 헬퍼 ES module 분리 (2026-06-07)
 * 분류:
@@ -1355,6 +1355,22 @@
   * `npm run test:browser` 통과 (7 passed, 3 skipped)
   * Playwright 캡처 확인: `tmp/theme-readability/dark-panel-muted.png`
   * Playwright 캡처 확인: `tmp/theme-readability/1995-modal-scrollbar.png`
+
+## 2-1-78단계: 파일 처리 직전 앱 버전 갱신 확인 (2026-06-11)
+* 분류:
+  * 요구사항 보강. 브라우저 캐시가 남은 오래 열린 탭에서 stale 앱으로 파일을 처리하지 않도록 배포 업데이트 확인 시점을 확장.
+* 변경:
+  * 파일/드롭/폴더 입력 처리 직전에 `assets/version.json`을 캐시 우회 쿼리로 다시 확인
+  * 새 앱 버전이 감지되면 파일 파싱을 시작하지 않고 `appVersion`/timestamp 쿼리로 캐시 우회 재진입
+  * 업로드 직전 갱신 확인을 `harness/REQUIREMENTS.md`, `README.md`, `INSTRUCTIONS.md`에 반영
+  * Browser smoke에 파일 선택 직전 stale 앱 감지 회귀 테스트 추가
+  * 앱 버전 값을 `2026-06-11-upload-version-check`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과
 
 ## 테스트 이력
 

@@ -269,7 +269,7 @@ UI 렌더링:
 - `copyCaptureText()` / `downloadCaptureText()` — 갈무리 TXT 복사/다운로드
 
 설정/테마:
-- `checkForAppUpdate()` / `fetchLatestAppVersion()` — `assets/version.json`을 캐시 우회 쿼리로 확인하고 새 버전이면 업로드 전 상태에서 1회 자동 새로고침
+- `checkForAppUpdate()` / `fetchLatestAppVersion()` / `ensureFreshAppBeforeInput()` — `assets/version.json`을 캐시 우회 쿼리로 확인하고 새 버전이면 앱 시작/탭 재활성화/파일 처리 직전 1회 자동 새로고침
 - `applyTheme(theme)` — light/dark/1995/system 테마 적용
 - `applyFont(font, isAutoSwitch)` — 폰트 적용, 자동 전환 관리
 - `resetVersionedSettings()` — 앱 버전 변경 시 테마/폰트 저장값을 Light 테마/RIDI바탕 폰트로 1회 초기화

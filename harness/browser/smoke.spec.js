@@ -7,7 +7,7 @@ const windowsFixture = path.join(
   repoRoot,
   'test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt'
 );
-const expectedAppVersion = '2026-06-11-1995-modal-scrollbar';
+const expectedAppVersion = '2026-06-11-upload-version-check';
 
 function watchLocalRuntime(page) {
   const failures = [];
@@ -121,6 +121,35 @@ test('new version manifest triggers cache-busting reload once', async ({ page },
   await expect.poll(() => new URL(page.url()).searchParams.get('appVersion')).toBe(latestVersion);
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem('chaextractorUpdateReloadTarget')))
     .toContain(latestVersion);
+  expect(failures).toEqual([]);
+});
+
+test('stale app reloads before processing selected files', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'upload update guard runs in the desktop project');
+  const failures = watchLocalRuntime(page);
+  const latestVersion = 'test-upload-newer-version';
+  let manifestVersion = expectedAppVersion;
+  let manifestRequestCount = 0;
+
+  await page.route('**/assets/version.json*', route => {
+    manifestRequestCount += 1;
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ version: manifestVersion })
+    });
+  });
+
+  await openApp(page);
+  await expect.poll(() => manifestRequestCount).toBeGreaterThan(0);
+  manifestVersion = latestVersion;
+
+  await page.setInputFiles('#zipInput', windowsFixture);
+
+  await expect.poll(() => new URL(page.url()).searchParams.get('appVersion')).toBe(latestVersion);
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('chaextractorUpdateReloadTarget')))
+    .toContain(latestVersion);
+  await expect(page.locator('#app')).not.toHaveClass(/active/);
   expect(failures).toEqual([]);
 });
 

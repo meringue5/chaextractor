@@ -49,7 +49,7 @@ const DEFAULT_THEME = 'light';
 const DEFAULT_FONT = 'ridi';
 const APP_STORAGE_VERSION_KEY = 'chaextractorAppVersion';
 const APP_VERSION = document.querySelector('meta[name="app-version"]')?.getAttribute('content')
-    || '2026-06-11-1995-modal-scrollbar';
+    || '2026-06-11-upload-version-check';
 const APP_VERSION_MANIFEST_URL = 'assets/version.json';
 const APP_UPDATE_RELOAD_TARGET_KEY = 'chaextractorUpdateReloadTarget';
 const APP_UPDATE_QUERY_PARAM = 'appVersion';
@@ -157,7 +157,7 @@ function reloadForAppUpdate(latestVersion) {
     return true;
 }
 
-async function checkForAppUpdate({ autoReload = true } = {}) {
+async function checkForAppUpdate({ autoReload = true, forceReload = false } = {}) {
     try {
         const latestVersion = await fetchLatestAppVersion();
         if (!latestVersion) {
@@ -168,7 +168,7 @@ async function checkForAppUpdate({ autoReload = true } = {}) {
             return { ok: true, upToDate: true, currentVersion: APP_VERSION, latestVersion };
         }
 
-        if (autoReload && canAutoReloadForAppUpdate()) {
+        if (autoReload && (forceReload || canAutoReloadForAppUpdate())) {
             return {
                 ok: true,
                 upToDate: false,
@@ -198,6 +198,19 @@ function scheduleAppUpdateCheck() {
     setTimeout(() => {
         checkForAppUpdate().catch(() => {});
     }, 0);
+}
+
+async function ensureFreshAppBeforeInput() {
+    const update = await checkForAppUpdate({ autoReload: true, forceReload: true });
+    if (!update || update.upToDate !== false) {
+        return true;
+    }
+
+    zipName.textContent = update.action === 'reload'
+        ? '새 버전을 적용하는 중입니다. 잠시 후 파일을 다시 선택해주세요.'
+        : '새 버전이 있습니다. 페이지를 새로고침한 뒤 파일을 다시 선택해주세요.';
+    zipName.classList.remove('error');
+    return false;
 }
 
 // IndexedDB 초기화
@@ -2165,6 +2178,10 @@ zipInput.addEventListener('change', async (e) => {
         recordDiagnosticInput(files, 'zipInput');
         setDiagnosticStage('zipInput-selected');
         zipName.textContent = `${file.name} (${formatSize(file.size)})`;
+        if (!await ensureFreshAppBeforeInput()) {
+            e.target.value = '';
+            return;
+        }
         zipBtn.disabled = true;
         folderBtn.disabled = true;
         step1.classList.add('processing');
@@ -2395,6 +2412,9 @@ dropZone.addEventListener('drop', async (e) => {
     recordDiagnosticInput(files, 'dropZone');
     setDiagnosticStage('dropZone-files-detected');
     zipName.textContent = `${files.length}개 파일 감지됨`;
+    if (!await ensureFreshAppBeforeInput()) {
+        return;
+    }
     zipBtn.disabled = true;
     folderBtn.disabled = true;
     step1.classList.add('processing');
@@ -2436,6 +2456,10 @@ folderInput.addEventListener('change', async (e) => {
         recordDiagnosticInput(files, 'folderInput');
         setDiagnosticStage('folderInput-selected');
         zipName.textContent = `${files.length}개 파일 선택됨`;
+        if (!await ensureFreshAppBeforeInput()) {
+            e.target.value = '';
+            return;
+        }
         folderBtn.disabled = true;
         zipBtn.disabled = true;
         step1.classList.add('processing');
