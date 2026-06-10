@@ -7,7 +7,7 @@ const windowsFixture = path.join(
   repoRoot,
   'test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt'
 );
-const expectedAppVersion = '2026-06-10-chat-domain-flat';
+const expectedAppVersion = '2026-06-10-app-state';
 
 function watchLocalRuntime(page) {
   const failures = [];

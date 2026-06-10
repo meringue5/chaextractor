@@ -1098,6 +1098,35 @@
   * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
   * `npm run test:browser` 통과
 
+## 2-1-66단계: 앱 전역 상태 appState 명시화 (2026-06-10)
+* 분류:
+  * implementation-only 아키텍처 리팩터링. 사용자 기능/플랫폼 지원 범위 변경 없음.
+* 결정:
+  * 새 상태 관리 파일이나 라이브러리를 만들지 않고, `assets/scripts/app.js` 내부 상태를 `appState` 단일 객체로 모은다.
+  * 진단 리포트용 `diagnosticState`와 DOM 참조는 성격이 달라 이번 범위에서 분리하지 않는다.
+* 변경:
+  * `messages`, `messagesByDate`, `attachmentFiles`, `attachmentEntries`, `zipInstance`, `dates`, `leaderCountByDate`, `currentMonth`, `selectedDate`, `renderedChatDate`, `leaderFilterActive`, `leaderFilterTarget`, `detectedPlatform`을 `appState` 필드로 이동
+  * 파싱 결과 반영, 캐시 복원, 첨부파일 매핑, 캘린더/날짜 선택, 사용자 필터, 테스트 스냅샷이 `appState`를 읽고 쓰도록 갱신
+  * AGENTS 전역 상태 설명을 `appState` 기준으로 갱신
+  * 앱 버전 값을 `2026-06-10-app-state`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/chat-core.js` 통과
+  * `node --check assets/scripts/chat-domain.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

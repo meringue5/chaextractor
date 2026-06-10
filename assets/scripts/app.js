@@ -18,18 +18,21 @@ import {
 // ========== 상태 관리 ==========
 const DEFAULT_LEADER_FILTER_TARGET = '채상욱 리더';
 
-let messages = [];
-let messagesByDate = {};
-let attachmentFiles = {};  // filename -> Blob URL (캐시)
-let attachmentEntries = {}; // filename -> ZIP entry path (지연 로딩용)
-let zipInstance = null;     // ZIP 객체 참조 (지연 로딩용)
-let dates = [];
-let leaderCountByDate = {};  // 날짜별 필터 대상 사용자 메시지 수
-let currentMonth = new Date();
-let selectedDate = null;
-let renderedChatDate = null;
-let leaderFilterActive = false;
-let leaderFilterTarget = DEFAULT_LEADER_FILTER_TARGET;
+const appState = {
+    messages: [],
+    messagesByDate: {},
+    attachmentFiles: {},  // filename -> Blob URL (캐시)
+    attachmentEntries: {}, // filename -> ZIP entry path (지연 로딩용)
+    zipInstance: null,     // ZIP 객체 참조 (지연 로딩용)
+    dates: [],
+    leaderCountByDate: {},  // 날짜별 필터 대상 사용자 메시지 수
+    currentMonth: new Date(),
+    selectedDate: null,
+    renderedChatDate: null,
+    leaderFilterActive: false,
+    leaderFilterTarget: DEFAULT_LEADER_FILTER_TARGET,
+    detectedPlatform: 'ios' // 'ios' | 'android' | 'windows' | 'macos'
+};
 
 const BUG_REPORT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeLjAqqVMEjSz2tbCs7tUpzRwDRnK41LAxDwuIyylU6XTnIlA/viewform';
 const BUG_REPORT_FORM_TYPE_FIELD = 'entry.315233821';
@@ -45,16 +48,13 @@ const DEFAULT_THEME = '1995';
 const DEFAULT_1995_FONT = 'iyagi';
 const APP_STORAGE_VERSION_KEY = 'chaextractorAppVersion';
 const APP_VERSION = document.querySelector('meta[name="app-version"]')?.getAttribute('content')
-    || '2026-06-10-chat-domain-flat';
+    || '2026-06-10-app-state';
 const APP_VERSION_MANIFEST_URL = 'assets/version.json';
 const APP_UPDATE_RELOAD_TARGET_KEY = 'chaextractorUpdateReloadTarget';
 const APP_UPDATE_QUERY_PARAM = 'appVersion';
 const THEME_1995_WINDOW_ANIMATION_MS = 240;
 const THEME_1995_GHOST_SIZE = 12;
 const THEME_1995_GHOST_FRAME_COUNT = 9;
-
-// ========== 플랫폼 감지 ==========
-let detectedPlatform = 'ios'; // 'ios' | 'android' | 'windows' | 'macos'
 
 // ========== IndexedDB 캐시 설정 ==========
 const DB_CONFIG = {
@@ -123,7 +123,7 @@ async function fetchLatestAppVersion() {
 }
 
 function canAutoReloadForAppUpdate() {
-    return messages.length === 0 && (!app || !app.classList.contains('active'));
+    return appState.messages.length === 0 && (!app || !app.classList.contains('active'));
 }
 
 function getCacheBustReloadUrl(latestVersion) {
@@ -417,7 +417,7 @@ function getDiagnosticTextSampleLines(content, limit = DIAGNOSTIC_TEXT_SAMPLE_LI
 function resetDiagnosticProcessing(route = 'none') {
     diagnosticState.processing = {
         route,
-        detectedPlatform: detectedPlatform || 'unknown',
+        detectedPlatform: appState.detectedPlatform || 'unknown',
         zipEntryCount: 0,
         zipEntries: [],
         omittedZipEntryCount: 0,
@@ -647,7 +647,7 @@ function buildDiagnosticReport(options = {}) {
         `- 유효 대화 파일: ${processing.validChatFileCount || 0}`,
         `- 첨부파일 후보: ${processing.attachmentCandidateCount || 0}`,
         `- 첨부 확장자 분포: ${processing.attachmentExtensions.length ? processing.attachmentExtensions.join(', ') : '없음'}`,
-        `- 처리 중 감지 플랫폼: ${processing.detectedPlatform || detectedPlatform}`,
+        `- 처리 중 감지 플랫폼: ${processing.detectedPlatform || appState.detectedPlatform}`,
         `- 파싱 결과: ${processing.parseResult ? `${processing.parseResult.messageCount}개 메시지 / ${processing.parseResult.dateCount}개 날짜 / ${processing.parseResult.attachmentMappedCount}개 첨부 매핑` : '없음'}`,
         '',
         '## 대화 파일 검증',
@@ -667,11 +667,11 @@ function buildDiagnosticReport(options = {}) {
         '',
         '## 앱 상태',
         `- 앱 URL: ${getSafeAppUrl()}`,
-        `- 감지 플랫폼: ${detectedPlatform}`,
-        `- 메시지 수: ${messages.length}`,
-        `- 날짜 수: ${dates.length}`,
-        `- 선택 날짜: ${selectedDate || '없음'}`,
-        `- 사용자 필터: ${leaderFilterActive ? 'on' : 'off'}`,
+        `- 감지 플랫폼: ${appState.detectedPlatform}`,
+        `- 메시지 수: ${appState.messages.length}`,
+        `- 날짜 수: ${appState.dates.length}`,
+        `- 선택 날짜: ${appState.selectedDate || '없음'}`,
+        `- 사용자 필터: ${appState.leaderFilterActive ? 'on' : 'off'}`,
         '',
         '## 브라우저',
         `- User agent: ${navigatorSnapshot.userAgent}`,
@@ -768,7 +768,7 @@ function buildDiagnosticFormSummary(options = {}) {
         `- ZIP 엔트리: ${processing.zipEntryCount || 0}`,
         `- 대화 후보/유효: ${processing.chatCandidateCount || 0}/${processing.validChatFileCount || 0}`,
         `- 첨부 후보: ${processing.attachmentCandidateCount || 0}`,
-        `- 감지 플랫폼: ${processing.detectedPlatform || detectedPlatform}`
+        `- 감지 플랫폼: ${processing.detectedPlatform || appState.detectedPlatform}`
     ];
 
     if (input.files.length > 0) {
@@ -926,10 +926,10 @@ function buildDiagnosticTestSnapshot() {
 // ========== 갈무리 TXT ==========
 function isCaptureReady() {
     return !!(
-        selectedDate &&
-        renderedChatDate === selectedDate &&
-        Array.isArray(messagesByDate[selectedDate]) &&
-        messagesByDate[selectedDate].length > 0
+        appState.selectedDate &&
+        appState.renderedChatDate === appState.selectedDate &&
+        Array.isArray(appState.messagesByDate[appState.selectedDate]) &&
+        appState.messagesByDate[appState.selectedDate].length > 0
     );
 }
 
@@ -943,21 +943,21 @@ function updateCaptureButtonState() {
 }
 
 function getCaptureScope() {
-    if (captureScopeCurrent && captureScopeCurrent.checked && selectedDate) {
+    if (captureScopeCurrent && captureScopeCurrent.checked && appState.selectedDate) {
         return 'current';
     }
     return 'all';
 }
 
 function getCaptureDates(scope = getCaptureScope()) {
-    if (scope === 'current' && selectedDate && messagesByDate[selectedDate]) {
-        return [selectedDate];
+    if (scope === 'current' && appState.selectedDate && appState.messagesByDate[appState.selectedDate]) {
+        return [appState.selectedDate];
     }
-    return [...dates].reverse();
+    return [...appState.dates].reverse();
 }
 
 function getCaptureMessagesForDate(date, options = {}) {
-    const sourceMessages = messagesByDate[date] || [];
+    const sourceMessages = appState.messagesByDate[date] || [];
     if (!options.useLeaderFilter) return sourceMessages;
     return sourceMessages.filter(msg => isLeader(msg.user));
 }
@@ -1038,7 +1038,7 @@ function buildCaptureText(scope = getCaptureScope(), options = {}) {
         ? `${includedDates[0]} ~ ${includedDates[includedDates.length - 1]}`
         : '없음';
     const scopeText = payload.scope === 'current' ? '현재 날짜' : '전체 대화';
-    const filterText = payload.useLeaderFilter ? leaderFilterTarget : '없음';
+    const filterText = payload.useLeaderFilter ? appState.leaderFilterTarget : '없음';
     const lines = [
         '# 카카오톡 대화 갈무리',
         '',
@@ -1049,7 +1049,7 @@ function buildCaptureText(scope = getCaptureScope(), options = {}) {
         `- 생성 시각: ${new Date().toISOString()}`,
         `- 범위: ${scopeText}`,
         `- 기간: ${rangeText}`,
-        `- 플랫폼: ${detectedPlatform}`,
+        `- 플랫폼: ${appState.detectedPlatform}`,
         `- 메시지 수: ${payload.messageCount.toLocaleString()}`,
         `- 참여자 수: ${payload.participants.length.toLocaleString()}`,
         `- 사용자 필터: ${filterText}`,
@@ -1114,7 +1114,7 @@ function openCaptureModal() {
         captureScopeAll.checked = false;
     }
     if (captureUseLeaderFilter) {
-        captureUseLeaderFilter.checked = leaderFilterActive;
+        captureUseLeaderFilter.checked = appState.leaderFilterActive;
     }
     if (captureStatus) {
         captureStatus.textContent = '';
@@ -1197,25 +1197,25 @@ function getBrowserCapabilityStatus(scope = window) {
 }
 
 function buildCapabilityMessages(status) {
-    const messages = [];
+    const capabilityMessages = [];
     if (!status.file) {
-        messages.push('File API가 없어 파일 선택 업로드를 사용할 수 없습니다. 최신 Chrome, Edge, Firefox, Safari에서 다시 열어주세요.');
+        capabilityMessages.push('File API가 없어 파일 선택 업로드를 사용할 수 없습니다. 최신 Chrome, Edge, Firefox, Safari에서 다시 열어주세요.');
     }
     if (!status.blob || !status.objectURL) {
-        messages.push('Blob URL 기능이 없어 첨부파일 미리보기와 파일 링크가 제한됩니다.');
+        capabilityMessages.push('Blob URL 기능이 없어 첨부파일 미리보기와 파일 링크가 제한됩니다.');
     }
     if (!status.indexedDB) {
-        messages.push('IndexedDB가 없어 캐시 없이 동작합니다. 같은 파일을 다시 열면 재파싱합니다.');
+        capabilityMessages.push('IndexedDB가 없어 캐시 없이 동작합니다. 같은 파일을 다시 열면 재파싱합니다.');
     }
-    return messages;
+    return capabilityMessages;
 }
 
 function applyBrowserCapabilityStatus(status = getBrowserCapabilityStatus()) {
-    const messages = buildCapabilityMessages(status);
+    const capabilityMessages = buildCapabilityMessages(status);
     const critical = !status.file || !status.blob || !status.objectURL;
 
-    if (messages.length > 0) {
-        capabilityWarning.textContent = messages.join(' ');
+    if (capabilityMessages.length > 0) {
+        capabilityWarning.textContent = capabilityMessages.join(' ');
         capabilityWarning.hidden = false;
         capabilityWarning.classList.add('active');
     } else {
@@ -1231,9 +1231,9 @@ function applyBrowserCapabilityStatus(status = getBrowserCapabilityStatus()) {
     dropZone.classList.toggle('disabled', critical);
 
     return {
-        supported: messages.length === 0,
+        supported: capabilityMessages.length === 0,
         critical,
-        messages,
+        messages: capabilityMessages,
         status
     };
 }
@@ -1252,14 +1252,14 @@ function buildCapabilityTestSnapshot() {
 }
 
 function setAttachmentFilesForTest(files) {
-    attachmentFiles = { ...files };
+    appState.attachmentFiles = { ...files };
 }
 
 function buildCachePrivacyTestSnapshot() {
     return {
-        attachmentFileCount: Object.keys(attachmentFiles).length,
-        attachmentEntriesCount: Object.keys(attachmentEntries).length,
-        zipInstanceActive: !!zipInstance,
+        attachmentFileCount: Object.keys(appState.attachmentFiles).length,
+        attachmentEntriesCount: Object.keys(appState.attachmentEntries).length,
+        zipInstanceActive: !!appState.zipInstance,
         cacheStatus: cacheStatus.textContent,
         clearCacheDisabled: clearCacheBtn.disabled
     };
@@ -1272,7 +1272,7 @@ function clearRuntimeAttachmentFiles() {
     let revokedCount = 0;
 
     if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
-        for (const url of Object.values(attachmentFiles)) {
+        for (const url of Object.values(appState.attachmentFiles)) {
             if (typeof url === 'string' && url.startsWith('blob:')) {
                 URL.revokeObjectURL(url);
                 revokedCount++;
@@ -1280,14 +1280,14 @@ function clearRuntimeAttachmentFiles() {
         }
     }
 
-    attachmentFiles = {};
+    appState.attachmentFiles = {};
     return revokedCount;
 }
 
 function resetRuntimeAttachmentState() {
     const revokedCount = clearRuntimeAttachmentFiles();
-    attachmentEntries = {};
-    zipInstance = null;
+    appState.attachmentEntries = {};
+    appState.zipInstance = null;
     return revokedCount;
 }
 
@@ -1824,13 +1824,13 @@ function normalizeLeaderFilterTarget(value) {
 }
 
 function updateLeaderFilterUI() {
-    leaderFilterBtn.classList.toggle('active', leaderFilterActive);
-    leaderFilterBtn.setAttribute('aria-pressed', String(leaderFilterActive));
-    leaderFilterBtn.title = `${leaderFilterTarget} 대화만 보기`;
-    leaderFilterBtn.setAttribute('aria-label', `${leaderFilterTarget} 대화 필터`);
+    leaderFilterBtn.classList.toggle('active', appState.leaderFilterActive);
+    leaderFilterBtn.setAttribute('aria-pressed', String(appState.leaderFilterActive));
+    leaderFilterBtn.title = `${appState.leaderFilterTarget} 대화만 보기`;
+    leaderFilterBtn.setAttribute('aria-label', `${appState.leaderFilterTarget} 대화 필터`);
 
-    if (leaderFilterInput && leaderFilterInput.value !== leaderFilterTarget) {
-        leaderFilterInput.value = leaderFilterTarget;
+    if (leaderFilterInput && leaderFilterInput.value !== appState.leaderFilterTarget) {
+        leaderFilterInput.value = appState.leaderFilterTarget;
     }
 }
 
@@ -1841,7 +1841,7 @@ function setLeaderFilterPanelOpen(open) {
     leaderFilterBtn.setAttribute('aria-expanded', String(open));
 
     if (open && leaderFilterInput) {
-        leaderFilterInput.value = leaderFilterTarget;
+        leaderFilterInput.value = appState.leaderFilterTarget;
         requestAnimationFrame(() => {
             leaderFilterInput.focus();
             if (typeof leaderFilterInput.select === 'function') {
@@ -1854,11 +1854,11 @@ function setLeaderFilterPanelOpen(open) {
 function recalculateLeaderCountByDate() {
     const nextCounts = {};
 
-    Object.keys(messagesByDate).forEach(date => {
+    Object.keys(appState.messagesByDate).forEach(date => {
         nextCounts[date] = 0;
     });
 
-    messages.forEach(msg => {
+    appState.messages.forEach(msg => {
         if (!nextCounts[msg.date]) {
             nextCounts[msg.date] = 0;
         }
@@ -1867,7 +1867,7 @@ function recalculateLeaderCountByDate() {
         }
     });
 
-    leaderCountByDate = nextCounts;
+    appState.leaderCountByDate = nextCounts;
 }
 
 function refreshLeaderFilterViews() {
@@ -1877,16 +1877,16 @@ function refreshLeaderFilterViews() {
     const searchInput = document.getElementById('searchInput');
     renderDateList(searchInput ? searchInput.value.toLowerCase() : '');
 
-    if (selectedDate && messagesByDate[selectedDate]) {
-        renderChat(selectedDate);
+    if (appState.selectedDate && appState.messagesByDate[appState.selectedDate]) {
+        renderChat(appState.selectedDate);
     } else {
         applyLeaderFilter();
     }
 }
 
 function commitLeaderFilterTarget({ activate = true, closePanel = true } = {}) {
-    leaderFilterTarget = normalizeLeaderFilterTarget(leaderFilterInput ? leaderFilterInput.value : leaderFilterTarget);
-    leaderFilterActive = activate;
+    appState.leaderFilterTarget = normalizeLeaderFilterTarget(leaderFilterInput ? leaderFilterInput.value : appState.leaderFilterTarget);
+    appState.leaderFilterActive = activate;
     refreshLeaderFilterViews();
 
     if (closePanel) {
@@ -1895,7 +1895,7 @@ function commitLeaderFilterTarget({ activate = true, closePanel = true } = {}) {
 }
 
 function clearLeaderFilter() {
-    leaderFilterActive = false;
+    appState.leaderFilterActive = false;
     updateLeaderFilterUI();
     applyLeaderFilter();
     setLeaderFilterPanelOpen(false);
@@ -1912,8 +1912,8 @@ leaderFilterBtn.addEventListener('click', () => {
     const shouldOpen = leaderFilterPanel ? leaderFilterPanel.hidden : false;
     setLeaderFilterPanelOpen(shouldOpen);
 
-    if (!leaderFilterActive) {
-        leaderFilterActive = true;
+    if (!appState.leaderFilterActive) {
+        appState.leaderFilterActive = true;
         refreshLeaderFilterViews();
     }
 });
@@ -1925,7 +1925,7 @@ function applyLeaderFilter() {
     );
 
     renderedMessages.forEach(msg => {
-        if (leaderFilterActive) {
+        if (appState.leaderFilterActive) {
             msg.style.display = hasClass(msg, 'leader') ? '' : 'none';
         } else {
             msg.style.display = '';
@@ -1955,9 +1955,9 @@ if (leaderFilterInput) {
     });
 }
 
-function setLeaderFilterForTest(active, target = leaderFilterTarget) {
-    leaderFilterTarget = normalizeLeaderFilterTarget(target);
-    leaderFilterActive = active;
+function setLeaderFilterForTest(active, target = appState.leaderFilterTarget) {
+    appState.leaderFilterTarget = normalizeLeaderFilterTarget(target);
+    appState.leaderFilterActive = active;
     refreshLeaderFilterViews();
 }
 
@@ -2023,7 +2023,7 @@ initSettings();
 scheduleAppUpdateCheck();
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-        checkForAppUpdate({ autoReload: messages.length === 0 }).catch(() => {});
+        checkForAppUpdate({ autoReload: appState.messages.length === 0 }).catch(() => {});
     }
 });
 
@@ -2219,12 +2219,12 @@ async function processZipFile(file) {
         updateProgress(50, '캐시에서 데이터 로드 중...');
 
         restoreCachedChatData(cachedData);
-        attachmentEntries = cachedData.attachmentEntries || {};
+        appState.attachmentEntries = cachedData.attachmentEntries || {};
 
         // ZIP 인스턴스는 다시 로드 필요
         updateProgress(70, 'ZIP 파일 연결 중...');
         const zip = await getJSZip().loadAsync(file);
-        zipInstance = zip;
+        appState.zipInstance = zip;
 
         updateProgress(100, '완료! (캐시 사용)');
         console.log(`⏱️ 총 처리 시간 (캐시): ${(performance.now() - startTime).toFixed(0)}ms`);
@@ -2239,7 +2239,7 @@ async function processZipFile(file) {
     updateProgress(5, 'ZIP 파일 읽는 중...');
 
     const zip = await getJSZip().loadAsync(file);
-    zipInstance = zip;  // 지연 로딩용으로 저장
+    appState.zipInstance = zip;  // 지연 로딩용으로 저장
     const entries = Object.keys(zip.files);
     updateDiagnosticProcessing({
         zipEntryCount: entries.length,
@@ -2306,18 +2306,18 @@ async function processZipFile(file) {
     // 파일명 -> ZIP 엔트리 경로 매핑
     for (const entry of attachEntryList) {
         const filename = entry.split('/').pop();
-        attachmentEntries[filename] = entry;
+        appState.attachmentEntries[filename] = entry;
     }
     console.log(`⏱️ 첨부파일 ${attachEntryList.length}개 발견 (지연 로딩 준비)`);
 
     // 플랫폼 감지 (대화 파일명 + 첨부파일명 기반)
     const attachFilenames = attachEntryList.map(e => e.split('/').pop());
-    detectedPlatform = detectPlatform(allChatFiles, attachFilenames);
+    appState.detectedPlatform = detectPlatform(allChatFiles, attachFilenames);
     updateDiagnosticProcessing({
-        detectedPlatform
+        detectedPlatform: appState.detectedPlatform
     });
-    setDiagnosticStage(`platform-detected-${detectedPlatform}`);
-    console.log(`플랫폼 감지: ${detectedPlatform}`);
+    setDiagnosticStage(`platform-detected-${appState.detectedPlatform}`);
+    console.log(`플랫폼 감지: ${appState.detectedPlatform}`);
 
     updateProgress(60, '대화 내용 파싱 중...');
 
@@ -2327,7 +2327,7 @@ async function processZipFile(file) {
     } else {
         const contents = validChatFiles.map(f => f.content);
         parseMergedChatFiles(contents);
-        console.log(`⏱️ ${validChatFiles.length}개 파일 병합 완료, 총 ${messages.length}개 메시지`);
+        console.log(`⏱️ ${validChatFiles.length}개 파일 병합 완료, 총 ${appState.messages.length}개 메시지`);
     }
 
     updateProgress(90, '첨부파일 매핑 중...');
@@ -2336,9 +2336,9 @@ async function processZipFile(file) {
     mapAttachments();
     updateDiagnosticProcessing({
         parseResult: {
-            messageCount: messages.length,
-            dateCount: dates.length,
-            attachmentMappedCount: messages.filter(msg => msg.attachment_path).length
+            messageCount: appState.messages.length,
+            dateCount: appState.dates.length,
+            attachmentMappedCount: appState.messages.filter(msg => msg.attachment_path).length
         }
     });
 
@@ -2346,11 +2346,11 @@ async function processZipFile(file) {
 
     // === 캐시 저장 ===
     await setCache(cacheKey, {
-        messages: messages,
-        messagesByDate: messagesByDate,
-        leaderCountByDate: leaderCountByDate,
-        dates: dates,
-        attachmentEntries: attachmentEntries
+        messages: appState.messages,
+        messagesByDate: appState.messagesByDate,
+        leaderCountByDate: appState.leaderCountByDate,
+        dates: appState.dates,
+        attachmentEntries: appState.attachmentEntries
     });
 
     updateProgress(100, '완료!');
@@ -2409,14 +2409,14 @@ async function processFolderFiles(files) {
 
     // 플랫폼 감지 (대화 파일명 + 첨부파일명 기반)
     const attachFilenames = files.filter(f => isAttachmentFile(f.name)).map(f => f.name);
-    detectedPlatform = detectPlatform(allChatFiles.map(f => f.name), attachFilenames);
+    appState.detectedPlatform = detectPlatform(allChatFiles.map(f => f.name), attachFilenames);
     updateDiagnosticProcessing({
-        detectedPlatform,
+        detectedPlatform: appState.detectedPlatform,
         attachmentCandidateCount: attachFilenames.length,
         attachmentExtensions: summarizeAttachmentExtensions(attachFilenames)
     });
-    setDiagnosticStage(`platform-detected-${detectedPlatform}`);
-    console.log(`플랫폼 감지: ${detectedPlatform}`);
+    setDiagnosticStage(`platform-detected-${appState.detectedPlatform}`);
+    console.log(`플랫폼 감지: ${appState.detectedPlatform}`);
 
     // === 캐시 확인 (첫 번째 대화 파일 + 파일 개수 기준) ===
     const firstFile = validChatFiles[0].file;
@@ -2445,7 +2445,7 @@ async function processFolderFiles(files) {
             const file = attachmentFiles_arr[i];
             try {
                 const blobUrl = URL.createObjectURL(file);
-                attachmentFiles[file.name] = blobUrl;
+                appState.attachmentFiles[file.name] = blobUrl;
                 loadedCount++;
             } catch (err) {
                 // 오류 무시
@@ -2481,7 +2481,7 @@ async function processFolderFiles(files) {
     for (const file of attachmentFiles_arr) {
         try {
             const blobUrl = URL.createObjectURL(file);
-            attachmentFiles[file.name] = blobUrl;
+            appState.attachmentFiles[file.name] = blobUrl;
             loadedCount++;
         } catch (err) {
             // 오류 무시
@@ -2502,7 +2502,7 @@ async function processFolderFiles(files) {
     } else {
         const contents = validChatFiles.map(f => f.content);
         parseMergedChatFiles(contents);
-        console.log(`⏱️ ${validChatFiles.length}개 파일 병합 완료, 총 ${messages.length}개 메시지`);
+        console.log(`⏱️ ${validChatFiles.length}개 파일 병합 완료, 총 ${appState.messages.length}개 메시지`);
     }
 
     updateProgress(90, '첨부파일 매핑 중...');
@@ -2511,9 +2511,9 @@ async function processFolderFiles(files) {
     mapAttachments();
     updateDiagnosticProcessing({
         parseResult: {
-            messageCount: messages.length,
-            dateCount: dates.length,
-            attachmentMappedCount: messages.filter(msg => msg.attachment_path).length
+            messageCount: appState.messages.length,
+            dateCount: appState.dates.length,
+            attachmentMappedCount: appState.messages.filter(msg => msg.attachment_path).length
         }
     });
 
@@ -2521,10 +2521,10 @@ async function processFolderFiles(files) {
 
     // === 캐시 저장 ===
     await setCache(cacheKey, {
-        messages: messages,
-        messagesByDate: messagesByDate,
-        leaderCountByDate: leaderCountByDate,
-        dates: dates
+        messages: appState.messages,
+        messagesByDate: appState.messagesByDate,
+        leaderCountByDate: appState.leaderCountByDate,
+        dates: appState.dates
     });
 
     updateProgress(100, '완료!');
@@ -2652,13 +2652,13 @@ function validateChatFile(content) {
 }
 
 function applyParsedChatResult(result) {
-    messages = result.messages || [];
-    messagesByDate = result.messagesByDate || {};
-    leaderCountByDate = result.leaderCountByDate || {};
-    dates = result.dates || sortDatesDescending(Object.keys(messagesByDate));
+    appState.messages = result.messages || [];
+    appState.messagesByDate = result.messagesByDate || {};
+    appState.leaderCountByDate = result.leaderCountByDate || {};
+    appState.dates = result.dates || sortDatesDescending(Object.keys(appState.messagesByDate));
 
     if (result.detectedPlatform) {
-        detectedPlatform = result.detectedPlatform;
+        appState.detectedPlatform = result.detectedPlatform;
     }
 }
 
@@ -2703,17 +2703,17 @@ function findAttachmentByReference(filenameSource, ref) {
 // ========== 첨부파일 지연 로딩 ==========
 async function loadAttachment(filename) {
     // 이미 로드된 경우 캐시에서 반환
-    if (attachmentFiles[filename]) {
-        return attachmentFiles[filename];
+    if (appState.attachmentFiles[filename]) {
+        return appState.attachmentFiles[filename];
     }
 
     // ZIP에서 지연 로딩
-    const entryPath = attachmentEntries[filename];
-    if (entryPath && zipInstance) {
+    const entryPath = appState.attachmentEntries[filename];
+    if (entryPath && appState.zipInstance) {
         try {
-            const blob = await zipInstance.files[entryPath].async('blob');
+            const blob = await appState.zipInstance.files[entryPath].async('blob');
             const blobUrl = URL.createObjectURL(blob);
-            attachmentFiles[filename] = blobUrl;  // 캐시
+            appState.attachmentFiles[filename] = blobUrl;  // 캐시
             return blobUrl;
         } catch (err) {
             console.error(`첨부파일 로드 실패: ${filename}`, err);
@@ -2753,13 +2753,13 @@ function generateCacheKey(fileName, fileSize, lastModified) {
 }
 
 function restoreCachedChatData(cachedData) {
-    messages = cachedData.messages || [];
-    messagesByDate = cachedData.messagesByDate || {};
+    appState.messages = cachedData.messages || [];
+    appState.messagesByDate = cachedData.messagesByDate || {};
 
     const cachedDates = Array.isArray(cachedData.dates) && cachedData.dates.length > 0
         ? cachedData.dates
-        : Object.keys(messagesByDate);
-    dates = sortDatesDescending(cachedDates);
+        : Object.keys(appState.messagesByDate);
+    appState.dates = sortDatesDescending(cachedDates);
     recalculateLeaderCountByDate();
 }
 
@@ -2868,15 +2868,15 @@ async function cleanOldCache() {
 // 타임스탬프 기반 매칭 (±30분 허용)
 function mapAttachments() {
     // ZIP인 경우 attachmentEntries 사용, 폴더인 경우 attachmentFiles 사용
-    const filenameSource = Object.keys(attachmentEntries).length > 0
-        ? attachmentEntries
-        : attachmentFiles;
+    const filenameSource = Object.keys(appState.attachmentEntries).length > 0
+        ? appState.attachmentEntries
+        : appState.attachmentFiles;
 
     let matchedCount = 0;
 
-    if (detectedPlatform === 'android') {
+    if (appState.detectedPlatform === 'android') {
         // Android: attachment_ref가 직접 파일명 → 직접 매핑
-        for (const msg of messages) {
+        for (const msg of appState.messages) {
             if (msg.attachment_ref) {
                 const matchedFilename = findAttachmentByReference(filenameSource, msg.attachment_ref);
                 if (matchedFilename) {
@@ -2885,7 +2885,7 @@ function mapAttachments() {
                 }
             }
         }
-    } else if (detectedPlatform === 'ios') {
+    } else if (appState.detectedPlatform === 'ios') {
         // iOS: 날짜 기반 탐색
         const attachmentList = Object.keys(filenameSource)
             .map(filename => parseAttachmentFilename(filename))
@@ -2894,7 +2894,7 @@ function mapAttachments() {
         // 시간순 정렬
         attachmentList.sort((a, b) => a.datetime - b.datetime);
 
-        for (const msg of messages) {
+        for (const msg of appState.messages) {
             if (msg.message_type === 'photo') {
                 const msgDt = parseDateTime(msg.datetime);
                 const match = findClosestAttachment(attachmentList, msgDt, 'image', 30);
@@ -2969,31 +2969,31 @@ startBtn.addEventListener('click', () => {
 
 // ========== 앱 초기화 ==========
 function initApp() {
-    selectedDate = null;
-    renderedChatDate = null;
+    appState.selectedDate = null;
+    appState.renderedChatDate = null;
 
-    const users = new Set(messages.map(m => m.user));
+    const users = new Set(appState.messages.map(m => m.user));
     document.getElementById('stats').textContent =
-        `${messages.length.toLocaleString()}개 메시지 · ${users.size}명 · ${dates.length}일`;
+        `${appState.messages.length.toLocaleString()}개 메시지 · ${users.size}명 · ${appState.dates.length}일`;
     updateCaptureButtonState();
 
-    if (dates.length > 0) {
+    if (appState.dates.length > 0) {
         // 오늘 날짜와 가장 가까운 날짜로 달력 이동 (선택은 하지 않음)
         const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
-        let closestDate = dates[0];
-        let minDiff = Math.abs(new Date(today) - new Date(dates[0]));
+        let closestDate = appState.dates[0];
+        let minDiff = Math.abs(new Date(today) - new Date(appState.dates[0]));
 
-        for (let i = 1; i < dates.length; i++) {
-            const diff = Math.abs(new Date(today) - new Date(dates[i]));
+        for (let i = 1; i < appState.dates.length; i++) {
+            const diff = Math.abs(new Date(today) - new Date(appState.dates[i]));
             if (diff < minDiff) {
                 minDiff = diff;
-                closestDate = dates[i];
+                closestDate = appState.dates[i];
             }
         }
 
         // 달력을 해당 날짜의 월로 이동 (브라우저 호환성을 위해 수동 파싱)
         const [year, month, day] = closestDate.split('-').map(Number);
-        currentMonth = new Date(year, month - 1, 1);
+        appState.currentMonth = new Date(year, month - 1, 1);
         renderCalendar();
         renderDateList();
 
@@ -3005,15 +3005,15 @@ function initApp() {
     }
 
     document.getElementById('prevMonth').addEventListener('click', () => {
-        currentMonth.setMonth(currentMonth.getMonth() - 1);
+        appState.currentMonth.setMonth(appState.currentMonth.getMonth() - 1);
         renderCalendar();
-        focusDateForMonth(currentMonth.getFullYear(), currentMonth.getMonth());
+        focusDateForMonth(appState.currentMonth.getFullYear(), appState.currentMonth.getMonth());
     });
 
     document.getElementById('nextMonth').addEventListener('click', () => {
-        currentMonth.setMonth(currentMonth.getMonth() + 1);
+        appState.currentMonth.setMonth(appState.currentMonth.getMonth() + 1);
         renderCalendar();
-        focusDateForMonth(currentMonth.getFullYear(), currentMonth.getMonth());
+        focusDateForMonth(appState.currentMonth.getFullYear(), appState.currentMonth.getMonth());
     });
 
     document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -3033,8 +3033,8 @@ function initApp() {
 
 // ========== 캘린더 렌더링 ==========
 function renderCalendar() {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
+    const year = appState.currentMonth.getFullYear();
+    const month = appState.currentMonth.getMonth();
 
     document.getElementById('monthYear').textContent = `${year}년 ${month + 1}월`;
 
@@ -3066,12 +3066,12 @@ function renderCalendar() {
 
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
 
-        if (messagesByDate[dateStr]) {
+        if (appState.messagesByDate[dateStr]) {
             el.classList.add('has-messages');
             el.addEventListener('click', () => selectDate(dateStr));
         }
 
-        if (dateStr === selectedDate) {
+        if (dateStr === appState.selectedDate) {
             el.classList.add('selected');
         }
 
@@ -3093,11 +3093,11 @@ function renderDateList(searchQuery = '') {
     const list = document.getElementById('dateList');
     list.innerHTML = '';
 
-    let filteredDates = dates;
+    let filteredDates = appState.dates;
 
     if (searchQuery) {
-        filteredDates = dates.filter(date => {
-            return messagesByDate[date].some(msg =>
+        filteredDates = appState.dates.filter(date => {
+            return appState.messagesByDate[date].some(msg =>
                 msg.content.toLowerCase().includes(searchQuery) ||
                 msg.user.toLowerCase().includes(searchQuery)
             );
@@ -3105,16 +3105,16 @@ function renderDateList(searchQuery = '') {
     }
 
     filteredDates.forEach(date => {
-        const msgs = messagesByDate[date];
+        const msgs = appState.messagesByDate[date];
         const el = document.createElement('div');
         el.className = 'date-item';
-        if (date === selectedDate) el.classList.add('selected');
+        if (date === appState.selectedDate) el.classList.add('selected');
 
         const dateObj = new Date(date);
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
         const displayDate = `${dateObj.getFullYear()}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${String(dateObj.getDate()).padStart(2, '0')} (${dayNames[dateObj.getDay()]})`;
 
-        const leaderCount = leaderCountByDate[date] || 0;
+        const leaderCount = appState.leaderCountByDate[date] || 0;
         const leaderRatio = Math.round((leaderCount / msgs.length) * 100);
 
         el.innerHTML = `
@@ -3132,15 +3132,15 @@ function renderDateList(searchQuery = '') {
 
 // ========== 날짜 선택 ==========
 function selectDate(date) {
-    selectedDate = date;
+    appState.selectedDate = date;
     if (captureBtn) {
         captureBtn.disabled = false;
     }
 
     const dateObj = new Date(date);
-    if (dateObj.getMonth() !== currentMonth.getMonth() ||
-        dateObj.getFullYear() !== currentMonth.getFullYear()) {
-        currentMonth = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+    if (dateObj.getMonth() !== appState.currentMonth.getMonth() ||
+        dateObj.getFullYear() !== appState.currentMonth.getFullYear()) {
+        appState.currentMonth = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
     }
     renderCalendar();
     renderDateList(document.getElementById('searchInput').value);
@@ -3156,12 +3156,12 @@ function focusDateForMonth(year, month) {
     // 해당 년/월의 첫 날짜를 "YYYY-MM-01" 형식으로 생성
     const targetYearMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-    // dates 배열에서 해당 년/월로 시작하는 첫 번째 날짜 찾기
-    let targetDate = dates.find(date => date.startsWith(targetYearMonth));
+    // appState.dates 배열에서 해당 년/월로 시작하는 첫 번째 날짜 찾기
+    let targetDate = appState.dates.find(date => date.startsWith(targetYearMonth));
 
     // 해당 월에 날짜가 없으면, 그 이후 가장 빠른 날짜 찾기
     if (!targetDate) {
-        targetDate = dates.find(date => date > targetYearMonth);
+        targetDate = appState.dates.find(date => date > targetYearMonth);
     }
 
     // 찾은 날짜가 있으면 스크롤
@@ -3174,7 +3174,7 @@ function scrollToDateInList(date) {
     requestAnimationFrame(() => {
         const dateList = document.getElementById('dateList');
         const dateItems = Array.from(dateList.querySelectorAll('.date-item'));
-        const targetIndex = dates.indexOf(date);
+        const targetIndex = appState.dates.indexOf(date);
 
         if (targetIndex !== -1 && dateItems[targetIndex]) {
             const targetElement = dateItems[targetIndex];
@@ -3199,7 +3199,7 @@ function scrollToDateInList(date) {
 
 // ========== 필터 대상 사용자 판별 ==========
 function isLeader(username) {
-    return username === leaderFilterTarget;
+    return username === appState.leaderFilterTarget;
 }
 
 function renderMissingPhotoAttachmentContent(reason) {
@@ -3220,9 +3220,9 @@ function renderMissingPhotoAttachment(reason) {
 
 // ========== 대화 렌더링 ==========
 function renderChat(date) {
-    const msgs = messagesByDate[date];
+    const msgs = appState.messagesByDate[date];
     if (!Array.isArray(msgs) || msgs.length === 0) {
-        renderedChatDate = null;
+        appState.renderedChatDate = null;
         updateCaptureButtonState();
         return;
     }
@@ -3266,15 +3266,15 @@ function renderChat(date) {
         const attachId = `attach-${index}`;
 
         if (msg.message_type === 'photo') {
-            if (msg.attachment_path && attachmentFiles[msg.attachment_path]) {
+            if (msg.attachment_path && appState.attachmentFiles[msg.attachment_path]) {
                 // 이미 로드됨 (캐시)
-                const url = attachmentFiles[msg.attachment_path];
+                const url = appState.attachmentFiles[msg.attachment_path];
                 attachmentHtml = `
                     <div class="attachment">
                         <img src="${url}" onclick="showImage('${url}', this)" alt="사진">
                     </div>
                 `;
-            } else if (msg.attachment_path && attachmentEntries[msg.attachment_path]) {
+            } else if (msg.attachment_path && appState.attachmentEntries[msg.attachment_path]) {
                 // 지연 로딩 필요
                 attachmentHtml = `
                     <div class="attachment" id="${attachId}">
@@ -3287,8 +3287,8 @@ function renderChat(date) {
                 attachmentHtml = renderMissingPhotoAttachment('파일 없음');
             }
         } else if (msg.message_type === 'file') {
-            if (msg.attachment_path && attachmentFiles[msg.attachment_path]) {
-                const url = attachmentFiles[msg.attachment_path];
+            if (msg.attachment_path && appState.attachmentFiles[msg.attachment_path]) {
+                const url = appState.attachmentFiles[msg.attachment_path];
                 attachmentHtml = `
                     <div class="attachment">
                         <a class="file-link" href="${url}" target="_blank" rel="noopener">
@@ -3296,7 +3296,7 @@ function renderChat(date) {
                         </a>
                     </div>
                 `;
-            } else if (msg.attachment_path && attachmentEntries[msg.attachment_path]) {
+            } else if (msg.attachment_path && appState.attachmentEntries[msg.attachment_path]) {
                 attachmentHtml = `
                     <div class="attachment" id="${attachId}">
                         <div class="loading-placeholder">📎 로딩 중...</div>
@@ -3331,11 +3331,11 @@ function renderChat(date) {
     renderScrollMarkers(leaderPositions);
 
     // 사용자 필터가 활성화되어 있으면 적용
-    if (leaderFilterActive) {
+    if (appState.leaderFilterActive) {
         applyLeaderFilter();
     }
 
-    renderedChatDate = date;
+    appState.renderedChatDate = date;
     updateCaptureButtonState();
 }
 
@@ -3546,21 +3546,21 @@ updateLinkSidebarToggle();
 
 function buildParserTestSnapshot() {
     const typeCounts = {};
-    for (const msg of messages) {
+    for (const msg of appState.messages) {
         typeCounts[msg.message_type] = (typeCounts[msg.message_type] || 0) + 1;
     }
 
     return {
-        detectedPlatform,
-        messageCount: messages.length,
-        dateCount: dates.length,
-        dates: [...dates],
+        detectedPlatform: appState.detectedPlatform,
+        messageCount: appState.messages.length,
+        dateCount: appState.dates.length,
+        dates: [...appState.dates],
         typeCounts,
-        attachmentRefCount: messages.filter(msg => msg.has_attachment).length,
-        attachmentMappedCount: messages.filter(msg => !!msg.attachment_path).length,
-        leaderFilterTarget,
-        leaderCountByDate: { ...leaderCountByDate },
-        messages: messages.map(msg => ({ ...msg }))
+        attachmentRefCount: appState.messages.filter(msg => msg.has_attachment).length,
+        attachmentMappedCount: appState.messages.filter(msg => !!msg.attachment_path).length,
+        leaderFilterTarget: appState.leaderFilterTarget,
+        leaderCountByDate: { ...appState.leaderCountByDate },
+        messages: appState.messages.map(msg => ({ ...msg }))
     };
 }
 
@@ -3581,9 +3581,9 @@ function buildUiTestSnapshot() {
 
     return {
         stats: document.getElementById('stats').textContent,
-        selectedDate,
-        renderedChatDate,
-        currentMonth: `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`,
+        selectedDate: appState.selectedDate,
+        renderedChatDate: appState.renderedChatDate,
+        currentMonth: `${appState.currentMonth.getFullYear()}-${String(appState.currentMonth.getMonth() + 1).padStart(2, '0')}`,
         dateListCount: document.getElementById('dateList').children.length,
         calendarCellCount: document.getElementById('calendarGrid').children.length,
         chatMessageCount: document.getElementById('chatMessages').children.length,
@@ -3594,8 +3594,8 @@ function buildUiTestSnapshot() {
         captureButtonDisabled: captureBtn ? captureBtn.disabled : null,
         captureReady: isCaptureReady(),
         captureModalOpen: isModalOpen('captureModal'),
-        leaderFilterActive,
-        leaderFilterTarget,
+        leaderFilterActive: appState.leaderFilterActive,
+        leaderFilterTarget: appState.leaderFilterTarget,
         leaderFilterPanelOpen: leaderFilterPanel ? !leaderFilterPanel.hidden : false,
         settingsModalOpen: isModalOpen('settingsModal'),
         sidebarOpen: sidebar.classList.contains('open'),
@@ -3621,15 +3621,15 @@ function buildAppVersionTestSnapshot() {
 if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
     window.__CHAEXTRACTOR_TEST__ = {
         parseChat(content, options = {}) {
-            detectedPlatform = options.platform || detectedPlatform;
-            attachmentEntries = {};
-            attachmentFiles = {};
-            zipInstance = null;
+            appState.detectedPlatform = options.platform || appState.detectedPlatform;
+            appState.attachmentEntries = {};
+            appState.attachmentFiles = {};
+            appState.zipInstance = null;
 
             if (options.attachments) {
                 for (const filename of options.attachments) {
                     const base = filename.split('/').pop();
-                    attachmentEntries[base] = filename;
+                    appState.attachmentEntries[base] = filename;
                 }
             }
 
@@ -3641,15 +3641,15 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
             return buildParserTestSnapshot();
         },
         parseMergedChatFiles(contents, options = {}) {
-            detectedPlatform = options.platform || detectedPlatform;
-            attachmentEntries = {};
-            attachmentFiles = {};
-            zipInstance = null;
+            appState.detectedPlatform = options.platform || appState.detectedPlatform;
+            appState.attachmentEntries = {};
+            appState.attachmentFiles = {};
+            appState.zipInstance = null;
 
             if (options.attachments) {
                 for (const filename of options.attachments) {
                     const base = filename.split('/').pop();
-                    attachmentEntries[base] = filename;
+                    appState.attachmentEntries[base] = filename;
                 }
             }
 

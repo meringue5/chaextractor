@@ -294,6 +294,9 @@ UI 렌더링:
 - `parseDateTime(str)` — datetime 문자열 → Date 객체
 
 ## 전역 상태
+앱 상태는 `assets/scripts/app.js`의 `appState` 객체에 모은다. `diagnosticState`처럼 독립 성격이 강한 진단 상태와 DOM 참조는 별도로 둔다.
+
+`appState` 필드:
 - `messages` — 전체 파싱된 메시지 배열
 - `messagesByDate` — 날짜별 메시지 그룹 (YYYY-MM-DD → [])
 - `attachmentFiles` — 파일명 → Blob URL (폴더 모드)
