@@ -2169,6 +2169,24 @@ body {
     text-shadow: none;
 }
 
+[data-theme="1995"] .modal-box {
+    padding: 0;
+}
+
+[data-theme="1995"] .modal-box > :not(.modal-header) {
+    max-width: calc(100% - 20px);
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+[data-theme="1995"] .modal-box > .modal-header + * {
+    margin-top: 10px;
+}
+
+[data-theme="1995"] .modal-box > :last-child {
+    margin-bottom: 10px;
+}
+
 [data-theme="1995"] .sidebar,
 [data-theme="1995"] .link-sidebar {
     background: var(--win31-face);

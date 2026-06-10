@@ -1226,6 +1226,20 @@
   * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
   * `npm run test:browser` 통과
 
+## 2-1-70단계: 1995 모달 여백 조정 (2026-06-10)
+* 분류:
+  * implementation-only UI 스타일 조정. 사용자 기능/플랫폼 지원 범위 변경 없음.
+* 변경:
+  * 1995 테마 모달의 공통 `padding: 20px`를 제거하고 제목표시줄은 사이드바처럼 2px margin으로 배치
+  * 모달 본문 요소에는 1995 전용 10px 안쪽 여백을 별도로 적용해 다른 테마의 모달 레이아웃을 건드리지 않음
+  * macOS Chrome/Firefox의 네이티브 스크롤바 한계와 모바일 리스크를 고려해 Redmond 스크롤바 강제 구현은 보류
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * Playwright 계산 스타일 확인: 1995 설정 모달 `padding: 0px`, 제목표시줄 margin `2px`, 창 테두리 기준 inset `4px` 확인
+  * `npm run test:browser` 통과 (7 passed, 3 skipped)
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트
