@@ -1870,9 +1870,7 @@ function applyTheme(theme) {
     const fontAutoSwitch = localStorage.getItem('fontAutoSwitch');
     if (fontAutoSwitch === null || fontAutoSwitch === 'true') {
         let autoFont = 'ridi';
-        if (actualTheme === 'dark') {
-            autoFont = 'neodgm';
-        } else if (actualTheme === '1995') {
+        if (actualTheme === '1995') {
             autoFont = 'iyagi';
         }
         applyFont(autoFont, true);

@@ -1256,6 +1256,17 @@
   * `git diff --check` 통과
   * `python3 harness/scripts/check_doc_drift.py` 통과
 
+## 2-1-72단계: 다크 테마 기본 폰트 정리 (2026-06-10)
+* 분류:
+  * requirement UI 동작 조정. 테마 선택 시 사용자에게 보이는 기본 폰트 동작 변경.
+* 변경:
+  * 다크 테마 자동 폰트를 라이트 테마와 같은 RIDI바탕으로 통일
+  * 설정 모달의 다크 테마 버튼 미리보기 폰트도 RIDI바탕으로 맞춤
+  * 앱 버전 값을 `2026-06-10-dark-font-ridi`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `git diff --check` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

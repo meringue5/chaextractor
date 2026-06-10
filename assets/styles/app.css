@@ -1839,7 +1839,7 @@ body {
     border-color: #505050;
     background: #2d2d2d;
     color: #e0e0e0;
-    font-family: "NeoDunggeunmo Pro", sans-serif;
+    font-family: "RIDIBatang", serif;
 }
 
 .theme-btn[data-theme="1995"] {
@@ -2390,7 +2390,7 @@ body {
 [data-theme="1995"] .theme-btn[data-theme="dark"] {
     background: #2d2d2d;
     color: #e0e0e0;
-    font-family: "NeoDunggeunmo Pro", sans-serif;
+    font-family: "RIDIBatang", serif;
 }
 
 [data-theme="1995"] .theme-btn[data-theme="system"] {
