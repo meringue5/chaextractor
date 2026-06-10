@@ -155,7 +155,7 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
     - `#dropZone` — 드래그앤드롭 영역
     - `#zipName` — 파일 상태 메시지
     - `#progressContainer` > `#progressFill` + `.progress-text` — 진행률 바
-  - `#startBtn` — 대화 보기 시작 버튼 (처리 완료 전 hidden)
+  - 파일 처리 완료 시 사용자 확인 없이 `#app` 메인 뷰어로 자동 전환
 - `.setup-footer-btns` — Google Form 버그 제보 버튼
 - `#app` — 메인 뷰어 (초기 hidden)
   - `.sidebar` — 좌측 패널 (320px, 모바일: 86vw 슬라이드)

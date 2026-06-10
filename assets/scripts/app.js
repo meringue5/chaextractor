@@ -226,7 +226,6 @@ const zipBtn = document.getElementById('zipBtn');
 const folderInput = document.getElementById('folderInput');
 const folderBtn = document.getElementById('folderBtn');
 const zipName = document.getElementById('zipName');
-const startBtn = document.getElementById('startBtn');
 const step1 = document.getElementById('step1');
 const clearCacheBtn = document.getElementById('clearCacheBtn');
 const cacheStatus = document.getElementById('cacheStatus');
@@ -2178,8 +2177,7 @@ zipInput.addEventListener('change', async (e) => {
             zipBtn.classList.add('selected');
             step1.classList.remove('processing');
             step1.classList.add('completed');
-            startBtn.disabled = false;
-            startBtn.style.display = 'inline-block';
+            enterChatViewer();
         } catch (error) {
             captureDiagnosticError(error, {
                 type: 'upload-processing',
@@ -2408,8 +2406,7 @@ dropZone.addEventListener('drop', async (e) => {
         zipName.classList.remove('error');
         step1.classList.remove('processing');
         step1.classList.add('completed');
-        startBtn.disabled = false;
-        startBtn.style.display = 'inline-block';
+        enterChatViewer();
     } catch (error) {
         captureDiagnosticError(error, {
             type: 'drop-processing',
@@ -2452,8 +2449,7 @@ folderInput.addEventListener('change', async (e) => {
             folderBtn.classList.add('selected');
             step1.classList.remove('processing');
             step1.classList.add('completed');
-            startBtn.disabled = false;
-            startBtn.style.display = 'inline-block';
+            enterChatViewer();
         } catch (error) {
             captureDiagnosticError(error, {
                 type: 'folder-processing',
@@ -3177,8 +3173,12 @@ function updateProgress(percent, text) {
     setDiagnosticStage(text);
 }
 
-// ========== 시작 버튼 ==========
-startBtn.addEventListener('click', () => {
+// ========== 대화 뷰어 진입 ==========
+function enterChatViewer() {
+    if (app.classList.contains('active')) {
+        return;
+    }
+
     setupScreen.style.display = 'none';
     app.classList.add('active');
     initApp();
@@ -3187,7 +3187,7 @@ startBtn.addEventListener('click', () => {
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
     });
-});
+}
 
 // ========== 앱 초기화 ==========
 function initApp() {

@@ -934,8 +934,6 @@
 * 검증:
   * `node --check assets/scripts/app.js` 통과
   * `git diff --check` 통과
-  * `python3 harness/scripts/check_doc_drift.py` 통과
-  * `python3 harness/scripts/check_ui_smoke.py` 통과
   * `npm run test:browser` 통과: 7 passed, 3 skipped
 
 ## 2-1-60단계: ePulse 링크 표시명 풀네임 정정 (2026-05-31)
@@ -1263,6 +1261,21 @@
   * 다크 테마 자동 폰트를 라이트 테마와 같은 RIDI바탕으로 통일
   * 설정 모달의 다크 테마 버튼 미리보기 폰트도 RIDI바탕으로 맞춤
   * 앱 버전 값을 `2026-06-10-dark-font-ridi`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과 (7 passed, 3 skipped)
+
+## 2-1-73단계: 처리 완료 후 대화 뷰어 자동 진입 (2026-06-10)
+* 분류:
+  * requirement UI 흐름 변경. 파일 처리 완료 후 시작 버튼 클릭 없이 메인 화면으로 진입하도록 사용자 흐름 변경.
+* 변경:
+  * `대화 보기 시작` 버튼 제거
+  * ZIP/TXT/CSV 선택, 드롭, 폴더 선택 처리 성공 시 `#app` 메인 뷰어로 자동 전환
+  * 자동 진입 흐름에 맞춰 harness 요구사항, INSTRUCTIONS, README, browser smoke 기대값 갱신
+  * 앱 버전 값을 `2026-06-10-auto-enter-viewer`로 갱신
 * 검증:
   * `node --check assets/scripts/app.js` 통과
   * `git diff --check` 통과

@@ -7,7 +7,7 @@ const windowsFixture = path.join(
   repoRoot,
   'test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt'
 );
-const expectedAppVersion = '2026-06-10-attachment-inventory';
+const expectedAppVersion = '2026-06-10-auto-enter-viewer';
 
 function watchLocalRuntime(page) {
   const failures = [];
@@ -34,8 +34,7 @@ async function openApp(page) {
 async function uploadWindowsFixture(page) {
   await page.setInputFiles('#zipInput', windowsFixture);
   await expect(page.locator('#zipName')).toContainText('처리 완료', { timeout: 10_000 });
-  await expect(page.locator('#startBtn')).toBeEnabled();
-  await page.locator('#startBtn').click();
+  await expect(page.locator('#startBtn')).toHaveCount(0);
   await expect(page.locator('#app')).toHaveClass(/active/);
 }
 
