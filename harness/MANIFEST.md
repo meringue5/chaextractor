@@ -80,6 +80,7 @@
 | 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 텍스트 파서와 macOS CSV 파서는 공식 지원으로 승격, Windows/macOS 첨부파일은 미결정 | 미결정 항목은 README에 홍보하지 않음 |
 | 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | project skill, parser golden/doc drift, 선택 실행 Playwright browser smoke 하네스 시작 | 로컬 표준 명령 유지 |
 | 하네스가 앱 내부를 검증할 때는 버전 있는 테스트 API 계약을 사용한다. | `window.__CHAEXTRACTOR_ENABLE_TEST_API__`가 설정된 하네스 환경에서만 `window.__CHAEXTRACTOR_TEST__`를 노출한다. 현재 계약은 `contractVersion: 1`과 `parser`/`ui`/`runtime`/`diagnostics`/`state` 네임스페이스로 구성되며, 기존 평면 함수는 호환용이다. | Node VM 하네스와 doc drift checker |
+| 입력 계층은 ZIP/폴더별 파일 수집 결과를 내부 bundle 계약으로 정규화한 뒤 파싱/첨부 매핑/캐시 흐름에 넘긴다. | `buildZipInputBundle`, `buildFolderInputBundle`, `check_input_bundle.py`, 작은 iOS ZIP fixture | 입력 bundle 하네스 |
 
 ## 요구사항으로 정의된 것
 

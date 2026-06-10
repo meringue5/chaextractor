@@ -237,6 +237,18 @@ def main() -> int:
             errors,
         )
 
+    if exists("harness/scripts/check_input_bundle.py"):
+        check(
+            "python3 harness/scripts/check_input_bundle.py" in testing,
+            "TESTING must document input bundle check command",
+            errors,
+        )
+        check(
+            "python3 harness/scripts/check_input_bundle.py" in tester_skill,
+            "tester skill must include input bundle check",
+            errors,
+        )
+
     if errors:
         print("FAIL doc drift")
         for error in errors:

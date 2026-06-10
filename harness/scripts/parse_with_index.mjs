@@ -504,6 +504,20 @@ if (input.mode === 'cachePrivacy') {
   process.exit(0);
 }
 
+if (input.mode === 'inputBundle') {
+  const api = windowObject.__CHAEXTRACTOR_TEST__;
+  const result = await api.runtime.input.buildBundleFromEntries(
+    input.sourceType || 'zip',
+    input.entries || [],
+    {
+      sourceName: input.sourceName,
+      cacheKey: input.cacheKey
+    }
+  );
+  process.stdout.write(JSON.stringify(result, null, 2));
+  process.exit(0);
+}
+
 function buildSyntheticAndroidChat(messageCount) {
   const lines = [
     'Synthetic Android chat',

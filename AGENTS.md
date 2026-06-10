@@ -210,6 +210,7 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 
 파일 처리:
 - `processFilesOrFolder(files)` — 파일 라우팅 (ZIP vs 폴더)
+- `buildZipInputBundle(file, zip)` / `buildFolderInputBundle(files)` — 입력 파일 후보, 첨부파일 후보, 플랫폼 감지, 캐시 키를 공통 입력 계약으로 정리
 - `processZipFile(file)` — ZIP 해제, 검증, 파싱
 - `processFolderFiles(files)` — 폴더 파일 처리 (Android)
 - `validateChatFile(content)` — 카카오톡 대화 형식 검증
@@ -289,6 +290,7 @@ UI 렌더링:
 - `parser` — `parseChat`, `parseMergedChatFiles`, `classifyContent`, `getSnapshot`
 - `ui` — `initApp`, `selectDate`, `renderChat`, `renderDateList`, `getSnapshot`, 사용자 필터/테마/폰트, `capture`, `navigation`, `modals`
 - `runtime` — 브라우저 기능 제한, 첨부파일 런타임 상태, 캐시, 앱 버전 업데이트 확인
+- `runtime.input` — ZIP/폴더 입력 bundle 계약 스냅샷
 - `diagnostics` — 진단 입력/단계/오류 기록, 리포트/제보 URL 생성, 진단 스냅샷
 - `state` — 파서/UI 스냅샷 보조 경로
 

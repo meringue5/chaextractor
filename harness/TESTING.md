@@ -17,6 +17,7 @@ python3 harness/scripts/run_parser_golden.py
 - `android-sample`: `test/dataset/android/`의 실제 ZIP 샘플
 - `android-files`: `test/fixtures/android-files/`의 Android 일반 파일/PDF fixture
 - `ios-minimal`: `test/fixtures/ios-minimal/`의 최소 iOS fixture
+- `ios-zip-minimal`: `test/dataset/ios/ios-zip-minimal.zip`의 개인정보 없는 작은 iOS ZIP fixture
 - `ios-missing-photo-guidance`: 누락 사진의 사용자 복구 안내 렌더링 fixture
 - `windows-minimal`: `test/fixtures/windows-minimal/`의 최소 Windows 데스크톱 TXT fixture
 - `windows-attachments-unsupported`: Windows 첨부파일 매핑 미지원 범위 고정 fixture
@@ -51,6 +52,7 @@ python3 harness/scripts/check_ui_smoke.py
 python3 harness/scripts/check_capability_notice.py
 python3 harness/scripts/check_cache_privacy.py
 python3 harness/scripts/check_diagnostic_report.py
+python3 harness/scripts/check_input_bundle.py
 python3 harness/scripts/check_performance_smoke.py
 PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"
 ```
@@ -68,6 +70,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; p
 `check_cache_privacy.py`는 새 업로드 전 Blob URL 해제, 런타임 첨부 상태 초기화, 설정 모달 캐시 삭제가 호출하는 IndexedDB clear 경로를 검사한다.
 
 `check_diagnostic_report.py`는 JS 오류/처리 실패 진단 리포트가 생성되고, 원본 대화 파일명/첨부파일명이 리포트와 Google Form 사전입력 URL에 포함되지 않는지 검사한다.
+
+`check_input_bundle.py`는 작은 iOS ZIP/폴더 fixture를 앱 테스트 API의 `runtime.input` 계약으로 정리해 대화 파일 후보, 첨부파일 후보, 플랫폼 감지, 캐시 키, 첨부 File 참조 유무가 기대대로인지 검사한다.
 
 `check_performance_smoke.py`는 합성 Android 로그 1만 메시지를 실제 앱 파서로 파싱하고 3초 예산 안에 메시지/날짜 수가 맞는지 검사한다.
 

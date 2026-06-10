@@ -48,7 +48,7 @@ const DEFAULT_THEME = '1995';
 const DEFAULT_1995_FONT = 'iyagi';
 const APP_STORAGE_VERSION_KEY = 'chaextractorAppVersion';
 const APP_VERSION = document.querySelector('meta[name="app-version"]')?.getAttribute('content')
-    || '2026-06-10-test-api-contract';
+    || '2026-06-10-input-bundle';
 const APP_VERSION_MANIFEST_URL = 'assets/version.json';
 const APP_UPDATE_RELOAD_TARGET_KEY = 'chaextractorUpdateReloadTarget';
 const APP_UPDATE_QUERY_PARAM = 'appVersion';
@@ -2095,6 +2095,148 @@ async function readDirectoryEntry(dirEntry, fileList) {
     });
 }
 
+function getInputEntryFilename(entryPath) {
+    return String(entryPath || '').split('/').pop();
+}
+
+function buildZipInputEntries(zip) {
+    return Object.keys(zip.files).map(entryPath => {
+        const zipEntry = zip.files[entryPath];
+        return {
+            name: entryPath,
+            filename: getInputEntryFilename(entryPath),
+            entryPath,
+            isDirectory: zipEntry.dir,
+            size: getZipEntrySize(zipEntry),
+            readText: () => zipEntry.async('string')
+        };
+    });
+}
+
+function buildFolderInputEntries(files) {
+    return Array.from(files).map(file => ({
+        name: file.name,
+        filename: file.name,
+        entryPath: file.webkitRelativePath || '',
+        isDirectory: false,
+        size: file.size,
+        lastModified: file.lastModified,
+        file,
+        readText: () => file.text()
+    }));
+}
+
+async function buildInputBundleFromEntries(sourceType, sourceName, entries, options = {}) {
+    const fileEntries = entries.filter(entry => !entry.isDirectory);
+    const chatCandidateEntries = fileEntries.filter(entry => String(entry.name).match(CHAT_FILE_PATTERN));
+    const attachmentFiles = fileEntries
+        .filter(entry => isAttachmentFile(entry.filename))
+        .map(entry => ({
+            filename: entry.filename,
+            entryPath: entry.entryPath || entry.name,
+            size: entry.size,
+            file: entry.file || null
+        }));
+
+    const chatFiles = [];
+    const chatCandidateDiagnostics = [];
+
+    for (const entry of chatCandidateEntries) {
+        const content = await entry.readText();
+        const validation = analyzeChatFileContent(content);
+        logChatValidationAnalysis(validation, content);
+        chatCandidateDiagnostics.push(buildDiagnosticChatCandidate(entry.filename, sourceType, validation, {
+            size: entry.size,
+            entryPath: entry.entryPath || entry.name
+        }));
+        if (validation.valid) {
+            chatFiles.push({
+                name: entry.name,
+                filename: entry.filename,
+                content,
+                size: entry.size,
+                lastModified: entry.lastModified,
+                entryPath: entry.entryPath || entry.name,
+                file: entry.file || null
+            });
+        }
+    }
+
+    const detectedPlatform = detectPlatform(
+        chatCandidateEntries.map(entry => entry.name),
+        attachmentFiles.map(entry => entry.filename)
+    );
+
+    let cacheKey = options.cacheKey || '';
+    if (!cacheKey && sourceType === 'folder' && chatFiles.length > 0) {
+        const firstFile = chatFiles[0];
+        cacheKey = generateCacheKey(
+            `${firstFile.filename}_count${chatFiles.length}`,
+            firstFile.size,
+            firstFile.lastModified
+        );
+    }
+
+    return {
+        sourceType,
+        sourceName,
+        cacheKey,
+        fileCount: fileEntries.length,
+        chatCandidates: chatCandidateEntries.map(entry => ({
+            name: entry.name,
+            filename: entry.filename,
+            entryPath: entry.entryPath || entry.name,
+            size: entry.size
+        })),
+        chatFiles,
+        attachmentFiles,
+        detectedPlatform,
+        diagnostics: {
+            processing: {
+                chatCandidateCount: chatCandidateEntries.length,
+                validChatFileCount: chatFiles.length,
+                attachmentCandidateCount: attachmentFiles.length,
+                attachmentExtensions: summarizeAttachmentExtensions(attachmentFiles.map(entry => entry.filename))
+            },
+            chatCandidates: chatCandidateDiagnostics
+        }
+    };
+}
+
+async function buildZipInputBundle(file, zip, cacheKey) {
+    return buildInputBundleFromEntries('zip', file.name, buildZipInputEntries(zip), { cacheKey });
+}
+
+async function buildFolderInputBundle(files) {
+    return buildInputBundleFromEntries('folder', 'folder', buildFolderInputEntries(files));
+}
+
+function applyInputBundleDiagnostics(bundle) {
+    updateDiagnosticProcessing({
+        ...bundle.diagnostics.processing,
+        detectedPlatform: bundle.detectedPlatform
+    });
+    for (const candidate of bundle.diagnostics.chatCandidates) {
+        recordDiagnosticChatCandidate(candidate);
+    }
+}
+
+function assertProcessableInputBundle(bundle) {
+    if (bundle.chatCandidates.length === 0) {
+        const selectedCount = bundle.sourceType === 'zip'
+            ? bundle.fileCount
+            : bundle.fileCount;
+        const sourceLabel = bundle.sourceType === 'zip'
+            ? `ZIP 내부 파일 ${selectedCount}개`
+            : `선택한 파일 ${selectedCount}개`;
+        throw new Error(`대화 파일(.txt/.csv)을 찾을 수 없습니다. ${sourceLabel} 중 TXT/CSV 후보가 없습니다.`);
+    }
+
+    if (bundle.chatFiles.length === 0) {
+        throw new Error(`유효한 대화 파일을 찾을 수 없습니다. TXT/CSV 후보 ${bundle.chatCandidates.length}개를 검사했지만 지원 형식과 맞지 않았습니다.`);
+    }
+}
+
 // ========== 드래그 앤 드롭 ==========
 dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -2252,67 +2394,24 @@ async function processZipFile(file) {
 
     updateProgress(10, `${entries.length}개 파일 발견`);
 
-    // 대화 파일 찾기 (모든 .txt/.csv 파일 검증)
-    const allChatFiles = entries.filter(name =>
-        name.match(CHAT_FILE_PATTERN) && !zip.files[name].dir
-    );
-    updateDiagnosticProcessing({
-        chatCandidateCount: allChatFiles.length
-    });
+    const inputBundle = await buildZipInputBundle(file, zip, cacheKey);
+    updateProgress(15, `${inputBundle.chatCandidates.length}개 대화 파일 검증 중...`);
+    applyInputBundleDiagnostics(inputBundle);
+    assertProcessableInputBundle(inputBundle);
 
-    if (allChatFiles.length === 0) {
-        throw new Error(`대화 파일(.txt/.csv)을 찾을 수 없습니다. ZIP 내부 파일 ${entries.length}개 중 TXT/CSV 후보가 없습니다.`);
-    }
-
-    updateProgress(15, `${allChatFiles.length}개 대화 파일 검증 중...`);
-
-    // 각 대화 파일 읽고 검증
-    const validChatFiles = [];
-    for (const chatFile of allChatFiles) {
-        const content = await zip.files[chatFile].async('string');
-        const validation = analyzeChatFileContent(content);
-        logChatValidationAnalysis(validation, content);
-        recordDiagnosticChatCandidate(buildDiagnosticChatCandidate(chatFile.split('/').pop(), 'zip', validation, {
-            size: getZipEntrySize(zip.files[chatFile]),
-            entryPath: chatFile
-        }));
-        if (validation.valid) {
-            validChatFiles.push({ name: chatFile, content });
-        }
-    }
-    updateDiagnosticProcessing({
-        validChatFileCount: validChatFiles.length
-    });
-
-    if (validChatFiles.length === 0) {
-        throw new Error(`유효한 대화 파일을 찾을 수 없습니다. TXT/CSV 후보 ${allChatFiles.length}개를 검사했지만 지원 형식과 맞지 않았습니다.`);
-    }
-
-    console.log(`⏱️ ${validChatFiles.length}개 유효한 대화 파일 발견`);
+    console.log(`⏱️ ${inputBundle.chatFiles.length}개 유효한 대화 파일 발견`);
 
     // 첨부파일 엔트리 매핑 (지연 로딩 - blob 생성 안 함)
     updateProgress(30, '첨부파일 목록 확인 중...');
 
-    const attachEntryList = entries.filter(name => {
-        if (zip.files[name].dir) return false;
-        const filename = name.split('/').pop();
-        return isAttachmentFile(filename);
-    });
-    updateDiagnosticProcessing({
-        attachmentCandidateCount: attachEntryList.length,
-        attachmentExtensions: summarizeAttachmentExtensions(attachEntryList.map(e => e.split('/').pop()))
-    });
-
     // 파일명 -> ZIP 엔트리 경로 매핑
-    for (const entry of attachEntryList) {
-        const filename = entry.split('/').pop();
-        appState.attachmentEntries[filename] = entry;
+    for (const entry of inputBundle.attachmentFiles) {
+        appState.attachmentEntries[entry.filename] = entry.entryPath;
     }
-    console.log(`⏱️ 첨부파일 ${attachEntryList.length}개 발견 (지연 로딩 준비)`);
+    console.log(`⏱️ 첨부파일 ${inputBundle.attachmentFiles.length}개 발견 (지연 로딩 준비)`);
 
     // 플랫폼 감지 (대화 파일명 + 첨부파일명 기반)
-    const attachFilenames = attachEntryList.map(e => e.split('/').pop());
-    appState.detectedPlatform = detectPlatform(allChatFiles, attachFilenames);
+    appState.detectedPlatform = inputBundle.detectedPlatform;
     updateDiagnosticProcessing({
         detectedPlatform: appState.detectedPlatform
     });
@@ -2322,12 +2421,12 @@ async function processZipFile(file) {
     updateProgress(60, '대화 내용 파싱 중...');
 
     // 대화 파싱 (단일 또는 병합)
-    if (validChatFiles.length === 1) {
-        parseKakaoChat(validChatFiles[0].content);
+    if (inputBundle.chatFiles.length === 1) {
+        parseKakaoChat(inputBundle.chatFiles[0].content);
     } else {
-        const contents = validChatFiles.map(f => f.content);
+        const contents = inputBundle.chatFiles.map(f => f.content);
         parseMergedChatFiles(contents);
-        console.log(`⏱️ ${validChatFiles.length}개 파일 병합 완료, 총 ${appState.messages.length}개 메시지`);
+        console.log(`⏱️ ${inputBundle.chatFiles.length}개 파일 병합 완료, 총 ${appState.messages.length}개 메시지`);
     }
 
     updateProgress(90, '첨부파일 매핑 중...');
@@ -2371,60 +2470,23 @@ async function processFolderFiles(files) {
 
     updateProgress(5, '파일 분석 중...');
 
-    // 대화 파일 찾기 (모든 .txt/.csv 파일 검증)
-    const allChatFiles = files.filter(f => f.name.match(CHAT_FILE_PATTERN));
-    updateDiagnosticProcessing({
-        chatCandidateCount: allChatFiles.length
-    });
+    const inputBundle = await buildFolderInputBundle(files);
+    updateProgress(7, `${inputBundle.chatCandidates.length}개 대화 파일 검증 중...`);
+    applyInputBundleDiagnostics(inputBundle);
+    assertProcessableInputBundle(inputBundle);
 
-    if (allChatFiles.length === 0) {
-        throw new Error(`대화 파일(.txt/.csv)을 찾을 수 없습니다. 선택한 파일 ${files.length}개 중 TXT/CSV 후보가 없습니다.`);
-    }
-
-    updateProgress(7, `${allChatFiles.length}개 대화 파일 검증 중...`);
-
-    // 각 대화 파일 읽고 검증
-    const validChatFiles = [];
-    for (const chatFile of allChatFiles) {
-        const content = await chatFile.text();
-        const validation = analyzeChatFileContent(content);
-        logChatValidationAnalysis(validation, content);
-        recordDiagnosticChatCandidate(buildDiagnosticChatCandidate(chatFile.name, 'folder', validation, {
-            size: chatFile.size,
-            entryPath: chatFile.webkitRelativePath || ''
-        }));
-        if (validation.valid) {
-            validChatFiles.push({ file: chatFile, content });
-        }
-    }
-    updateDiagnosticProcessing({
-        validChatFileCount: validChatFiles.length
-    });
-
-    if (validChatFiles.length === 0) {
-        throw new Error(`유효한 대화 파일을 찾을 수 없습니다. TXT/CSV 후보 ${allChatFiles.length}개를 검사했지만 지원 형식과 맞지 않았습니다.`);
-    }
-
-    console.log(`⏱️ ${validChatFiles.length}개 유효한 대화 파일 발견`);
+    console.log(`⏱️ ${inputBundle.chatFiles.length}개 유효한 대화 파일 발견`);
 
     // 플랫폼 감지 (대화 파일명 + 첨부파일명 기반)
-    const attachFilenames = files.filter(f => isAttachmentFile(f.name)).map(f => f.name);
-    appState.detectedPlatform = detectPlatform(allChatFiles.map(f => f.name), attachFilenames);
+    appState.detectedPlatform = inputBundle.detectedPlatform;
     updateDiagnosticProcessing({
-        detectedPlatform: appState.detectedPlatform,
-        attachmentCandidateCount: attachFilenames.length,
-        attachmentExtensions: summarizeAttachmentExtensions(attachFilenames)
+        detectedPlatform: appState.detectedPlatform
     });
     setDiagnosticStage(`platform-detected-${appState.detectedPlatform}`);
     console.log(`플랫폼 감지: ${appState.detectedPlatform}`);
 
     // === 캐시 확인 (첫 번째 대화 파일 + 파일 개수 기준) ===
-    const firstFile = validChatFiles[0].file;
-    const cacheKey = generateCacheKey(
-        `${firstFile.name}_count${validChatFiles.length}`,
-        firstFile.size,
-        firstFile.lastModified
-    );
+    const cacheKey = inputBundle.cacheKey;
 
     updateProgress(7, '캐시 확인 중...');
     const cachedData = await getCache(cacheKey);
@@ -2438,7 +2500,9 @@ async function processFolderFiles(files) {
         // 첨부파일은 다시 로드 필요 (Blob URL은 캐시 불가)
         updateProgress(50, '첨부파일 로드 중...');
 
-        const attachmentFiles_arr = files.filter(f => isAttachmentFile(f.name));
+        const attachmentFiles_arr = inputBundle.attachmentFiles
+            .map(entry => entry.file)
+            .filter(Boolean);
 
         let loadedCount = 0;
         for (let i = 0; i < attachmentFiles_arr.length; i++) {
@@ -2471,7 +2535,9 @@ async function processFolderFiles(files) {
     updateProgress(10, `${files.length}개 파일 발견`);
 
     // 첨부파일 필터링
-    const attachmentFiles_arr = files.filter(f => isAttachmentFile(f.name));
+    const attachmentFiles_arr = inputBundle.attachmentFiles
+        .map(entry => entry.file)
+        .filter(Boolean);
 
     updateProgress(30, '첨부파일 로드 중...');
 
@@ -2497,12 +2563,12 @@ async function processFolderFiles(files) {
     updateProgress(60, '대화 내용 파싱 중...');
 
     // 대화 파싱 (단일 또는 병합)
-    if (validChatFiles.length === 1) {
-        parseKakaoChat(validChatFiles[0].content);
+    if (inputBundle.chatFiles.length === 1) {
+        parseKakaoChat(inputBundle.chatFiles[0].content);
     } else {
-        const contents = validChatFiles.map(f => f.content);
+        const contents = inputBundle.chatFiles.map(f => f.content);
         parseMergedChatFiles(contents);
-        console.log(`⏱️ ${validChatFiles.length}개 파일 병합 완료, 총 ${appState.messages.length}개 메시지`);
+        console.log(`⏱️ ${inputBundle.chatFiles.length}개 파일 병합 완료, 총 ${appState.messages.length}개 메시지`);
     }
 
     updateProgress(90, '첨부파일 매핑 중...');
@@ -3618,6 +3684,53 @@ function buildAppVersionTestSnapshot() {
     };
 }
 
+function buildInputBundleTestSnapshot(bundle) {
+    return {
+        sourceType: bundle.sourceType,
+        sourceName: bundle.sourceName,
+        cacheKey: bundle.cacheKey,
+        fileCount: bundle.fileCount,
+        detectedPlatform: bundle.detectedPlatform,
+        chatCandidateCount: bundle.chatCandidates.length,
+        validChatFileCount: bundle.chatFiles.length,
+        attachmentCandidateCount: bundle.attachmentFiles.length,
+        attachmentExtensions: bundle.diagnostics.processing.attachmentExtensions,
+        chatFiles: bundle.chatFiles.map(file => ({
+            name: file.name,
+            filename: file.filename,
+            entryPath: file.entryPath,
+            size: file.size,
+            contentLength: file.content.length
+        })),
+        attachmentFiles: bundle.attachmentFiles.map(file => ({
+            filename: file.filename,
+            entryPath: file.entryPath,
+            size: file.size,
+            hasFile: !!file.file
+        }))
+    };
+}
+
+async function buildInputBundleFromEntriesForTest(sourceType, entries, options = {}) {
+    const adaptedEntries = entries.map(entry => ({
+        name: entry.name,
+        filename: entry.filename || getInputEntryFilename(entry.name),
+        entryPath: entry.entryPath || entry.name,
+        isDirectory: !!entry.isDirectory,
+        size: entry.size || 0,
+        lastModified: entry.lastModified || 0,
+        file: entry.hasFile ? {} : null,
+        readText: () => Promise.resolve(entry.content || '')
+    }));
+    const bundle = await buildInputBundleFromEntries(
+        sourceType,
+        options.sourceName || `${sourceType}-test`,
+        adaptedEntries,
+        { cacheKey: options.cacheKey || '' }
+    );
+    return buildInputBundleTestSnapshot(bundle);
+}
+
 if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
     const testContractVersion = 1;
     const legacyTestApi = {
@@ -3679,6 +3792,7 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
         applyBrowserCapabilityStatus,
         getBrowserCapabilityStatus,
         getCapabilitySnapshot: buildCapabilityTestSnapshot,
+        buildInputBundleFromEntries: buildInputBundleFromEntriesForTest,
         setAttachmentFilesForTest,
         getCachePrivacySnapshot: buildCachePrivacyTestSnapshot,
         clearRuntimeAttachmentFiles,
@@ -3752,6 +3866,9 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
             applyBrowserCapabilityStatus,
             getBrowserCapabilityStatus,
             getCapabilitySnapshot: buildCapabilityTestSnapshot,
+            input: {
+                buildBundleFromEntries: buildInputBundleFromEntriesForTest
+            },
             setAttachmentFilesForTest,
             getCachePrivacySnapshot: buildCachePrivacyTestSnapshot,
             clearRuntimeAttachmentFiles,

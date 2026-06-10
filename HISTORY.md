@@ -1158,6 +1158,40 @@
   * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
   * `npm run test:browser` 통과
 
+## 2-1-68단계: 입력 bundle fixture와 계약 도입 (2026-06-10)
+* 분류:
+  * implementation-only 아키텍처 리팩터링. 사용자 기능/플랫폼 지원 범위 변경 없음.
+* 결정:
+  * ZIP/폴더 입력은 대화 후보, 유효 대화 파일, 첨부 후보, 플랫폼 감지, 캐시 키를 담은 내부 `InputBundle` 계약으로 먼저 정규화한다.
+  * 개인정보 없는 작은 iOS ZIP fixture를 추가해 입력 구조와 파싱/첨부 매핑 결과를 고정한다.
+* 변경:
+  * `buildZipInputBundle`, `buildFolderInputBundle`, `buildInputBundleFromEntries` 추가
+  * `processZipFile`, `processFolderFiles`의 후보 수집/검증/플랫폼 감지 흐름을 입력 bundle 기반으로 정리
+  * 테스트 API `runtime.input.buildBundleFromEntries` 추가
+  * `test/fixtures/ios-zip-minimal/` 원본과 `test/dataset/ios/ios-zip-minimal.zip` fixture 추가
+  * `test/parser-golden/ios-zip-minimal.json` parser golden 추가
+  * `harness/scripts/check_input_bundle.py` 입력 bundle 계약 검사 추가
+  * AGENTS, harness MANIFEST, harness DECISIONS, harness TESTING, tester skill, doc drift checker에 입력 bundle 계약과 검증 명령 반영
+  * 앱 버전 값을 `2026-06-10-input-bundle`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/chat-core.js` 통과
+  * `node --check assets/scripts/chat-domain.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_input_bundle.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

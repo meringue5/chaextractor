@@ -1,0 +1,79 @@
+{
+  "id": "ios-zip-minimal",
+  "description": "iOS ZIP 입력 fixture: 루트 대화 txt와 jpeg/pdf/webp 첨부파일, 12/24시간, 첨부 매핑, 누락 첨부",
+  "platform": "ios",
+  "renderDate": "2026-06-10",
+  "input": {
+    "zip": "test/dataset/ios/ios-zip-minimal.zip",
+    "chatFile": "Talk_2026.6.10 09_30-1.txt"
+  },
+  "expected": {
+    "detectedPlatform": "ios",
+    "messageCount": 10,
+    "dateCount": 1,
+    "dates": ["2026-06-10"],
+    "typeCounts": {
+      "text": 4,
+      "photo": 3,
+      "file": 2,
+      "emoticon": 1
+    },
+    "attachmentRefCount": 6,
+    "attachmentMappedCount": 3,
+    "leaderCountByDate": {
+      "2026-06-10": 2
+    },
+    "messages": [
+      {
+        "index": 0,
+        "user": "채상욱 리더",
+        "message_type": "text",
+        "content": "안녕하세요\n이어서 말합니다"
+      },
+      {
+        "index": 1,
+        "message_type": "photo",
+        "attachment_path": "20260610_093200_1.jpeg"
+      },
+      {
+        "index": 2,
+        "message_type": "file",
+        "attachment_ref": "보고서.pdf",
+        "attachment_path": "20260610_093300.pdf"
+      },
+      {
+        "index": 3,
+        "message_type": "photo",
+        "attachment_path": "20260610_093400_2.webp"
+      },
+      {
+        "index": 5,
+        "message_type": "text",
+        "content": "첫 메시지\n링크 https://example.com\n이어지는 메시지",
+        "has_link": true
+      },
+      {
+        "index": 6,
+        "message_type": "photo",
+        "attachment_path": ""
+      },
+      {
+        "index": 7,
+        "message_type": "file",
+        "attachment_ref": "missing.pdf",
+        "attachment_path": ""
+      },
+      {
+        "index": 9,
+        "message_type": "text",
+        "content": "일반 텍스트\n이어지는 일반 텍스트"
+      }
+    ],
+    "renderedMessageCount": 10,
+    "renderedHtmlContains": [
+      "로딩 중...",
+      "사진 (파일 없음)",
+      "missing-attachment-tooltip"
+    ]
+  }
+}
