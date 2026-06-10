@@ -21,8 +21,9 @@ const DEFAULT_LEADER_FILTER_TARGET = '채상욱 리더';
 const appState = {
     messages: [],
     messagesByDate: {},
-    attachmentFiles: {},  // filename -> Blob URL (캐시)
-    attachmentEntries: {}, // filename -> ZIP entry path (지연 로딩용)
+    attachmentFiles: {},  // legacy mirror: filename -> Blob URL
+    attachmentEntries: {}, // legacy mirror: filename -> ZIP entry path
+    attachmentInventory: createEmptyAttachmentInventory(),
     zipInstance: null,     // ZIP 객체 참조 (지연 로딩용)
     dates: [],
     leaderCountByDate: {},  // 날짜별 필터 대상 사용자 메시지 수
@@ -48,7 +49,7 @@ const DEFAULT_THEME = '1995';
 const DEFAULT_1995_FONT = 'iyagi';
 const APP_STORAGE_VERSION_KEY = 'chaextractorAppVersion';
 const APP_VERSION = document.querySelector('meta[name="app-version"]')?.getAttribute('content')
-    || '2026-06-10-input-bundle';
+    || '2026-06-10-attachment-inventory';
 const APP_VERSION_MANIFEST_URL = 'assets/version.json';
 const APP_UPDATE_RELOAD_TARGET_KEY = 'chaextractorUpdateReloadTarget';
 const APP_UPDATE_QUERY_PARAM = 'appVersion';
@@ -1251,14 +1252,12 @@ function buildCapabilityTestSnapshot() {
     };
 }
 
-function setAttachmentFilesForTest(files) {
-    appState.attachmentFiles = { ...files };
-}
-
 function buildCachePrivacyTestSnapshot() {
     return {
         attachmentFileCount: Object.keys(appState.attachmentFiles).length,
         attachmentEntriesCount: Object.keys(appState.attachmentEntries).length,
+        attachmentInventoryMode: appState.attachmentInventory.mode,
+        attachmentInventoryCount: Object.keys(appState.attachmentInventory.byFilename).length,
         zipInstanceActive: !!appState.zipInstance,
         cacheStatus: cacheStatus.textContent,
         clearCacheDisabled: clearCacheBtn.disabled
@@ -1268,11 +1267,137 @@ function buildCachePrivacyTestSnapshot() {
 applyBrowserCapabilityStatus();
 
 // ========== 런타임 첨부파일/캐시 정리 ==========
+function createEmptyAttachmentInventory() {
+    return {
+        mode: 'none',
+        byFilename: {}
+    };
+}
+
+function setAttachmentInventory(inventory) {
+    const normalized = {
+        mode: inventory.mode || 'none',
+        byFilename: inventory.byFilename || {}
+    };
+    appState.attachmentInventory = normalized;
+    appState.attachmentEntries = {};
+    appState.attachmentFiles = {};
+
+    for (const [filename, item] of Object.entries(normalized.byFilename)) {
+        if (item.entryPath) {
+            appState.attachmentEntries[filename] = item.entryPath;
+        }
+        if (item.url) {
+            appState.attachmentFiles[filename] = item.url;
+        }
+    }
+}
+
+function setZipAttachmentInventory(attachmentFiles) {
+    const byFilename = {};
+    for (const entry of attachmentFiles) {
+        byFilename[entry.filename] = {
+            filename: entry.filename,
+            entryPath: entry.entryPath,
+            source: 'zip'
+        };
+    }
+    setAttachmentInventory({ mode: 'zip', byFilename });
+}
+
+function beginBlobAttachmentInventory() {
+    setAttachmentInventory({ mode: 'blob', byFilename: {} });
+}
+
+function registerBlobAttachment(file, url) {
+    if (!file || !url) return;
+    if (appState.attachmentInventory.mode !== 'blob') {
+        beginBlobAttachmentInventory();
+    }
+    appState.attachmentInventory.byFilename[file.name] = {
+        filename: file.name,
+        url,
+        source: 'blob'
+    };
+    appState.attachmentFiles[file.name] = url;
+}
+
+function setAttachmentFilesForTest(files) {
+    const byFilename = {};
+    for (const [filename, url] of Object.entries(files || {})) {
+        byFilename[filename] = {
+            filename,
+            url,
+            source: 'blob'
+        };
+    }
+    setAttachmentInventory({ mode: 'blob', byFilename });
+}
+
+function getAttachmentInventoryItem(filename) {
+    return appState.attachmentInventory.byFilename[filename] || null;
+}
+
+function getLoadedAttachmentUrl(filename) {
+    const item = getAttachmentInventoryItem(filename);
+    return item?.url || appState.attachmentFiles[filename] || '';
+}
+
+function getZipAttachmentEntryPath(filename) {
+    const item = getAttachmentInventoryItem(filename);
+    return item?.entryPath || appState.attachmentEntries[filename] || '';
+}
+
+function hasAttachmentRuntimeSource(filename) {
+    return !!(getLoadedAttachmentUrl(filename) || getZipAttachmentEntryPath(filename));
+}
+
+function serializeAttachmentInventoryForCache() {
+    if (appState.attachmentInventory.mode !== 'zip') {
+        return null;
+    }
+
+    const entries = {};
+    for (const [filename, item] of Object.entries(appState.attachmentInventory.byFilename)) {
+        if (item.entryPath) {
+            entries[filename] = item.entryPath;
+        }
+    }
+
+    return {
+        mode: 'zip',
+        entries
+    };
+}
+
+function restoreCachedAttachmentInventory(cachedData) {
+    if (cachedData.attachmentInventory?.mode === 'zip') {
+        const byFilename = {};
+        for (const [filename, entryPath] of Object.entries(cachedData.attachmentInventory.entries || {})) {
+            byFilename[filename] = { filename, entryPath, source: 'zip' };
+        }
+        setAttachmentInventory({ mode: 'zip', byFilename });
+        return;
+    }
+
+    if (cachedData.attachmentEntries) {
+        const byFilename = {};
+        for (const [filename, entryPath] of Object.entries(cachedData.attachmentEntries)) {
+            byFilename[filename] = { filename, entryPath, source: 'zip' };
+        }
+        setAttachmentInventory({ mode: 'zip', byFilename });
+    }
+}
+
 function clearRuntimeAttachmentFiles() {
     let revokedCount = 0;
 
     if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
-        for (const url of Object.values(appState.attachmentFiles)) {
+        const urls = new Set([
+            ...Object.values(appState.attachmentFiles),
+            ...Object.values(appState.attachmentInventory.byFilename).map(item => item.url)
+        ]);
+        for (const url of urls) {
             if (typeof url === 'string' && url.startsWith('blob:')) {
                 URL.revokeObjectURL(url);
                 revokedCount++;
@@ -1281,12 +1406,19 @@ function clearRuntimeAttachmentFiles() {
     }
 
     appState.attachmentFiles = {};
+    if (appState.attachmentInventory.mode === 'blob') {
+        appState.attachmentInventory = createEmptyAttachmentInventory();
+    } else {
+        for (const item of Object.values(appState.attachmentInventory.byFilename)) {
+            delete item.url;
+        }
+    }
     return revokedCount;
 }
 
 function resetRuntimeAttachmentState() {
     const revokedCount = clearRuntimeAttachmentFiles();
-    appState.attachmentEntries = {};
+    setAttachmentInventory(createEmptyAttachmentInventory());
     appState.zipInstance = null;
     return revokedCount;
 }
@@ -2361,12 +2493,31 @@ async function processZipFile(file) {
         updateProgress(50, '캐시에서 데이터 로드 중...');
 
         restoreCachedChatData(cachedData);
-        appState.attachmentEntries = cachedData.attachmentEntries || {};
+        restoreCachedAttachmentInventory(cachedData);
 
         // ZIP 인스턴스는 다시 로드 필요
         updateProgress(70, 'ZIP 파일 연결 중...');
         const zip = await getJSZip().loadAsync(file);
         appState.zipInstance = zip;
+        if (!cachedData.detectedPlatform) {
+            const zipEntries = buildZipInputEntries(zip).filter(entry => !entry.isDirectory);
+            const chatFilenames = zipEntries
+                .filter(entry => String(entry.name).match(CHAT_FILE_PATTERN))
+                .map(entry => entry.name);
+            const attachmentFiles = zipEntries
+                .filter(entry => isAttachmentFile(entry.filename))
+                .map(entry => ({
+                    filename: entry.filename,
+                    entryPath: entry.entryPath
+                }));
+            appState.detectedPlatform = detectPlatform(
+                chatFilenames,
+                attachmentFiles.map(entry => entry.filename)
+            );
+            if (Object.keys(appState.attachmentInventory.byFilename).length === 0) {
+                setZipAttachmentInventory(attachmentFiles);
+            }
+        }
 
         updateProgress(100, '완료! (캐시 사용)');
         console.log(`⏱️ 총 처리 시간 (캐시): ${(performance.now() - startTime).toFixed(0)}ms`);
@@ -2404,10 +2555,7 @@ async function processZipFile(file) {
     // 첨부파일 엔트리 매핑 (지연 로딩 - blob 생성 안 함)
     updateProgress(30, '첨부파일 목록 확인 중...');
 
-    // 파일명 -> ZIP 엔트리 경로 매핑
-    for (const entry of inputBundle.attachmentFiles) {
-        appState.attachmentEntries[entry.filename] = entry.entryPath;
-    }
+    setZipAttachmentInventory(inputBundle.attachmentFiles);
     console.log(`⏱️ 첨부파일 ${inputBundle.attachmentFiles.length}개 발견 (지연 로딩 준비)`);
 
     // 플랫폼 감지 (대화 파일명 + 첨부파일명 기반)
@@ -2449,7 +2597,8 @@ async function processZipFile(file) {
         messagesByDate: appState.messagesByDate,
         leaderCountByDate: appState.leaderCountByDate,
         dates: appState.dates,
-        attachmentEntries: appState.attachmentEntries
+        detectedPlatform: appState.detectedPlatform,
+        attachmentInventory: serializeAttachmentInventoryForCache()
     });
 
     updateProgress(100, '완료!');
@@ -2504,12 +2653,13 @@ async function processFolderFiles(files) {
             .map(entry => entry.file)
             .filter(Boolean);
 
+        beginBlobAttachmentInventory();
         let loadedCount = 0;
         for (let i = 0; i < attachmentFiles_arr.length; i++) {
             const file = attachmentFiles_arr[i];
             try {
                 const blobUrl = URL.createObjectURL(file);
-                appState.attachmentFiles[file.name] = blobUrl;
+                registerBlobAttachment(file, blobUrl);
                 loadedCount++;
             } catch (err) {
                 // 오류 무시
@@ -2543,11 +2693,12 @@ async function processFolderFiles(files) {
 
     // 첨부파일 로드
     const attachStart = performance.now();
+    beginBlobAttachmentInventory();
     let loadedCount = 0;
     for (const file of attachmentFiles_arr) {
         try {
             const blobUrl = URL.createObjectURL(file);
-            appState.attachmentFiles[file.name] = blobUrl;
+            registerBlobAttachment(file, blobUrl);
             loadedCount++;
         } catch (err) {
             // 오류 무시
@@ -2590,7 +2741,8 @@ async function processFolderFiles(files) {
         messages: appState.messages,
         messagesByDate: appState.messagesByDate,
         leaderCountByDate: appState.leaderCountByDate,
-        dates: appState.dates
+        dates: appState.dates,
+        detectedPlatform: appState.detectedPlatform
     });
 
     updateProgress(100, '완료!');
@@ -2769,17 +2921,25 @@ function findAttachmentByReference(filenameSource, ref) {
 // ========== 첨부파일 지연 로딩 ==========
 async function loadAttachment(filename) {
     // 이미 로드된 경우 캐시에서 반환
-    if (appState.attachmentFiles[filename]) {
-        return appState.attachmentFiles[filename];
+    const loadedUrl = getLoadedAttachmentUrl(filename);
+    if (loadedUrl) {
+        return loadedUrl;
     }
 
     // ZIP에서 지연 로딩
-    const entryPath = appState.attachmentEntries[filename];
+    const entryPath = getZipAttachmentEntryPath(filename);
     if (entryPath && appState.zipInstance) {
         try {
             const blob = await appState.zipInstance.files[entryPath].async('blob');
             const blobUrl = URL.createObjectURL(blob);
-            appState.attachmentFiles[filename] = blobUrl;  // 캐시
+            appState.attachmentInventory.byFilename[filename] = {
+                ...(appState.attachmentInventory.byFilename[filename] || { filename }),
+                filename,
+                entryPath,
+                url: blobUrl,
+                source: 'zip'
+            };
+            appState.attachmentFiles[filename] = blobUrl;  // legacy mirror
             return blobUrl;
         } catch (err) {
             console.error(`첨부파일 로드 실패: ${filename}`, err);
@@ -2821,6 +2981,7 @@ function generateCacheKey(fileName, fileSize, lastModified) {
 function restoreCachedChatData(cachedData) {
     appState.messages = cachedData.messages || [];
     appState.messagesByDate = cachedData.messagesByDate || {};
+    appState.detectedPlatform = cachedData.detectedPlatform || appState.detectedPlatform;
 
     const cachedDates = Array.isArray(cachedData.dates) && cachedData.dates.length > 0
         ? cachedData.dates
@@ -2933,10 +3094,7 @@ async function cleanOldCache() {
 // ========== 첨부파일 매핑 ==========
 // 타임스탬프 기반 매칭 (±30분 허용)
 function mapAttachments() {
-    // ZIP인 경우 attachmentEntries 사용, 폴더인 경우 attachmentFiles 사용
-    const filenameSource = Object.keys(appState.attachmentEntries).length > 0
-        ? appState.attachmentEntries
-        : appState.attachmentFiles;
+    const filenameSource = appState.attachmentInventory.byFilename;
 
     let matchedCount = 0;
 
@@ -3332,15 +3490,15 @@ function renderChat(date) {
         const attachId = `attach-${index}`;
 
         if (msg.message_type === 'photo') {
-            if (msg.attachment_path && appState.attachmentFiles[msg.attachment_path]) {
+            const loadedUrl = msg.attachment_path ? getLoadedAttachmentUrl(msg.attachment_path) : '';
+            if (loadedUrl) {
                 // 이미 로드됨 (캐시)
-                const url = appState.attachmentFiles[msg.attachment_path];
                 attachmentHtml = `
                     <div class="attachment">
-                        <img src="${url}" onclick="showImage('${url}', this)" alt="사진">
+                        <img src="${loadedUrl}" onclick="showImage('${loadedUrl}', this)" alt="사진">
                     </div>
                 `;
-            } else if (msg.attachment_path && appState.attachmentEntries[msg.attachment_path]) {
+            } else if (msg.attachment_path && hasAttachmentRuntimeSource(msg.attachment_path)) {
                 // 지연 로딩 필요
                 attachmentHtml = `
                     <div class="attachment" id="${attachId}">
@@ -3353,16 +3511,16 @@ function renderChat(date) {
                 attachmentHtml = renderMissingPhotoAttachment('파일 없음');
             }
         } else if (msg.message_type === 'file') {
-            if (msg.attachment_path && appState.attachmentFiles[msg.attachment_path]) {
-                const url = appState.attachmentFiles[msg.attachment_path];
+            const loadedUrl = msg.attachment_path ? getLoadedAttachmentUrl(msg.attachment_path) : '';
+            if (loadedUrl) {
                 attachmentHtml = `
                     <div class="attachment">
-                        <a class="file-link" href="${url}" target="_blank" rel="noopener">
+                        <a class="file-link" href="${loadedUrl}" target="_blank" rel="noopener">
                             📎 ${escapeHtml(msg.attachment_ref || msg.attachment_path)}
                         </a>
                     </div>
                 `;
-            } else if (msg.attachment_path && appState.attachmentEntries[msg.attachment_path]) {
+            } else if (msg.attachment_path && hasAttachmentRuntimeSource(msg.attachment_path)) {
                 attachmentHtml = `
                     <div class="attachment" id="${attachId}">
                         <div class="loading-placeholder">📎 로딩 중...</div>
@@ -3736,15 +3894,14 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
     const legacyTestApi = {
         parseChat(content, options = {}) {
             appState.detectedPlatform = options.platform || appState.detectedPlatform;
-            appState.attachmentEntries = {};
-            appState.attachmentFiles = {};
+            setAttachmentInventory(createEmptyAttachmentInventory());
             appState.zipInstance = null;
 
             if (options.attachments) {
-                for (const filename of options.attachments) {
-                    const base = filename.split('/').pop();
-                    appState.attachmentEntries[base] = filename;
-                }
+                setZipAttachmentInventory(options.attachments.map(filename => ({
+                    filename: filename.split('/').pop(),
+                    entryPath: filename
+                })));
             }
 
             parseKakaoChat(content);
@@ -3756,15 +3913,14 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
         },
         parseMergedChatFiles(contents, options = {}) {
             appState.detectedPlatform = options.platform || appState.detectedPlatform;
-            appState.attachmentEntries = {};
-            appState.attachmentFiles = {};
+            setAttachmentInventory(createEmptyAttachmentInventory());
             appState.zipInstance = null;
 
             if (options.attachments) {
-                for (const filename of options.attachments) {
-                    const base = filename.split('/').pop();
-                    appState.attachmentEntries[base] = filename;
-                }
+                setZipAttachmentInventory(options.attachments.map(filename => ({
+                    filename: filename.split('/').pop(),
+                    entryPath: filename
+                })));
             }
 
             parseMergedChatFiles(contents);

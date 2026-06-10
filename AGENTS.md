@@ -228,7 +228,8 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 - `isAttachmentFile(filename)` — iOS/Android 첨부파일 패턴 확인
 - `parseAttachmentFilename(filename)` — iOS 파일명에서 datetime 추출
 - `findClosestAttachment(list, targetDt, type, toleranceMinutes)` — 타임스탬프 기반 매핑 (iOS ±30분)
-- `mapAttachments()` — 메시지-첨부파일 연결
+- `attachmentInventory` — ZIP entryPath 또는 폴더 Blob URL을 파일명 기준으로 정규화한 런타임 첨부 목록
+- `mapAttachments()` — `attachmentInventory` 기반 메시지-첨부파일 연결
 - `loadAttachment(filename)` — ZIP에서 지연 로딩 + Blob URL 생성
 - `loadAndRenderAttachment(elementId, filename, type, ref)` — 첨부파일 로딩 + DOM 업데이트
 - `renderMissingPhotoAttachment(reason)` — 사진 파일 누락/로드 실패 안내 렌더링
@@ -312,6 +313,7 @@ UI 렌더링:
 - `messagesByDate` — 날짜별 메시지 그룹 (YYYY-MM-DD → [])
 - `attachmentFiles` — 파일명 → Blob URL (폴더 모드)
 - `attachmentEntries` — 파일명 → ZIP 엔트리 경로 (ZIP 모드)
+- `attachmentInventory` — 첨부파일 런타임 원천. ZIP은 `entryPath`, 폴더는 Blob URL을 담고 캐시에는 직렬화 가능한 ZIP entryPath만 저장
 - `zipInstance` — JSZip 인스턴스 (지연 로딩용)
 - `dates` — 날짜 배열 (내림차순)
 - `leaderCountByDate` — 날짜별 필터 대상 사용자 발언 수

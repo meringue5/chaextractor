@@ -1192,6 +1192,40 @@
   * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
   * `npm run test:browser` 통과
 
+## 2-1-69단계: 첨부파일 inventory와 캐시 경계 정리 (2026-06-10)
+* 분류:
+  * implementation-only 아키텍처 리팩터링. 사용자 기능/플랫폼 지원 범위 변경 없음.
+* 결정:
+  * 첨부파일 런타임 원천은 `attachmentInventory`로 모은다.
+  * ZIP 첨부는 캐시에 저장 가능한 entryPath로, 폴더 첨부는 런타임 Blob URL/File 참조로 분리한다.
+  * 캐시 payload에는 Blob URL이나 File 객체를 저장하지 않는다.
+* 변경:
+  * `attachmentInventory`와 ZIP/blob inventory helper 추가
+  * `mapAttachments`, `loadAttachment`, 메시지 렌더링의 첨부 존재 판단을 inventory 기반으로 변경
+  * ZIP 캐시 payload에 `detectedPlatform`과 직렬화 가능한 `attachmentInventory`를 저장하도록 변경
+  * 캐시 복원 시 플랫폼과 ZIP attachment inventory를 복원하도록 변경
+  * 폴더 캐시 hit/miss 모두 현재 입력 파일에서 Blob URL inventory를 재구성하도록 정리
+  * AGENTS, harness MANIFEST, harness DECISIONS에 첨부 inventory/캐시 경계 반영
+  * 앱 버전 값을 `2026-06-10-attachment-inventory`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/chat-core.js` 통과
+  * `node --check assets/scripts/chat-domain.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_input_bundle.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트
