@@ -181,6 +181,14 @@ def main() -> int:
         check("python3 harness/scripts/check_diagnostic_report.py" in tester_skill, "tester skill must include diagnostic report check", errors)
         check("GitHub Issue Form은 개발자용 보조 채널" in read("harness/DECISIONS.md"), "DECISIONS must keep GitHub as a developer fallback, not primary reporting", errors)
 
+    if "__CHAEXTRACTOR_TEST__" in runtime:
+        check("테스트 API 계약" in agents, "AGENTS must document the test API contract", errors)
+        check("contractVersion: 1" in agents, "AGENTS must document the current test API contract version", errors)
+        check("parser`/`ui`/`runtime`/`diagnostics`/`state" in manifest, "MANIFEST must classify test API namespaces", errors)
+        check("테스트 API는 버전 있는 내부 하네스 계약" in decisions, "DECISIONS must record the test API contract policy", errors)
+        check("window.__CHAEXTRACTOR_TEST__" in testing, "TESTING must document the test API entrypoint", errors)
+        check("contractVersion: 1" in testing, "TESTING must document the current test API contract version", errors)
+
     if "captureModal" in runtime or "buildCaptureText" in runtime:
         requirements = read("harness/REQUIREMENTS.md")
         check("갈무리 TXT" in readme, "README must document capture TXT behavior", errors)

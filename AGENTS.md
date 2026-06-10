@@ -283,6 +283,15 @@ UI 렌더링:
 모달:
 - `openModal(modalId)` / `closeModal(modalId)` — 모달 열기/닫기
 
+## 테스트 API 계약
+`window.__CHAEXTRACTOR_TEST__`는 `window.__CHAEXTRACTOR_ENABLE_TEST_API__`가 설정된 하네스 환경에서만 노출하는 테스트 전용 내부 계약이다. 현재 계약 버전은 `contractVersion: 1`이며, 하네스는 아래 네임스페이스 API를 우선 사용한다. 기존 평면 함수들은 호환용으로만 유지한다.
+
+- `parser` — `parseChat`, `parseMergedChatFiles`, `classifyContent`, `getSnapshot`
+- `ui` — `initApp`, `selectDate`, `renderChat`, `renderDateList`, `getSnapshot`, 사용자 필터/테마/폰트, `capture`, `navigation`, `modals`
+- `runtime` — 브라우저 기능 제한, 첨부파일 런타임 상태, 캐시, 앱 버전 업데이트 확인
+- `diagnostics` — 진단 입력/단계/오류 기록, 리포트/제보 URL 생성, 진단 스냅샷
+- `state` — 파서/UI 스냅샷 보조 경로
+
 유틸리티:
 - `isLeader(username)` — 현재 필터 대상 사용자 여부 확인 (기본값: `채상욱 리더`)
 - `escapeHtml(text)` — HTML 이스케이프
@@ -310,6 +319,8 @@ UI 렌더링:
 - `leaderFilterActive` — 사용자 필터 상태
 - `leaderFilterTarget` — 현재 필터 대상 사용자명 (기본값: `채상욱 리더`)
 - `detectedPlatform` — 'ios', 'android', 'windows', 'macos'
+
+별도 런타임 참조:
 - `linkSidebar`/`linkSidebarToggle` — 오른쪽 링크 패널 DOM 상태 제어
 - `diagnosticState` — 안전 진단 리포트용 처리 단계, 입력 요약, 최근 오류 이벤트
 

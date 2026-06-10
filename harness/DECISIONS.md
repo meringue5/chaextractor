@@ -23,6 +23,7 @@
 | 가이드 스크린샷은 `assets/guide/*.png` 개별 파일로 둔다. | 채택 | 내용 이미지라 스프라이트보다 alt/lazy loading/cache/replacement가 유리 |
 | Open Graph 이미지는 `assets/og-image.png`에 둔다. | 채택 | 런타임 정적 이미지 자산 위치 일관화 |
 | 하네스, fixture, 문서, 테스트 도구는 앱 런타임 밖의 보조 파일로 둔다. | 채택 | 앱 런타임과 개발 검증 레이어 분리 |
+| 테스트 API는 버전 있는 내부 하네스 계약으로 둔다. | 채택 | `window.__CHAEXTRACTOR_TEST__`는 테스트 플래그가 켜진 환경에서만 노출한다. 현재 `contractVersion: 1`이며 `parser`/`ui`/`runtime`/`diagnostics`/`state` 네임스페이스를 정식 하네스 호출 경로로 사용한다. 기존 평면 함수는 호환용으로 유지 |
 | 대화 원문과 첨부파일은 클라이언트 로컬에서 처리한다. | 채택 | 개인정보 표준 |
 | iOS, Android, Windows, macOS는 공식 지원 플랫폼으로 유지한다. | 채택 | README/AGENTS 약속, parser golden fixture |
 | Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원한다. | 채택 | `windows-minimal` fixture/expected 추가 |

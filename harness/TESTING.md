@@ -6,7 +6,7 @@
 
 ### Parser golden
 
-`assets/scripts/chat-core.js`, `assets/scripts/chat-domain.js`, `assets/scripts/app.js`의 실제 파서/도메인 함수를 Node VM에서 호출해 fixture expected와 비교한다.
+`assets/scripts/chat-core.js`, `assets/scripts/chat-domain.js`, `assets/scripts/app.js`의 실제 파서/도메인 함수를 Node VM에서 호출해 fixture expected와 비교한다. 앱 내부 호출은 테스트 플래그로 노출되는 `window.__CHAEXTRACTOR_TEST__` 계약을 사용하며, 현재 계약은 `contractVersion: 1`과 `parser`/`ui`/`runtime`/`diagnostics`/`state` 네임스페이스를 기준으로 한다.
 
 ```bash
 python3 harness/scripts/run_parser_golden.py
@@ -61,7 +61,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; p
 
 `check_cache_date_sort.py`는 캐시 hit 복원 시 날짜 목록이 항상 최신순으로 정규화되는지 검사한다.
 
-`check_ui_smoke.py`는 Node VM에서 실제 앱 UI 함수를 호출해 fixture 로드, 날짜 선택, 검색 날짜 필터, 사용자 지정 필터, 갈무리 TXT 생성, 테마/폰트 설정, 설정 모달, 좌우 사이드바 열기/닫기와 모바일 상호 배제를 검사한다. Playwright 같은 실제 브라우저 smoke는 의존성을 도입할 때 이 명령 위에 확장한다.
+`check_ui_smoke.py`는 Node VM에서 테스트 API 계약의 `parser`, `ui`, `ui.capture`, `ui.navigation`, `ui.modals` 네임스페이스를 통해 실제 앱 UI 함수를 호출해 fixture 로드, 날짜 선택, 검색 날짜 필터, 사용자 지정 필터, 갈무리 TXT 생성, 테마/폰트 설정, 설정 모달, 좌우 사이드바 열기/닫기와 모바일 상호 배제를 검사한다. Playwright 같은 실제 브라우저 smoke는 의존성을 도입할 때 이 명령 위에 확장한다.
 
 `check_capability_notice.py`는 `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 지원 여부에 따라 안내 문구와 업로드 제한 상태가 올바른지 검사한다.
 

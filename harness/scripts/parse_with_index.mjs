@@ -305,6 +305,10 @@ if (!windowObject.__CHAEXTRACTOR_TEST__) {
   throw new Error('assets/scripts/app.js did not expose __CHAEXTRACTOR_TEST__');
 }
 
+if (windowObject.__CHAEXTRACTOR_TEST__.contractVersion !== 1) {
+  throw new Error('assets/scripts/app.js exposed an unsupported __CHAEXTRACTOR_TEST__ contractVersion');
+}
+
 if (input.mode === 'modalEscape') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
   const modalIds = ['settingsModal', 'captureModal', 'reportIssueModal'];
@@ -312,21 +316,21 @@ if (input.mode === 'modalEscape') {
 
   for (const modalId of modalIds) {
     let prevented = false;
-    api.openModal(modalId);
-    const before = api.isModalOpen(modalId);
-    api.handleModalKeydown({
+    api.ui.modals.open(modalId);
+    const before = api.ui.modals.isOpen(modalId);
+    api.ui.modals.handleKeydown({
       key: 'Escape',
       preventDefault() {
         prevented = true;
       }
     });
-    results.push({ modalId, before, after: api.isModalOpen(modalId), prevented });
+    results.push({ modalId, before, after: api.ui.modals.isOpen(modalId), prevented });
   }
 
   let prevented = false;
-  api.showImage('blob:test-image');
-  const before = api.isModalOpen('imageModal');
-  api.handleModalKeydown({
+  api.ui.modals.showImage('blob:test-image');
+  const before = api.ui.modals.isOpen('imageModal');
+  api.ui.modals.handleKeydown({
     key: 'Escape',
     preventDefault() {
       prevented = true;
@@ -335,7 +339,7 @@ if (input.mode === 'modalEscape') {
   results.push({
     modalId: 'imageModal',
     before,
-    after: api.isModalOpen('imageModal'),
+    after: api.ui.modals.isOpen('imageModal'),
     prevented
   });
 
@@ -353,97 +357,97 @@ if (input.mode === 'diagnosticReport') {
     '사진',
     '오류 재현용 짧은 파일'
   ].join('\n');
-  api.recordDiagnosticInput([
+  api.diagnostics.recordInput([
     { name: 'private-chat-name.txt', size: 2048 },
     { name: '20260517_120000.jpeg', size: 4096 }
   ], 'testInput');
-  api.updateDiagnosticProcessing({
+  api.diagnostics.updateProcessing({
     route: 'folder',
     chatCandidateCount: 1,
     attachmentCandidateCount: 1,
     attachmentExtensions: ['jpeg:1']
   });
-  api.recordDiagnosticChatCandidate(api.buildDiagnosticChatCandidate(
+  api.diagnostics.recordChatCandidate(api.diagnostics.buildDiagnosticChatCandidate(
     'private-chat-name.txt',
     'testInput',
-    api.analyzeChatFileContent(invalidChatContent),
+    api.diagnostics.analyzeChatFileContent(invalidChatContent),
     { size: 2048, entryPath: 'Talk/private-chat-name.txt' }
   ));
-  api.setDiagnosticStage('test-processing');
-  api.captureDiagnosticError(new Error('synthetic diagnostic failure in private-chat-name.txt'), {
+  api.diagnostics.setStage('test-processing');
+  api.diagnostics.captureError(new Error('synthetic diagnostic failure in private-chat-name.txt'), {
     type: 'test-error',
     stage: 'test-processing',
     filename: 'http://127.0.0.1/assets/scripts/app.js',
     line: 123,
     column: 4
   });
-  api.openDiagnosticReportModal();
-  process.stdout.write(JSON.stringify(api.getDiagnosticSnapshot(), null, 2));
+  api.diagnostics.openReportModal();
+  process.stdout.write(JSON.stringify(api.diagnostics.getSnapshot(), null, 2));
   process.exit(0);
 }
 
 if (input.mode === 'cacheDateSort') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
-  api.restoreCachedChatData(input.cachedData || {});
-  process.stdout.write(JSON.stringify(api.getSnapshot(), null, 2));
+  api.runtime.restoreCachedChatData(input.cachedData || {});
+  process.stdout.write(JSON.stringify(api.parser.getSnapshot(), null, 2));
   process.exit(0);
 }
 
 if (input.mode === 'uiSmoke') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
-  const parseResult = api.parseChat(input.content, {
+  const parseResult = api.parser.parseChat(input.content, {
     platform: input.platform,
     attachments: input.attachments || [],
     mapAttachments: true
   });
 
-  api.initApp();
-  const afterInit = api.getUiSnapshot();
-  const beforeSelectCaptureAttempt = api.openCaptureModal();
-  const afterCaptureBeforeSelect = api.getUiSnapshot();
+  api.ui.initApp();
+  const afterInit = api.ui.getSnapshot();
+  const beforeSelectCaptureAttempt = api.ui.capture.openModal();
+  const afterCaptureBeforeSelect = api.ui.getSnapshot();
 
-  api.selectDate(input.selectDate || parseResult.dates[0]);
-  const afterSelect = api.getUiSnapshot();
+  api.ui.selectDate(input.selectDate || parseResult.dates[0]);
+  const afterSelect = api.ui.getSnapshot();
 
-  api.openCaptureModal();
-  const afterCaptureModal = api.getCaptureSnapshot();
+  api.ui.capture.openModal();
+  const afterCaptureModal = api.ui.capture.getSnapshot();
 
-  api.renderDateList(input.searchQuery || '');
-  const afterSearch = api.getUiSnapshot();
+  api.ui.renderDateList(input.searchQuery || '');
+  const afterSearch = api.ui.getSnapshot();
 
-  api.setLeaderFilterForTest(true, '테스터');
-  const afterLeaderFilter = api.getUiSnapshot();
-  api.openCaptureModal();
-  const afterFilteredCaptureModal = api.getCaptureSnapshot();
+  api.ui.setLeaderFilterForTest(true, '테스터');
+  const afterLeaderFilter = api.ui.getSnapshot();
+  api.ui.capture.openModal();
+  const afterFilteredCaptureModal = api.ui.capture.getSnapshot();
 
-  api.applyTheme('1995');
-  const afterTheme1995 = api.getUiSnapshot();
+  api.ui.applyTheme('1995');
+  const afterTheme1995 = api.ui.getSnapshot();
 
-  api.applyTheme('dark');
-  api.applyFont('ridi');
-  const afterSettings = api.getUiSnapshot();
+  api.ui.applyTheme('dark');
+  api.ui.applyFont('ridi');
+  const afterSettings = api.ui.getSnapshot();
 
-  api.openModal('settingsModal');
-  const afterSettingsModal = api.getUiSnapshot();
+  api.ui.modals.open('settingsModal');
+  const afterSettingsModal = api.ui.getSnapshot();
 
-  api.openSidebar();
-  const afterSidebarOpen = api.getUiSnapshot();
+  api.ui.navigation.openSidebar();
+  const afterSidebarOpen = api.ui.getSnapshot();
 
-  api.closeSidebar();
-  const afterSidebarClose = api.getUiSnapshot();
+  api.ui.navigation.closeSidebar();
+  const afterSidebarClose = api.ui.getSnapshot();
 
   mobileMatches = true;
-  api.openSidebar();
-  const afterMobileSidebarOpen = api.getUiSnapshot();
+  api.ui.navigation.openSidebar();
+  const afterMobileSidebarOpen = api.ui.getSnapshot();
 
-  api.openLinkSidebar();
-  const afterMobileLinkSidebarOpen = api.getUiSnapshot();
+  api.ui.navigation.openLinkSidebar();
+  const afterMobileLinkSidebarOpen = api.ui.getSnapshot();
 
-  api.openSidebar();
-  const afterMobileSidebarReopen = api.getUiSnapshot();
+  api.ui.navigation.openSidebar();
+  const afterMobileSidebarReopen = api.ui.getSnapshot();
 
-  api.closeMobilePanels();
-  const afterMobilePanelsClose = api.getUiSnapshot();
+  api.ui.navigation.closeMobilePanels();
+  const afterMobilePanelsClose = api.ui.getSnapshot();
 
   process.stdout.write(JSON.stringify({
     parseResult,
@@ -470,25 +474,25 @@ if (input.mode === 'uiSmoke') {
 
 if (input.mode === 'capabilityNotice') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
-  const result = api.applyBrowserCapabilityStatus(input.status);
+  const result = api.runtime.applyBrowserCapabilityStatus(input.status);
   process.stdout.write(JSON.stringify({
     result,
-    snapshot: api.getCapabilitySnapshot()
+    snapshot: api.runtime.getCapabilitySnapshot()
   }, null, 2));
   process.exit(0);
 }
 
 if (input.mode === 'cachePrivacy') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
-  api.setAttachmentFilesForTest({
+  api.runtime.setAttachmentFilesForTest({
     image: 'blob:test-image',
     file: 'blob:test-file',
     external: 'https://example.com/not-a-blob'
   });
-  const beforeCleanup = api.getCachePrivacySnapshot();
-  const revokedCount = api.resetRuntimeAttachmentState();
-  const afterCleanup = api.getCachePrivacySnapshot();
-  const clearCacheResult = await api.clearAllCache();
+  const beforeCleanup = api.runtime.getCachePrivacySnapshot();
+  const revokedCount = api.runtime.resetRuntimeAttachmentState();
+  const afterCleanup = api.runtime.getCachePrivacySnapshot();
+  const clearCacheResult = await api.runtime.clearAllCache();
 
   process.stdout.write(JSON.stringify({
     beforeCleanup,
@@ -528,7 +532,7 @@ if (input.mode === 'performanceSmoke') {
   const messageCount = input.messageCount || 10000;
   const content = buildSyntheticAndroidChat(messageCount);
   const start = process.hrtime.bigint();
-  const result = api.parseChat(content, {
+  const result = api.parser.parseChat(content, {
     platform: 'android',
     attachments: [],
     mapAttachments: false
@@ -545,7 +549,7 @@ if (input.mode === 'performanceSmoke') {
   process.exit(0);
 }
 
-let result = windowObject.__CHAEXTRACTOR_TEST__.parseChat(input.content, {
+let result = windowObject.__CHAEXTRACTOR_TEST__.parser.parseChat(input.content, {
   platform: input.platform,
   attachments: input.attachments || [],
   mapAttachments: true
@@ -554,7 +558,7 @@ let result = windowObject.__CHAEXTRACTOR_TEST__.parseChat(input.content, {
 if (input.renderDate) {
   result = {
     ...result,
-    rendered: windowObject.__CHAEXTRACTOR_TEST__.renderChat(input.renderDate)
+    rendered: windowObject.__CHAEXTRACTOR_TEST__.ui.renderChat(input.renderDate)
   };
 }
 

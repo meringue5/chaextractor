@@ -48,7 +48,7 @@ const DEFAULT_THEME = '1995';
 const DEFAULT_1995_FONT = 'iyagi';
 const APP_STORAGE_VERSION_KEY = 'chaextractorAppVersion';
 const APP_VERSION = document.querySelector('meta[name="app-version"]')?.getAttribute('content')
-    || '2026-06-10-app-state';
+    || '2026-06-10-test-api-contract';
 const APP_VERSION_MANIFEST_URL = 'assets/version.json';
 const APP_UPDATE_RELOAD_TARGET_KEY = 'chaextractorUpdateReloadTarget';
 const APP_UPDATE_QUERY_PARAM = 'appVersion';
@@ -3619,7 +3619,8 @@ function buildAppVersionTestSnapshot() {
 }
 
 if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
-    window.__CHAEXTRACTOR_TEST__ = {
+    const testContractVersion = 1;
+    const legacyTestApi = {
         parseChat(content, options = {}) {
             appState.detectedPlatform = options.platform || appState.detectedPlatform;
             appState.attachmentEntries = {};
@@ -3707,6 +3708,78 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
         getCaptureSnapshot: buildCaptureTestSnapshot,
         checkForAppUpdate,
         getAppVersionSnapshot: buildAppVersionTestSnapshot
+    };
+
+    window.__CHAEXTRACTOR_TEST__ = {
+        contractVersion: testContractVersion,
+        parser: {
+            parseChat: legacyTestApi.parseChat,
+            parseMergedChatFiles: legacyTestApi.parseMergedChatFiles,
+            classifyContent,
+            getSnapshot: buildParserTestSnapshot
+        },
+        ui: {
+            initApp,
+            selectDate,
+            renderChat: buildRenderedChatTestSnapshot,
+            renderDateList,
+            getSnapshot: buildUiTestSnapshot,
+            setLeaderFilterForTest,
+            applyTheme,
+            applyFont,
+            capture: {
+                openModal: openCaptureModal,
+                updateText: updateCaptureText,
+                buildText: buildCaptureText,
+                getSnapshot: buildCaptureTestSnapshot
+            },
+            navigation: {
+                openSidebar,
+                closeSidebar,
+                openLinkSidebar,
+                closeLinkSidebar,
+                closeMobilePanels
+            },
+            modals: {
+                open: openModal,
+                closeActive: closeActiveModal,
+                handleKeydown: handleModalKeydown,
+                isOpen: isModalOpen,
+                showImage
+            }
+        },
+        runtime: {
+            applyBrowserCapabilityStatus,
+            getBrowserCapabilityStatus,
+            getCapabilitySnapshot: buildCapabilityTestSnapshot,
+            setAttachmentFilesForTest,
+            getCachePrivacySnapshot: buildCachePrivacyTestSnapshot,
+            clearRuntimeAttachmentFiles,
+            resetRuntimeAttachmentState,
+            clearAllCache,
+            restoreCachedChatData,
+            getAppVersionSnapshot: buildAppVersionTestSnapshot,
+            checkForAppUpdate
+        },
+        diagnostics: {
+            recordInput: recordDiagnosticInput,
+            setStage: setDiagnosticStage,
+            updateProcessing: updateDiagnosticProcessing,
+            recordChatCandidate: recordDiagnosticChatCandidate,
+            analyzeChatFileContent,
+            buildDiagnosticChatCandidate,
+            captureError: captureDiagnosticError,
+            buildReport: buildDiagnosticReport,
+            buildIssueUrl: buildDiagnosticIssueUrl,
+            buildFilename: buildDiagnosticFilename,
+            openReportModal: openDiagnosticReportModal,
+            getSnapshot: buildDiagnosticTestSnapshot
+        },
+        state: {
+            getSnapshot: buildParserTestSnapshot,
+            getUiSnapshot: buildUiTestSnapshot
+        },
+        ...legacyTestApi
     };
 }
 

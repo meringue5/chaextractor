@@ -1127,6 +1127,37 @@
   * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
   * `npm run test:browser` 통과
 
+## 2-1-67단계: 테스트 API 계약화 (2026-06-10)
+* 분류:
+  * implementation-only 하네스 계약 정리. 사용자 기능/플랫폼 지원 범위 변경 없음.
+* 결정:
+  * `window.__CHAEXTRACTOR_TEST__`는 테스트 플래그가 켜진 Node VM/하네스 환경에서만 노출하는 내부 계약으로 둔다.
+  * 현재 계약 버전은 `contractVersion: 1`이며, 정식 하네스 호출 경로는 `parser`, `ui`, `runtime`, `diagnostics`, `state` 네임스페이스다.
+  * 기존 평면 함수 API는 바로 제거하지 않고 호환용으로 유지한다.
+* 변경:
+  * `assets/scripts/app.js`의 테스트 API를 네임스페이스 구조와 계약 버전으로 재구성
+  * Node VM 하네스 `harness/scripts/parse_with_index.mjs`가 새 테스트 API 네임스페이스를 사용하도록 변경
+  * AGENTS, harness MANIFEST, harness DECISIONS, harness TESTING에 테스트 API 계약을 문서화
+  * doc drift checker가 테스트 API 계약 문서화를 점검하도록 확장
+  * 앱 버전 값을 `2026-06-10-test-api-contract`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/chat-core.js` 통과
+  * `node --check assets/scripts/chat-domain.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트
