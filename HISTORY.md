@@ -947,6 +947,124 @@
   * `python3 harness/scripts/check_doc_drift.py` 통과
   * `python3 harness/scripts/check_ui_smoke.py` 통과
 
+## 2-1-61단계: 공식 서비스 경로와 ES module 진입점 전환 (2026-06-07)
+* 결정:
+  * 공식 서비스 제공 경로는 GitHub Pages로 둔다.
+  * 로컬 검증/개인 사용 경로로 `file://` 직접 실행을 유지한다.
+  * JavaScript는 빌드 산출물을 만들지 않는 ES module 기반 분리를 허용한다.
+* 변경:
+  * `index.html`의 앱 스크립트 로드를 `type="module"`로 전환
+  * 앱 버전 값을 `2026-06-07-es-module-entry`로 갱신
+  * README, AGENTS, harness MANIFEST, harness DECISIONS에 GitHub Pages 공식 서비스 경로와 `file://` 로컬 실행 유지 결정을 반영
+  * module scope에서도 JSZip 의존성 확인 오류가 명시적으로 드러나도록 `getJSZip()` 헬퍼 추가
+* 검증:
+  * 사용자 수동 확인: `file://` ES module fixture가 macOS Firefox, Chrome, Safari에서 로드됨
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과
+
+## 2-1-62단계: 저수준 대화 도메인 헬퍼 ES module 분리 (2026-06-07)
+* 분류:
+  * implementation-only 아키텍처 리팩터링. 사용자 기능/플랫폼 지원 범위 변경 없음.
+* 변경:
+  * 정규식 패턴, 플랫폼 감지, 첨부파일 파일명 판별/파싱, URL 감지, CSV 레코드 파서, macOS CSV 헬퍼, 메시지 타입 분류를 `assets/scripts/domain/chat-domain.js`로 분리
+  * `assets/scripts/app.js`는 새 도메인 모듈을 import하도록 변경하고 중복 정의 제거
+  * Node VM 하네스 `harness/scripts/parse_with_index.mjs`가 ES module import를 실제 모듈 import + VM context 주입으로 처리하도록 보강
+  * `AGENTS.md`, `README.md`, `harness/MANIFEST.md`, `harness/DECISIONS.md`, `harness/TESTING.md`에 새 JS module 경계를 반영
+  * 앱 버전 값을 `2026-06-07-domain-module`로 갱신
+* 검증:
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `node --check assets/scripts/domain/chat-domain.js` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과
+
+## 2-1-63단계: `file://` 직접 실행 파일 선택 버튼 회귀 수정 (2026-06-07)
+* 원인:
+  * Chromium 계열 `file://` 직접 실행에서 외부 module script가 CORS 정책으로 차단되어 `assets/scripts/app.js`가 실행되지 않았다.
+  * 그 결과 `#zipBtn` / `#folderBtn` 이벤트 리스너가 붙지 않아 파일 불러오기 버튼이 응답하지 않았다.
+* 변경:
+  * 로컬 `file://` 직접 실행 계약을 우선해 앱 JS 로딩을 classic script 방식으로 되돌림
+  * `assets/scripts/domain/chat-domain.js`는 IIFE 안에서 저수준 도메인 헬퍼를 정의하고 `window.ChaExtractorChatDomain` namespace만 노출하도록 변경
+  * `assets/scripts/app.js`는 `window.ChaExtractorChatDomain`을 사용하도록 변경
+  * `file://` 직접 실행에서는 `assets/version.json` fetch 업데이트 체크를 건너뛰어 콘솔 오류를 제거
+  * Node VM 하네스가 domain script를 먼저 실행한 뒤 app script를 실행하도록 변경
+  * README, AGENTS, harness MANIFEST, harness DECISIONS, harness TESTING을 classic script namespace 분리 기준으로 정정
+  * 앱 버전 값을 `2026-06-07-file-classic-domain`으로 갱신
+* 검증:
+  * 로컬 `file:///Users/lvcwoo/workspace/chaextractor/index.html` Chromium 재현에서 `#zipBtn` 클릭 시 file chooser 열림 확인
+  * 로컬 `file://` Chromium 재현에서 pageerror/console error 없음 확인
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/domain/chat-domain.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * `npm run test:browser` 통과
+
+## 2-1-64단계: 로컬 정적 서버 표준화와 ES module 재전환 (2026-06-07)
+* 분류:
+  * standard 아키텍처 계약 변경. 사용자 기능/플랫폼 지원 범위 변경 없음.
+* 결정:
+  * 공식 서비스 제공 경로는 GitHub Pages로 유지한다.
+  * 로컬 개발/검증은 `file://` 직접 실행 대신 정적 서버의 `http://127.0.0.1:<port>/` 경로를 표준으로 삼는다.
+  * `file://` 직접 실행은 일부 브라우저에서 외부 module script 로딩이 차단될 수 있으므로 공식 검증 경로로 보장하지 않는다.
+  * 앱 JS는 빌드 산출물 없이 ES module 경계를 사용한다.
+* 변경:
+  * `index.html`의 앱 스크립트 로드를 `type="module"`로 재전환
+  * `assets/scripts/domain/chat-domain.js`를 ES module export 경계로 복원하고 `assets/scripts/app.js`가 import하도록 변경
+  * `scripts/start-local-server.sh`, `scripts/start-local-server.ps1` 로컬 정적 서버 실행 스크립트 추가
+  * `package.json`에 `dev`, `dev:sh`, `dev:ps1` 실행 명령 추가
+  * Node VM 하네스 `harness/scripts/parse_with_index.mjs`가 실제 도메인 ES module을 import한 뒤 VM context에 주입하도록 변경
+  * `harness/scripts/check_doc_drift.py`가 앱 ES module import 경로를 함께 읽어 런타임 파서 문서 검사를 유지하도록 변경
+  * README, AGENTS, harness MANIFEST, harness DECISIONS, harness TESTING에 GitHub Pages 공식 서비스 경로와 로컬 정적 서버 검증 경로를 반영
+  * 앱 버전 값을 `2026-06-07-local-server-esm`으로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/domain/chat-domain.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `sh -n scripts/start-local-server.sh` 통과
+  * `python3 -m http.server` 기반 `scripts/start-local-server.sh 8765` 실행 후 `http://127.0.0.1:8765/` 응답 확인
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과
+  * `PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"` 통과
+  * PowerShell 스크립트 실행 검증은 macOS 환경에 `pwsh`가 없으면 미실행
+  * `npm run test:browser` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

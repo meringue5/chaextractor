@@ -28,6 +28,14 @@ def asset_paths(pattern: str, text: str) -> list[str]:
     return sorted({match.split("?", 1)[0] for match in re.findall(pattern, text)})
 
 
+def imported_module_paths(script_path: str, script_text: str) -> list[str]:
+    script_dir = Path(script_path).parent
+    imports = []
+    for raw_import in re.findall(r"from\s+['\"](\./[^'\"]+\.js)['\"]", script_text):
+        imports.append(str((script_dir / raw_import).as_posix()))
+    return imports
+
+
 def check_markdown_links(errors: list[str]) -> None:
     files = [
         *REPO_ROOT.glob("*.md"),
@@ -72,7 +80,12 @@ def main() -> int:
     app_script_assets = asset_paths(r'src="(assets/scripts/[^"]+\.js(?:\?[^"]*)?)"', index)
     vendor_script_assets = asset_paths(r'src="(assets/vendor/[^"]+\.js(?:\?[^"]*)?)"', index)
     styles = "\n".join(read(asset) for asset in style_assets if exists(asset))
-    scripts = "\n".join(read(asset) for asset in [*app_script_assets, *vendor_script_assets] if exists(asset))
+    imported_app_modules: list[str] = []
+    for asset in app_script_assets:
+        if exists(asset):
+            imported_app_modules.extend(imported_module_paths(asset, read(asset)))
+    app_runtime_assets = sorted({*app_script_assets, *imported_app_modules})
+    scripts = "\n".join(read(asset) for asset in [*app_runtime_assets, *vendor_script_assets] if exists(asset))
     runtime = index + "\n" + styles + "\n" + scripts
 
     check_markdown_links(errors)
@@ -110,7 +123,7 @@ def main() -> int:
         check("assets/scripts/app.js" in agents, "AGENTS must document app script path", errors)
         check("assets/scripts/app.js" in manifest, "MANIFEST must classify app script as runtime static asset", errors)
         check("assets/scripts/app.js" in decisions, "DECISIONS must record app script asset policy", errors)
-        for asset in app_script_assets:
+        for asset in app_runtime_assets:
             check(exists(asset), f"app script referenced by index.html is missing: {asset}", errors)
 
     if vendor_script_assets:

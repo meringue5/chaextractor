@@ -72,7 +72,7 @@
 
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
-| 앱은 서버 없이 실행 가능한 빌드 없는 정적 앱이다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` 앱 로직, `assets/version.json` 앱 버전 매니페스트, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타 이미지 | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
+| 앱은 배포용 애플리케이션 서버 없이 실행 가능한 빌드 없는 정적 앱이다. 공식 서비스 제공 경로는 GitHub Pages이며, 로컬 개발/검증은 정적 서버로 `http://127.0.0.1:<port>/`에서 수행한다. `file://` 직접 실행은 공식 검증 경로로 보장하지 않는다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` ES module 앱 진입 로직, `assets/scripts/domain/chat-domain.js` ES module 저수준 도메인 헬퍼, `assets/version.json` 앱 버전 매니페스트, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타 이미지, `scripts/start-local-server.sh`/`.ps1` 로컬 정적 서버 실행 스크립트. | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
 | 새 배포는 브라우저 캐시를 우회할 수 있어야 한다. | `meta[name="app-version"]`, CSS/JS query, `assets/version.json` 버전을 맞추고 앱 시작 시 같은 출처 version manifest를 cache-busting fetch로 확인한다 | Browser smoke |
 | 런타임 정적 자산은 소스와 배포본이 같은 파일이어야 한다. | 별도 빌드 산출물 없음 | doc drift checker와 파일 경로 존재 점검 |
 | 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 3.10.1 로컬 vendor, 폰트 CDN | doc drift checker로 일부 점검 |

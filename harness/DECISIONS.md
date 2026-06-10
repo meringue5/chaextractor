@@ -11,11 +11,13 @@
 | 결정 | 상태 | 근거/메모 |
 |---|---|---|
 | 앱 런타임은 빌드 없는 정적 앱으로 유지한다. `index.html`은 진입점이고 정적 자산은 별도 파일로 둘 수 있다. | 채택 | GitHub Pages 직접 배포와 소스/배포 드리프트 방지 |
-| JS/vendor 분리는 빌드 산출물을 만들지 않는 범위에서 단계적으로 검토한다. | 채택 | 저장소 가독성과 Pages 직접 동작 균형 |
+| 공식 서비스 제공 경로는 GitHub Pages로 둔다. 로컬 개발/검증 경로는 정적 서버로 `http://127.0.0.1:<port>/`에서 실행한다. | 채택 | 사용자는 GitHub Pages에서 서비스를 이용한다. 개발/검증은 GitHub Pages와 같은 HTTP 정적 호스팅 조건을 로컬에서 재현한다. `file://` 직접 실행은 공식 검증 경로로 보장하지 않는다. |
+| JS/vendor 분리는 빌드 산출물을 만들지 않는 범위에서 단계적으로 진행한다. 앱 JS는 ES module을 허용하고, 로컬 검증은 정적 서버를 사용한다. | 채택 | Chromium 계열 `file://`에서 외부 module script가 CORS로 차단되어 파일 선택 버튼 초기화가 실패함을 확인. 모듈 경계를 유지하기 위해 로컬 정적 서버 경로를 표준화한다. |
 | 앱 CSS는 `assets/styles/app.css`로 분리한다. | 채택 | 스타일 변경 가독성 개선, 빌드 없는 정적 배포 유지 |
 | 앱 JS는 `assets/scripts/app.js`로 분리한다. | 채택 | 파서/UI 로직 유지보수성 개선, 빌드 없는 정적 배포 유지 |
+| 저수준 대화 도메인 헬퍼는 `assets/scripts/domain/chat-domain.js`로 분리하고 ES module export로 제공한다. | 채택 | 정규식, 플랫폼 감지, CSV/첨부파일/메시지 분류 계약을 DOM/UI 전역 상태에서 떼어내 다음 파서 분리의 기준점으로 삼음 |
 | 앱 버전 매니페스트는 `assets/version.json`에 둔다. | 채택 | GitHub Pages 캐시 환경에서 새 배포 감지와 캐시 우회 새로고침 기준 제공 |
-| JSZip 3.10.1은 `assets/vendor/jszip-3.10.1.min.js` 로컬 vendor 파일로 둔다. | 채택 | CDN 버전 드리프트 없이 GitHub Pages와 오프라인 보관에서 동일 동작 |
+| JSZip 3.10.1은 `assets/vendor/jszip-3.10.1.min.js` 로컬 vendor 파일로 둔다. | 채택 | CDN 버전 드리프트 없이 GitHub Pages 배포 파일과 저장소 소스가 동일하게 동작 |
 | Playwright browser smoke는 선택 실행 개발 하네스로 둔다. | 채택 | 실제 브라우저 자산 로드, 파일 업로드, 모바일 UI는 Node VM만으로 검증하기 어려움 |
 | 가이드 스크린샷은 `assets/guide/*.png` 개별 파일로 둔다. | 채택 | 내용 이미지라 스프라이트보다 alt/lazy loading/cache/replacement가 유리 |
 | Open Graph 이미지는 `assets/og-image.png`에 둔다. | 채택 | 런타임 정적 이미지 자산 위치 일관화 |
@@ -48,7 +50,7 @@
 | 개인정보 | 외부 전송 없음 | 대화 데이터 자동 외부 전송 없음. 폰트 CDN 자동 요청과 사용자 클릭 외부 링크는 별도 표면으로 문서화 |
 | Android 샘플 | `tmp/android/` 확보 | tracked 샘플 기준은 `test/dataset/android/` |
 | Windows | 구현-only | 데스크톱 텍스트 내보내기 파싱은 fixture/expected를 추가해 공식 지원으로 승격 |
-| 앱 파일 구조 | 단일 `index.html` 파일 | 현재 기준은 빌드 없는 정적 앱. `index.html`은 진입점이고 `assets/guide/*.png` 같은 정적 자산 분리 허용 |
+| 앱 파일 구조 | 단일 `index.html` 파일 | 현재 기준은 빌드 없는 정적 앱. `index.html`은 진입점이고 `assets/guide/*.png` 같은 정적 자산 분리와 ES module 기반 JS 분리 허용 |
 | 앱 스타일 | `index.html` 내부 `<style>` | 현재 기준은 `assets/styles/app.css` 외부 스타일시트 |
 | Open Graph 이미지 | 루트 `og-image.png` | 현재 기준은 `assets/og-image.png` |
 

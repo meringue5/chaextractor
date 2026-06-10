@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "sh scripts/start-local-server.sh",
+    "dev:sh": "sh scripts/start-local-server.sh",
+    "dev:ps1": "pwsh -File scripts/start-local-server.ps1",
     "test:browser": "playwright test --config harness/browser/playwright.config.js",
     "test:browser:headed": "playwright test --config harness/browser/playwright.config.js --headed",
     "test:browser:install": "playwright install chromium"

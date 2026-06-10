@@ -8,11 +8,13 @@
 -->
 
 # 프로젝트 개요
-카카오톡 오픈채팅방 대화 내역 뷰어. 빌드 없는 정적 앱, 서버 불필요, 클라이언트 사이드 처리.
+카카오톡 오픈채팅방 대화 내역 뷰어. 빌드 없는 정적 앱, 배포용 애플리케이션 서버 불필요, 클라이언트 사이드 처리.
 - 배포: https://meringue5.github.io/chaextractor/
-- 기술: HTML (`index.html`), CSS (`assets/styles/app.css`), JS (`assets/scripts/app.js`), 앱 버전 매니페스트 (`assets/version.json`), JSZip local vendor (`assets/vendor/jszip-3.10.1.min.js`), `assets/guide` 정적 이미지, `assets/og-image.png`, IndexedDB (캐시), 폰트 CDN
+- 기술: HTML (`index.html`), CSS (`assets/styles/app.css`), ES module JS (`assets/scripts/app.js`, `assets/scripts/domain/chat-domain.js`), 앱 버전 매니페스트 (`assets/version.json`), JSZip local vendor (`assets/vendor/jszip-3.10.1.min.js`), `assets/guide` 정적 이미지, `assets/og-image.png`, IndexedDB (캐시), 폰트 CDN
 - 개발 검증: Python/Node VM 하네스 + 선택 실행 Playwright browser smoke (`npm run test:browser`)
+- 로컬 개발/검증: 정적 서버 (`scripts/start-local-server.sh`, `scripts/start-local-server.ps1`)로 `http://127.0.0.1:<port>/` 실행. `file://` 직접 실행은 공식 검증 경로로 보장하지 않는다.
 - 플랫폼: iOS / Android / Windows / macOS 카카오톡 내보내기 파일 지원
+- 공식 서비스 제공 경로: GitHub Pages.
 - TODO: Windows/macOS 첨부파일 매핑 지원 예정
 
 # 하네스 문서
@@ -129,9 +131,9 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 
 # 코드 구조: index.html + 정적 자산
 
-현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` 로드 → `assets/scripts/app.js` 로드. 앱 CSS/JS에는 `meta[name="app-version"]`과 같은 버전 query를 붙이고, `assets/version.json`을 캐시 우회 쿼리로 확인해 새 배포 시 브라우저 자산 캐시를 갱신한다.
+현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` classic script 로드 → `assets/scripts/app.js` ES module 로드 → `app.js`가 `assets/scripts/domain/chat-domain.js`를 import한다. 앱 CSS/JS에는 `meta[name="app-version"]`과 같은 버전 query를 붙이고, `assets/version.json`을 캐시 우회 쿼리로 확인해 새 배포 시 브라우저 자산 캐시를 갱신한다.
 
-빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 로직은 `assets/scripts/app.js`, 앱 버전 매니페스트는 `assets/version.json`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph 이미지는 `assets/og-image.png`에 둔다.
+빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 진입 로직은 ES module인 `assets/scripts/app.js`, 저수준 대화 도메인 헬퍼는 ES module export를 제공하는 `assets/scripts/domain/chat-domain.js`, 앱 버전 매니페스트는 `assets/version.json`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph 이미지는 `assets/og-image.png`에 둔다. 로컬 개발/검증은 `scripts/start-local-server.sh` 또는 `scripts/start-local-server.ps1`로 정적 서버를 띄워 `http://127.0.0.1:<port>/`에서 수행한다. 공식 서비스 제공 경로는 GitHub Pages다.
 
 브라우저 회귀 검증은 `harness/browser/`의 Playwright smoke를 선택 실행한다. 이 하네스는 정적 서버로 저장소 루트의 `index.html`을 열고, 앱 배포 파일을 빌드 없이 그대로 검증한다.
 
@@ -204,7 +206,7 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 - 테마: `[data-theme="dark"]`, `[data-theme="1995"]`, `[data-font="ridi"]` (RIDIBatang), `[data-font="neodgm"]` (NeoDunggeunmo Pro), `[data-font="iyagi"]` (IyagiGGC)
 
 ## JavaScript 주요 함수
-정본 앱 스크립트는 `assets/scripts/app.js`다.
+정본 앱 진입 스크립트는 ES module인 `assets/scripts/app.js`다. 정규식 패턴, 플랫폼 감지, CSV 레코드 파서, 첨부파일 파일명 판별, URL 감지, 메시지 타입 분류 같은 DOM 없는 저수준 도메인 헬퍼는 `assets/scripts/domain/chat-domain.js`가 ES module export로 제공하고 `app.js`가 import한다.
 
 파일 처리:
 - `processFilesOrFolder(files)` — 파일 라우팅 (ZIP vs 폴더)
@@ -216,8 +218,8 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 파싱:
 - `parseKakaoChat(content)` — 대화 파싱 (iOS/Android/Windows 정규식 분기, macOS CSV 분기)
 - `parseMergedChatFiles(chatContents)` — 다중 대화 파일 병합 + 정렬
-- `classifyContent(content)` — 메시지 유형 분류 (text/photo/emoticon/file)
-- `detectPlatform(chatFilenames, attachFilenames)` — iOS/Android/Windows/macOS 감지
+- `classifyContent(content)` — 메시지 유형 분류 (text/photo/emoticon/file, `assets/scripts/domain/chat-domain.js`)
+- `detectPlatform(chatFilenames, attachFilenames)` — iOS/Android/Windows/macOS 감지 (`assets/scripts/domain/chat-domain.js`)
 - `testPatternArray(line, patternArray)` — 정규식 배열 매칭 테스트
 - `execPatternArray(line, patternArray)` — 정규식 배열 실행 + 첫 매치 반환
 

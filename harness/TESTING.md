@@ -6,7 +6,7 @@
 
 ### Parser golden
 
-`assets/scripts/app.js`의 실제 파서 함수를 Node VM에서 호출해 fixture expected와 비교한다.
+`assets/scripts/domain/chat-domain.js`와 `assets/scripts/app.js`의 실제 파서/도메인 함수를 Node VM에서 호출해 fixture expected와 비교한다.
 
 ```bash
 python3 harness/scripts/run_parser_golden.py
@@ -104,6 +104,22 @@ npm run test:browser
 
 ```bash
 npm run test:browser:headed
+```
+
+### 수동 로컬 브라우저 검증
+
+로컬 수동 검증은 `file://` 직접 실행 대신 정적 서버를 표준 경로로 사용한다. 서버가 뜨면 `http://127.0.0.1:8000/`을 연다.
+
+macOS/Linux:
+
+```bash
+./scripts/start-local-server.sh
+```
+
+Windows PowerShell:
+
+```powershell
+.\scripts\start-local-server.ps1
 ```
 
 ## 예정 명령
