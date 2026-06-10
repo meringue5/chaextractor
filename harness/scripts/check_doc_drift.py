@@ -67,7 +67,9 @@ def main() -> int:
     errors: list[str] = []
 
     readme = read("README.md")
+    instructions = read("INSTRUCTIONS.md")
     agents = read("AGENTS.md")
+    claude = read("CLAUDE.md")
     manifest = read("harness/MANIFEST.md")
     domain = read("harness/DOMAIN_RULES.md")
     decisions = read("harness/DECISIONS.md")
@@ -90,11 +92,17 @@ def main() -> int:
 
     check_markdown_links(errors)
 
+    check("INSTRUCTIONS.md" in agents, "AGENTS must point to common INSTRUCTIONS.md", errors)
+    check("INSTRUCTIONS.md" in claude, "CLAUDE must point to common INSTRUCTIONS.md", errors)
+    check("INSTRUCTIONS.md" in readme, "README must document the common instructions entrypoint", errors)
+    check("INSTRUCTIONS.md" in manifest, "MANIFEST must classify the common instructions entrypoint", errors)
+    check("공통 작업 진입점은 `INSTRUCTIONS.md`" in decisions, "DECISIONS must record the common instructions entrypoint policy", errors)
+
     check("iOS / Android / Windows / macOS" in readme, "README must publicly support iOS / Android / Windows / macOS", errors)
-    check("iOS / Android / Windows / macOS 카카오톡 내보내기 파일 지원" in agents, "AGENTS must state iOS / Android / Windows / macOS support", errors)
+    check("iOS / Android / Windows / macOS 카카오톡 내보내기 파일 지원" in instructions, "INSTRUCTIONS must state iOS / Android / Windows / macOS support", errors)
 
     if "MESSAGE_WINDOWS" in runtime or "DATE_HEADER_WINDOWS" in runtime:
-        check("Windows 데스크톱 텍스트 내보내기는 공식 지원" in agents, "AGENTS must state Windows text export support", errors)
+        check("Windows 데스크톱 텍스트 내보내기는 공식 지원" in instructions, "INSTRUCTIONS must state Windows text export support", errors)
         check("Windows | 공식 지원" in domain, "DOMAIN_RULES must classify Windows as official support", errors)
         check("Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원" in decisions, "DECISIONS must adopt Windows text support", errors)
         check(
@@ -107,7 +115,7 @@ def main() -> int:
 
     if "DATETIME_MACOS_CSV" in runtime or "parseMacOSCsvChat" in runtime:
         check("macOS 데스크톱 CSV" in readme, "README must document macOS CSV support", errors)
-        check("macOS 데스크톱 CSV 텍스트 내보내기는 공식 지원" in agents, "AGENTS must state macOS CSV text export support", errors)
+        check("macOS 데스크톱 CSV 텍스트 내보내기는 공식 지원" in instructions, "INSTRUCTIONS must state macOS CSV text export support", errors)
         check("macOS | 공식 지원" in domain, "DOMAIN_RULES must classify macOS as official support", errors)
         check("macOS는 데스크톱 CSV 텍스트 내보내기 파싱을 공식 지원" in decisions, "DECISIONS must adopt macOS CSV support", errors)
         check("Windows/macOS 첨부파일 매핑" in manifest, "MANIFEST must keep desktop attachment mapping unresolved", errors)
@@ -120,11 +128,11 @@ def main() -> int:
 
     if app_script_assets:
         check("assets/scripts" in readme, "README must document app script asset directory", errors)
-        check("assets/scripts/app.js" in agents, "AGENTS must document app script path", errors)
+        check("assets/scripts/app.js" in instructions, "INSTRUCTIONS must document app script path", errors)
         check("assets/scripts/app.js" in manifest, "MANIFEST must classify app script as runtime static asset", errors)
         check("assets/scripts/app.js" in decisions, "DECISIONS must record app script asset policy", errors)
         if "assets/scripts/chat-core.js" in app_runtime_assets:
-            check("assets/scripts/chat-core.js" in agents, "AGENTS must document chat core script path", errors)
+            check("assets/scripts/chat-core.js" in instructions, "INSTRUCTIONS must document chat core script path", errors)
             check("assets/scripts/chat-core.js" in manifest, "MANIFEST must classify chat core as runtime static asset", errors)
             check("assets/scripts/chat-core.js" in decisions, "DECISIONS must record chat core script policy", errors)
         for asset in app_runtime_assets:
@@ -132,7 +140,7 @@ def main() -> int:
 
     if vendor_script_assets:
         check("assets/vendor" in readme, "README must document vendor script asset directory", errors)
-        check("assets/vendor/jszip-3.10.1.min.js" in agents, "AGENTS must document JSZip vendor path", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in instructions, "INSTRUCTIONS must document JSZip vendor path", errors)
         check("assets/vendor/jszip-3.10.1.min.js" in manifest, "MANIFEST must classify JSZip vendor asset", errors)
         check("assets/vendor/jszip-3.10.1.min.js" in decisions, "DECISIONS must record JSZip vendor asset policy", errors)
         for asset in vendor_script_assets:
@@ -140,13 +148,13 @@ def main() -> int:
 
     if "JSZip v3.10.1" in runtime:
         check("JSZip은 `assets/vendor/jszip-3.10.1.min.js`" in readme, "README must say JSZip is local vendor", errors)
-        check("assets/vendor/jszip-3.10.1.min.js" in agents, "AGENTS must say JSZip is local vendor", errors)
+        check("assets/vendor/jszip-3.10.1.min.js" in instructions, "INSTRUCTIONS must say JSZip is local vendor", errors)
         check("assets/vendor/jszip-3.10.1.min.js" in manifest, "MANIFEST must track JSZip local vendor dependency", errors)
         check("JSZip 3.10.1은 `assets/vendor/jszip-3.10.1.min.js`" in decisions, "DECISIONS must record JSZip local vendor status", errors)
 
     if style_assets:
         check("assets/styles" in readme, "README must document stylesheet asset directory", errors)
-        check("assets/styles/app.css" in agents, "AGENTS must document app stylesheet path", errors)
+        check("assets/styles/app.css" in instructions, "INSTRUCTIONS must document app stylesheet path", errors)
         check("assets/styles/app.css" in manifest, "MANIFEST must classify app stylesheet as runtime static asset", errors)
         check("assets/styles/app.css" in decisions, "DECISIONS must record stylesheet asset policy", errors)
         for asset in style_assets:
@@ -154,7 +162,7 @@ def main() -> int:
 
     if "assets/version.json" in runtime:
         check("assets/version.json" in readme, "README must document app version manifest path", errors)
-        check("assets/version.json" in agents, "AGENTS must document app version manifest path", errors)
+        check("assets/version.json" in instructions, "INSTRUCTIONS must document app version manifest path", errors)
         check("assets/version.json" in manifest, "MANIFEST must classify app version manifest as runtime static asset", errors)
         check("assets/version.json" in decisions, "DECISIONS must record app version manifest policy", errors)
         check("배포 업데이트" in read("harness/REQUIREMENTS.md"), "REQUIREMENTS must include deployment update behavior", errors)
@@ -162,14 +170,14 @@ def main() -> int:
 
     if "cdn.jsdelivr.net" in runtime:
         check("폰트는 CDN에서 로드" in readme, "README must document font CDN loading", errors)
-        check("폰트 CDN" in agents, "AGENTS must mention font CDN", errors)
+        check("폰트 CDN" in instructions, "INSTRUCTIONS must mention font CDN", errors)
         check("cdn.jsdelivr.net/gh/neodgm" in manifest, "MANIFEST must list NeoDunggeunmo CDN surface", errors)
         check("cdn.jsdelivr.net/gh/projectnoonnu" in manifest, "MANIFEST must list RIDIBatang CDN surface", errors)
         check("cdn.jsdelivr.net/gh/JuwanPark/IyagiGGC" in manifest, "MANIFEST must list IyagiGGC CDN surface", errors)
 
     if "reportIssueModal" in runtime or "diagnosticState" in runtime:
         check("오류 진단 리포트" in readme, "README must document diagnostic report behavior", errors)
-        check("오류 진단 리포트" in agents, "AGENTS must document diagnostic report UI", errors)
+        check("오류 진단 리포트" in instructions, "INSTRUCTIONS must document diagnostic report UI", errors)
         check("진단 리포트는 오류 재현" in manifest, "MANIFEST must classify diagnostic report debugging boundary", errors)
         check("오류 보고" in read("harness/REQUIREMENTS.md"), "REQUIREMENTS must include diagnostic issue reporting", errors)
         check("대화 파일 검증 결과" in read("harness/REQUIREMENTS.md"), "REQUIREMENTS must require diagnostic validation details", errors)
@@ -182,8 +190,8 @@ def main() -> int:
         check("GitHub Issue Form은 개발자용 보조 채널" in read("harness/DECISIONS.md"), "DECISIONS must keep GitHub as a developer fallback, not primary reporting", errors)
 
     if "__CHAEXTRACTOR_TEST__" in runtime:
-        check("테스트 API 계약" in agents, "AGENTS must document the test API contract", errors)
-        check("contractVersion: 1" in agents, "AGENTS must document the current test API contract version", errors)
+        check("테스트 API 계약" in instructions, "INSTRUCTIONS must document the test API contract", errors)
+        check("contractVersion: 1" in instructions, "INSTRUCTIONS must document the current test API contract version", errors)
         check("parser`/`ui`/`runtime`/`diagnostics`/`state" in manifest, "MANIFEST must classify test API namespaces", errors)
         check("테스트 API는 버전 있는 내부 하네스 계약" in decisions, "DECISIONS must record the test API contract policy", errors)
         check("window.__CHAEXTRACTOR_TEST__" in testing, "TESTING must document the test API entrypoint", errors)
@@ -192,7 +200,7 @@ def main() -> int:
     if "captureModal" in runtime or "buildCaptureText" in runtime:
         requirements = read("harness/REQUIREMENTS.md")
         check("갈무리 TXT" in readme, "README must document capture TXT behavior", errors)
-        check("갈무리 TXT" in agents, "AGENTS must document capture TXT UI", errors)
+        check("갈무리 TXT" in instructions, "INSTRUCTIONS must document capture TXT UI", errors)
         check("갈무리 TXT" in requirements, "REQUIREMENTS must include capture TXT feature", errors)
         check("갈무리 TXT" in manifest, "MANIFEST must classify capture TXT privacy boundary", errors)
         check("갈무리 내보내기" in decisions, "DECISIONS must record capture TXT scope", errors)
@@ -201,7 +209,7 @@ def main() -> int:
     guide_assets = sorted(set(re.findall(r'src="(assets/guide/[^"]+)"', index)))
     if guide_assets:
         check("assets/guide" in readme, "README must document guide asset directory", errors)
-        check("assets/guide" in agents, "AGENTS must document guide asset directory", errors)
+        check("assets/guide" in instructions, "INSTRUCTIONS must document guide asset directory", errors)
         check("assets/guide/*.png" in manifest, "MANIFEST must classify guide images as runtime static assets", errors)
         check("assets/guide/*.png" in decisions, "DECISIONS must record guide image asset policy", errors)
         for asset in guide_assets:
@@ -210,7 +218,7 @@ def main() -> int:
     if "og-image.png" in index:
         check("assets/og-image.png" in index, "index.html must reference OG image under assets/", errors)
         check("assets/og-image.png" in readme, "README must document OG image asset path", errors)
-        check("assets/og-image.png" in agents, "AGENTS must document OG image asset path", errors)
+        check("assets/og-image.png" in instructions, "INSTRUCTIONS must document OG image asset path", errors)
         check("assets/og-image.png" in manifest, "MANIFEST must classify OG image as runtime static asset", errors)
         check("assets/og-image.png" in decisions, "DECISIONS must record OG image asset policy", errors)
         check(exists("assets/og-image.png"), "OG image asset is missing: assets/og-image.png", errors)
@@ -218,7 +226,7 @@ def main() -> int:
 
     check(not exists("parse_kakao_chat.py"), "root parse_kakao_chat.py should remain moved to tools/", errors)
     check("tools/parse_kakao_chat.py" in readme, "README must point to tools/parse_kakao_chat.py", errors)
-    check("tools/parse_kakao_chat.py" in agents, "AGENTS must point to tools/parse_kakao_chat.py", errors)
+    check("tools/parse_kakao_chat.py" in instructions, "INSTRUCTIONS must point to tools/parse_kakao_chat.py", errors)
 
     android_samples = list((REPO_ROOT / "test" / "dataset" / "android").glob("*.zip"))
     if android_samples:

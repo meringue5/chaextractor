@@ -1240,6 +1240,22 @@
   * Playwright 계산 스타일 확인: 1995 설정 모달 `padding: 0px`, 제목표시줄 margin `2px`, 창 테두리 기준 inset `4px` 확인
   * `npm run test:browser` 통과 (7 passed, 3 skipped)
 
+## 2-1-71단계: 범용 작업 진입점과 도구별 어댑터 분리 (2026-06-10)
+* 분류:
+  * standard 문서 구조 정리. 사용자 기능/플랫폼 지원 범위 변경 없음.
+* 결정:
+  * 공통 작업 진입점은 `INSTRUCTIONS.md`로 둔다.
+  * `AGENTS.md`와 `CLAUDE.md`는 특정 도구의 자동 인식 관례를 위한 얇은 어댑터로 둔다.
+  * 요구사항, 표준, 결정의 정본 계약 레이어는 계속 `harness/`를 우선한다.
+* 변경:
+  * 기존 `AGENTS.md`의 공통 작업 지침과 코드 구조 맵을 `INSTRUCTIONS.md`로 승격
+  * `AGENTS.md`와 `CLAUDE.md`를 `INSTRUCTIONS.md`를 가리키는 얇은 어댑터 문서로 축소
+  * README 프로젝트 구조, harness README/MANIFEST/REQUIREMENTS/DOMAIN_RULES/DECISIONS/BACKLOG, maintainer skill을 새 진입점 구조에 맞게 갱신
+  * doc drift checker가 실질 작업 지침은 `INSTRUCTIONS.md`에서 검사하고, `AGENTS.md`/`CLAUDE.md`는 공통 진입점 참조만 검사하도록 변경
+* 검증:
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

@@ -15,11 +15,12 @@
 | 3 | `harness/DOMAIN_RULES.md` | 플랫폼별 내보내기 규칙과 파싱 불변식 |
 | 4 | `harness/DECISIONS.md` | 현재 유효한 기술/제품 결정 |
 | 5 | `harness/BACKLOG.md` | 리뷰에서 나온 미반영 실행 과제 |
-| 6 | `AGENTS.md` | 에이전트 작업 진입점과 코드 구조 맵 |
-| 7 | `README.md` | 사용자에게 공개되는 약속 |
-| 8 | `HISTORY.md` | 시간순 변경 이력과 검증 기록 |
-| 9 | `index.html` | 현재 구현. 단독으로는 요구사항의 근거가 아님 |
-| 10 | `tools/parse_kakao_chat.py` | 보조 CSV 파서. 브라우저 앱과 별도 범위 |
+| 6 | `INSTRUCTIONS.md` | 사람/모든 LLM/에이전트용 공통 작업 진입점과 코드 구조 맵 |
+| 7 | `AGENTS.md`, `CLAUDE.md` | 특정 도구의 자동 인식 관례를 위한 얇은 어댑터 |
+| 8 | `README.md` | 사용자에게 공개되는 약속 |
+| 9 | `HISTORY.md` | 시간순 변경 이력과 검증 기록 |
+| 10 | `index.html` | 현재 구현. 단독으로는 요구사항의 근거가 아님 |
+| 11 | `tools/parse_kakao_chat.py` | 보조 CSV 파서. 브라우저 앱과 별도 범위 |
 
 ## 분류 기준
 
@@ -78,7 +79,7 @@
 | 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 3.10.1 로컬 vendor, 폰트 CDN | doc drift checker로 일부 점검 |
 | 플랫폼 파서 변경은 fixture와 expected 결과를 동반한다. | Android 실제 ZIP/iOS 최소/Windows 최소/macOS CSV fixture parser golden 시작 | 새 플랫폼 확장 시 fixture 추가 |
 | 구현-only 플랫폼 지원은 공개 지원으로 홍보하지 않는다. | Windows 텍스트 파서와 macOS CSV 파서는 공식 지원으로 승격, Windows/macOS 첨부파일은 미결정 | 미결정 항목은 README에 홍보하지 않음 |
-| 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | project skill, parser golden/doc drift, 선택 실행 Playwright browser smoke 하네스 시작 | 로컬 표준 명령 유지 |
+| 에이전트 작업은 문서/구현/검증/HISTORY를 함께 남긴다. | `INSTRUCTIONS.md` 공통 진입점, 도구별 얇은 어댑터, project skill, parser golden/doc drift, 선택 실행 Playwright browser smoke 하네스 시작 | 로컬 표준 명령 유지 |
 | 하네스가 앱 내부를 검증할 때는 버전 있는 테스트 API 계약을 사용한다. | `window.__CHAEXTRACTOR_ENABLE_TEST_API__`가 설정된 하네스 환경에서만 `window.__CHAEXTRACTOR_TEST__`를 노출한다. 현재 계약은 `contractVersion: 1`과 `parser`/`ui`/`runtime`/`diagnostics`/`state` 네임스페이스로 구성되며, 기존 평면 함수는 호환용이다. | Node VM 하네스와 doc drift checker |
 | 입력 계층은 ZIP/폴더별 파일 수집 결과를 내부 bundle 계약으로 정규화한 뒤 파싱/첨부 매핑/캐시 흐름에 넘긴다. | `buildZipInputBundle`, `buildFolderInputBundle`, `check_input_bundle.py`, 작은 iOS ZIP fixture | 입력 bundle 하네스 |
 | 첨부파일 런타임 원천과 캐시 payload를 분리한다. | `attachmentInventory`는 ZIP entryPath 또는 폴더 Blob URL을 파일명 기준으로 담는다. 캐시에는 메시지와 직렬화 가능한 ZIP entryPath만 저장하고 Blob URL/File 객체는 저장하지 않는다. | cache privacy, parser golden, browser smoke |
@@ -111,7 +112,7 @@
 | 폰트 CDN 자동 요청 | CSS `@font-face` | 개인정보 문구와 외부 요청 범위 혼선 | 외부 네트워크 표면으로 공식 등재 완료 |
 | 20줄 미만 대화 파일 거부 | `validateChatFile` | 짧은 실제 내보내기 거부 가능 | 요구사항으로 인정할지 결정 |
 | 캐시 키 전략 | 파일명/크기/mtime 중심 | 폴더/첨부 변경 감지 부족 가능 | 캐시 정책 표준화 |
-| 검색 결과 하이라이트 부재 | 검색은 `renderDateList`에만 연결 | AGENTS와 불일치 | 구현 또는 요구사항 수정 |
+| 검색 결과 하이라이트 부재 | 검색은 `renderDateList`에만 연결 | `INSTRUCTIONS.md`와 불일치 | 구현 또는 요구사항 수정 |
 | Windows/macOS 첨부파일 매핑 | 텍스트/CSV 파싱은 지원하나 첨부파일 패턴은 미확정. 현재 직접 매핑하지 않도록 fixture로 고정 | 데스크톱 사용자 기대 혼선 | 실제 샘플 확보 후 정식화 |
 
 ## 미결정 항목
@@ -130,7 +131,7 @@
 새 작업은 아래 순서로 분류한다.
 
 1. 이 변경이 표준, 요구사항, 구현-only, 미결정 중 어디에 속하는지 판단한다.
-2. 표준 또는 요구사항이면 구현 전에 해당 하네스 문서와 `AGENTS.md`를 갱신한다.
+2. 표준 또는 요구사항이면 구현 전에 해당 하네스 문서와 `INSTRUCTIONS.md`를 갱신한다. 특정 도구별 진입점이 바뀌면 `AGENTS.md` 또는 `CLAUDE.md` 같은 어댑터도 함께 맞춘다.
 3. 사용자에게 보이는 약속이면 `README.md`도 갱신한다.
 4. 파서/플랫폼 변경이면 fixture와 expected 결과를 추가한다.
 5. UI 흐름 변경이면 browser smoke 대상에 추가한다.

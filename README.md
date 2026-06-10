@@ -61,8 +61,9 @@ chaextractor/
 ├── package.json         # 선택 실행 브라우저 테스트 의존성/명령
 ├── harness/             # 요구사항/도메인 규칙/결정/하네스 매니페스트
 ├── .agents/skills/      # Project-specific skill procedures
-├── CLAUDE.md            # Claude Code용 AGENTS.md 포워딩 문서
-├── AGENTS.md            # AI 에이전트 진입점 (하네스/코드 구조)
+├── INSTRUCTIONS.md      # 사람/모든 LLM/에이전트용 공통 작업 진입점
+├── AGENTS.md            # Codex/AGENTS.md 관례용 얇은 어댑터
+├── CLAUDE.md            # Claude Code용 얇은 어댑터
 ├── HISTORY.md           # 진행 이력
 ├── LICENSE              # MIT License
 └── README.md            # 이 파일

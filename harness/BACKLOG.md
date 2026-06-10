@@ -20,6 +20,7 @@
 | 항목 | 반영 위치 | 상태 |
 |---|---|---|
 | 루트 Markdown 역할 정리 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `HISTORY.md` | 반영 |
+| 범용 작업 진입점과 도구별 어댑터 분리 | `INSTRUCTIONS.md`, `AGENTS.md`, `CLAUDE.md`, `README.md`, `harness/MANIFEST.md`, `harness/DECISIONS.md` | 반영 |
 | 하네스 계약 레이어 추가 | `harness/MANIFEST.md` | 반영 |
 | 요구사항 정본 분리 | `harness/REQUIREMENTS.md` | 반영 |
 | 도메인 규칙 정본 분리 | `harness/DOMAIN_RULES.md` | 반영 |

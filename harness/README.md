@@ -18,7 +18,8 @@
 - [BACKLOG.md](BACKLOG.md): 하네스 리뷰에서 나온 미반영 실행 과제
 - [TESTING.md](TESTING.md): 현재 사용 가능한 검증 명령과 예정 검증
 - [reviews/2026-05-17.md](reviews/2026-05-17.md): 2026-05-17 기준 하네스 검토 결과
-- [../AGENTS.md](../AGENTS.md): 에이전트 작업 진입점과 코드 구조 맵
+- [../INSTRUCTIONS.md](../INSTRUCTIONS.md): 사람/모든 LLM/에이전트용 공통 작업 진입점과 코드 구조 맵
+- [../AGENTS.md](../AGENTS.md), [../CLAUDE.md](../CLAUDE.md): 특정 도구의 자동 인식 관례를 위한 얇은 어댑터
 - [../HISTORY.md](../HISTORY.md): 프로젝트 진행 이력
 
 관련 project skills:
@@ -31,6 +32,6 @@
 운영 원칙:
 
 1. `index.html`에 동작이 추가되어도 이 매니페스트에 분류되기 전까지는 공식 요구사항이 아니다.
-2. `README.md`에 공개 약속을 추가할 때는 `AGENTS.md`와 이 매니페스트의 범위도 함께 맞춘다.
+2. `README.md`에 공개 약속을 추가할 때는 `INSTRUCTIONS.md`와 이 매니페스트의 범위도 함께 맞춘다. 특정 도구의 진입점이 바뀌면 어댑터 문서도 함께 맞춘다.
 3. 플랫폼 파서 규칙을 바꿀 때는 fixture와 expected 결과를 함께 만든다.
 4. 보안/개인정보 표준을 바꾸려면 구현보다 먼저 이 디렉터리에서 의도를 명시한다.

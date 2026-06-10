@@ -19,7 +19,7 @@ Do not copy domain rules into this skill. Read the harness documents as the sour
 
 Always start with:
 
-1. `AGENTS.md`
+1. `INSTRUCTIONS.md`
 2. `harness/MANIFEST.md`
 3. The task-relevant harness doc:
    - requirements/UI/nonfunctional: `harness/REQUIREMENTS.md`
@@ -36,7 +36,8 @@ Use `harness/reviews/2026-05-17.md` only for historical context.
 2. Map affected layers before editing:
    - harness docs
    - public docs such as `README.md`
-   - agent entry docs such as `AGENTS.md` and `CLAUDE.md`
+   - common agent entry docs such as `INSTRUCTIONS.md`
+   - tool adapters such as `AGENTS.md` and `CLAUDE.md`
    - implementation
    - fixture/test expectations
    - `HISTORY.md`

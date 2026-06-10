@@ -23,11 +23,12 @@
 | 가이드 스크린샷은 `assets/guide/*.png` 개별 파일로 둔다. | 채택 | 내용 이미지라 스프라이트보다 alt/lazy loading/cache/replacement가 유리 |
 | Open Graph 이미지는 `assets/og-image.png`에 둔다. | 채택 | 런타임 정적 이미지 자산 위치 일관화 |
 | 하네스, fixture, 문서, 테스트 도구는 앱 런타임 밖의 보조 파일로 둔다. | 채택 | 앱 런타임과 개발 검증 레이어 분리 |
+| 공통 작업 진입점은 `INSTRUCTIONS.md`로 두고, `AGENTS.md`와 `CLAUDE.md`는 특정 도구의 자동 인식 관례를 위한 얇은 어댑터로 둔다. | 채택 | Codex, Claude Code, 범용 LLM, 사람 모두 같은 하네스 계약을 읽도록 하고 도구별 파일에는 정본 내용을 복제하지 않음 |
 | 테스트 API는 버전 있는 내부 하네스 계약으로 둔다. | 채택 | `window.__CHAEXTRACTOR_TEST__`는 테스트 플래그가 켜진 환경에서만 노출한다. 현재 `contractVersion: 1`이며 `parser`/`ui`/`runtime`/`diagnostics`/`state` 네임스페이스를 정식 하네스 호출 경로로 사용한다. 기존 평면 함수는 호환용으로 유지 |
 | ZIP/폴더 입력은 내부 `InputBundle` 계약으로 먼저 정규화한다. | 채택 | 입력 후보 수집, 대화 파일 검증, 첨부 후보 목록, 플랫폼 감지, 캐시 키를 같은 구조로 모아 이후 첨부파일/캐시 경계 리팩터링의 기준점으로 삼는다 |
 | 첨부파일 런타임 원천은 `attachmentInventory`로 둔다. | 채택 | ZIP은 캐시에 저장 가능한 entryPath, 폴더는 런타임 Blob URL/File 참조로 분리한다. 캐시 payload에는 Blob URL이나 File 객체를 저장하지 않는다 |
 | 대화 원문과 첨부파일은 클라이언트 로컬에서 처리한다. | 채택 | 개인정보 표준 |
-| iOS, Android, Windows, macOS는 공식 지원 플랫폼으로 유지한다. | 채택 | README/AGENTS 약속, parser golden fixture |
+| iOS, Android, Windows, macOS는 공식 지원 플랫폼으로 유지한다. | 채택 | README/INSTRUCTIONS 약속, parser golden fixture |
 | Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원한다. | 채택 | `windows-minimal` fixture/expected 추가 |
 | macOS는 데스크톱 CSV 텍스트 내보내기 파싱을 공식 지원한다. | 채택 | 실제 CSV 형식 확인 후 `macos-csv` fixture/expected 추가 |
 | `tools/parse_kakao_chat.py`는 보조 iOS CSV 파서로 취급한다. | 채택 | 브라우저 앱과 범위 분리 |
@@ -70,6 +71,6 @@
 
 1. 새 결정은 이 문서에 먼저 추가한다.
 2. 결정이 사용자 약속을 바꾸면 `README.md`를 함께 갱신한다.
-3. 결정이 에이전트 작업 규칙을 바꾸면 `AGENTS.md` 또는 `CLAUDE.md`를 함께 갱신한다.
+3. 결정이 공통 작업 규칙을 바꾸면 `INSTRUCTIONS.md`를 함께 갱신한다. 특정 도구의 자동 인식 진입점이 바뀌면 `AGENTS.md` 또는 `CLAUDE.md` 같은 어댑터도 함께 갱신한다.
 4. 결정이 파서 규칙을 바꾸면 [DOMAIN_RULES.md](DOMAIN_RULES.md)와 fixture/expected를 함께 갱신한다.
 5. 결정의 배경과 검증 결과는 `HISTORY.md`에 시간순으로 남긴다.
