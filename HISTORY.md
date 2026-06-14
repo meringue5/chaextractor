@@ -1372,6 +1372,26 @@
   * `python3 harness/scripts/check_ui_smoke.py` 통과
   * `npm run test:browser` 통과
 
+## 2-1-79단계: 초기 준비화면을 앱 메인 영역으로 통합 (2026-06-14)
+* 분류:
+  * 표준 UI 흐름 조정. 파서/플랫폼 지원 범위 변경 없음.
+* 변경:
+  * `#setupScreen`을 앱 바깥 독립 화면에서 `.chat-area` 내부 초기 준비화면으로 이동
+  * 파일 처리 전에는 `#app.setup-mode`에서 좌측 탐색 패널, 우측 링크 패널, 대화 헤더, 대화 목록을 숨기고 준비화면만 표시
+  * 파일 처리 완료 후 `#app.viewer-mode`로 전환해 좌우 패널과 대화 헤더를 표시
+  * 초기 setup 상태에서도 배포 버전 확인 자동 새로고침이 가능하도록 앱 업데이트 판정 조건을 조정
+  * 화면 요구사항과 작업 지침을 setup/viewer 모드 구조에 맞게 갱신
+  * Browser smoke에 초기 setup 모드의 패널/헤더 숨김과 viewer 모드 전환 검증을 추가
+  * 앱 버전 값을 `2026-06-14-setup-mode`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `git diff --check` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_input_bundle.py` 통과
+  * `npm run test:browser` 통과 (8 passed, 4 skipped)
+  * Browser 확인: 초기 `#app.setup-mode`에서 `#setupScreen`은 `.chat-area` 내부에 표시되고 좌/우 패널, 대화 헤더, 대화 목록은 숨겨짐
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

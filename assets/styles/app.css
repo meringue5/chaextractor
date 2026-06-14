@@ -810,6 +810,29 @@ body {
     display: flex;
 }
 
+.app.setup-mode .sidebar,
+.app.setup-mode .link-sidebar,
+.app.setup-mode .sidebar-overlay,
+.app.setup-mode .scroll-markers,
+.app.setup-mode .chat-header,
+.app.setup-mode .chat-messages {
+    display: none;
+}
+
+.app.setup-mode .chat-area {
+    background: var(--bg-primary);
+}
+
+.app.setup-mode .setup-screen {
+    width: 100%;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.app.viewer-mode .setup-screen {
+    display: none;
+}
+
 /* 사이드바 */
 .sidebar {
     width: 320px;

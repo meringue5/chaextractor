@@ -7,7 +7,7 @@ const windowsFixture = path.join(
   repoRoot,
   'test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt'
 );
-const expectedAppVersion = '2026-06-11-upload-version-check';
+const expectedAppVersion = '2026-06-14-setup-mode';
 
 function watchLocalRuntime(page) {
   const failures = [];
@@ -35,7 +35,8 @@ async function uploadWindowsFixture(page) {
   await page.setInputFiles('#zipInput', windowsFixture);
   await expect(page.locator('#zipName')).toContainText('처리 완료', { timeout: 10_000 });
   await expect(page.locator('#startBtn')).toHaveCount(0);
-  await expect(page.locator('#app')).toHaveClass(/active/);
+  await expect(page.locator('#app')).toHaveClass(/viewer-mode/);
+  await expect(page.locator('#setupScreen')).not.toBeVisible();
 }
 
 test('static shell loads local assets, vendor script, and chat modules', async ({ page }) => {
@@ -44,6 +45,11 @@ test('static shell loads local assets, vendor script, and chat modules', async (
   await openApp(page);
 
   await expect(page.locator('#setupScreen')).toBeVisible();
+  await expect(page.locator('#app')).toHaveClass(/setup-mode/);
+  await expect(page.locator('.sidebar')).not.toBeVisible();
+  await expect(page.locator('.link-sidebar')).not.toBeVisible();
+  await expect(page.locator('.chat-header')).not.toBeVisible();
+  await expect(page.locator('#chatMessages')).not.toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await expect(page.locator('html')).toHaveAttribute('data-font', 'ridi');
   await expect(page.locator('meta[name="app-version"]')).toHaveAttribute('content', expectedAppVersion);
@@ -149,7 +155,8 @@ test('stale app reloads before processing selected files', async ({ page }, test
   await expect.poll(() => new URL(page.url()).searchParams.get('appVersion')).toBe(latestVersion);
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem('chaextractorUpdateReloadTarget')))
     .toContain(latestVersion);
-  await expect(page.locator('#app')).not.toHaveClass(/active/);
+  await expect(page.locator('#app')).toHaveClass(/setup-mode/);
+  await expect(page.locator('#app')).not.toHaveClass(/viewer-mode/);
   expect(failures).toEqual([]);
 });
 

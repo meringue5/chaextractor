@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>채상욱의 머니버스 대화 뷰어</title>
     <meta name="description" content="카카오톡 오픈채팅방 대화를 날짜별로 탐색하고 검색하는 뷰어">
-    <meta name="app-version" content="2026-06-11-upload-version-check">
+    <meta name="app-version" content="2026-06-14-setup-mode">
     <!-- Open Graph (Facebook, 카카오톡 등) -->
     <meta property="og:title" content="채상욱의 머니버스 대화 뷰어">
     <meta property="og:description" content="카카오톡 오픈채팅방 대화를 날짜별로 탐색하고 검색하는 뷰어">
@@ -18,90 +18,11 @@
     <meta name="twitter:description" content="카카오톡 오픈채팅방 대화를 날짜별로 탐색하고 검색하는 뷰어">
     <meta name="twitter:image" content="https://meringue5.github.io/chaextractor/assets/og-image.png">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
-    <link rel="stylesheet" href="assets/styles/app.css?v=2026-06-11-upload-version-check">
+    <link rel="stylesheet" href="assets/styles/app.css?v=2026-06-14-setup-mode">
 </head>
 <body>
-    <!-- 설정 화면 -->
-    <div class="setup-screen" id="setupScreen">
-        <div class="setup-box">
-            <h1>채상욱의 머니버스 대화 뷰어</h1>
-            <p class="subtitle">머니버스 오픈 카톡방에서 '카카오톡 대화 내보내기'를 실행하여 받은 백업을 읽기 좋게 정리해드립니다. 서버로 대화내용이 전송되지 않으며 자기가 참여한 시점부터의 대화 내용만 볼 수 있습니다. (문의: 무스타파)</p>
-            <!-- 사용 가이드 -->
-            <div class="guide-section">
-                <h2>📱 Step 1: 카카오톡에서 대화 내보내기</h2>
-                <div class="guide-row">
-                    <div class="guide-item">
-                        <span class="step-num">1</span>
-                        <img src="assets/guide/guide-01-settings.png" alt="설정 메뉴" loading="lazy" decoding="async">
-                        <p class="caption">오픈채팅방에서<br>설정 메뉴(⚙️)로 들어갑니다</p>
-                    </div>
-                    <div class="guide-item">
-                        <span class="step-num">2</span>
-                        <img src="assets/guide/guide-02-export.png" alt="대화내용 내보내기" loading="lazy" decoding="async">
-                        <p class="caption">대화내용 내보내기<br>선택</p>
-                    </div>
-                    <div class="guide-item">
-                        <span class="step-num">3</span>
-                        <img src="assets/guide/guide-03-save-all.png" alt="모든 메시지 저장" loading="lazy" decoding="async">
-                        <p class="caption">모든 메시지 저장하기<br>선택</p>
-                    </div>
-                    <div class="guide-item">
-                        <span class="step-num">4</span>
-                        <img src="assets/guide/guide-04-transfer.png" alt="PC로 전송" loading="lazy" decoding="async">
-                        <p class="caption">폰에 저장된 대화내용을 확인<br>(이후 필요 시 PC로 전송)</p>
-                    </div>
-                </div>
-                <ul class="hint"><li>iOS: 파일>나의 iPhone>카카오톡</li><li>Android: 파일>내장메모리>Documents>KakaoTalk>Chats</li></ul>
-
-
-                <h2>💻 Step 2: 백업 선택</h2>
-                <div class="guide-row">
-                    <div class="guide-item">
-                        <span class="step-num">5</span>
-                        <img src="assets/guide/guide-05-select-file.png" alt="파일 선택" loading="lazy" decoding="async">
-                        <p class="caption">PC 또는 폰에서 대화내용을 아래 버튼으로 선택합니다</p>
-                    </div>
-                    <div class="guide-item">
-                        <span class="step-num">6</span>
-                        <img src="assets/guide/guide-06-review-chat.png" alt="대화 복기" loading="lazy" decoding="async">
-                        <p class="caption">분석이 끝나면 날짜를 선택하여 대화를 복기합니다</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="setup-step" id="step1">
-                <label><span class="icon">📦</span> 내보내기 한 카카오톡 대화 선택</label>
-                <div class="drop-zone" id="dropZone">
-                    <div class="drop-message">ZIP/TXT/CSV 파일 또는 폴더를 여기에 끌어다 놓으세요</div>
-                    <div class="drop-or">또는</div>
-                    <div class="file-btn-group">
-                        <label class="file-btn" id="zipBtn">파일(zip, txt, csv)</label>
-                        <input type="file" id="zipInput" accept=".zip,.txt,.csv">
-                        <label class="file-btn" id="folderBtn">폴더</label>
-                        <input type="file" id="folderInput" webkitdirectory multiple accept="*/*">
-                    </div>
-                </div>
-                <div class="capability-warning" id="capabilityWarning" role="status" hidden></div>
-                <ul class="hint"><li><strong>iOS:</strong> ZIP 파일 선택</li><li><strong>Android:</strong> KakaoTalk &gt; Chats &gt; 대화폴더 진입 → <strong>폴더 안의 모든 파일 선택</strong> (우측 상단 메뉴 → 전체선택)</li><li><strong>Windows:</strong> 데스크톱 내보내기 TXT 파일 선택</li><li><strong>macOS:</strong> 데스크톱 내보내기 CSV 파일 선택</li><li><strong>사진이 비어 보이면:</strong> 카카오톡 원본 대화에서 사진을 열어 기기에 내려받은 뒤 다시 내보내세요.</li></ul>
-                <div class="file-name" id="zipName"></div>
-
-                <div class="progress-container" id="progressContainer">
-                    <div class="progress-bar">
-                        <div class="fill" id="progressFill"></div>
-                    </div>
-                    <div class="progress-text" id="progressText">준비 중...</div>
-                </div>
-            </div>
-
-            <!-- 하단 버튼 그룹 -->
-            <div class="setup-footer-btns">
-                <button type="button" class="footer-link-btn" id="reportIssueFooterBtn">버그 제보</button>
-            </div>
-        </div>
-    </div>
-
     <!-- 메인 앱 -->
-    <div class="app" id="app">
+    <div class="app active setup-mode" id="app">
         <div class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-header-top">
@@ -141,6 +62,84 @@
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
         <div class="chat-area">
+            <!-- 설정 화면 -->
+            <div class="setup-screen" id="setupScreen">
+                <div class="setup-box">
+                    <h1>채상욱의 머니버스 대화 뷰어</h1>
+                    <p class="subtitle">머니버스 오픈 카톡방에서 '카카오톡 대화 내보내기'를 실행하여 받은 백업을 읽기 좋게 정리해드립니다. 서버로 대화내용이 전송되지 않으며 자기가 참여한 시점부터의 대화 내용만 볼 수 있습니다. (문의: 무스타파)</p>
+                    <!-- 사용 가이드 -->
+                    <div class="guide-section">
+                        <h2>📱 Step 1: 카카오톡에서 대화 내보내기</h2>
+                        <div class="guide-row">
+                            <div class="guide-item">
+                                <span class="step-num">1</span>
+                                <img src="assets/guide/guide-01-settings.png" alt="설정 메뉴" loading="lazy" decoding="async">
+                                <p class="caption">오픈채팅방에서<br>설정 메뉴(⚙️)로 들어갑니다</p>
+                            </div>
+                            <div class="guide-item">
+                                <span class="step-num">2</span>
+                                <img src="assets/guide/guide-02-export.png" alt="대화내용 내보내기" loading="lazy" decoding="async">
+                                <p class="caption">대화내용 내보내기<br>선택</p>
+                            </div>
+                            <div class="guide-item">
+                                <span class="step-num">3</span>
+                                <img src="assets/guide/guide-03-save-all.png" alt="모든 메시지 저장" loading="lazy" decoding="async">
+                                <p class="caption">모든 메시지 저장하기<br>선택</p>
+                            </div>
+                            <div class="guide-item">
+                                <span class="step-num">4</span>
+                                <img src="assets/guide/guide-04-transfer.png" alt="PC로 전송" loading="lazy" decoding="async">
+                                <p class="caption">폰에 저장된 대화내용을 확인<br>(이후 필요 시 PC로 전송)</p>
+                            </div>
+                        </div>
+                        <ul class="hint"><li>iOS: 파일>나의 iPhone>카카오톡</li><li>Android: 파일>내장메모리>Documents>KakaoTalk>Chats</li></ul>
+
+
+                        <h2>💻 Step 2: 백업 선택</h2>
+                        <div class="guide-row">
+                            <div class="guide-item">
+                                <span class="step-num">5</span>
+                                <img src="assets/guide/guide-05-select-file.png" alt="파일 선택" loading="lazy" decoding="async">
+                                <p class="caption">PC 또는 폰에서 대화내용을 아래 버튼으로 선택합니다</p>
+                            </div>
+                            <div class="guide-item">
+                                <span class="step-num">6</span>
+                                <img src="assets/guide/guide-06-review-chat.png" alt="대화 복기" loading="lazy" decoding="async">
+                                <p class="caption">분석이 끝나면 날짜를 선택하여 대화를 복기합니다</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setup-step" id="step1">
+                        <label><span class="icon">📦</span> 내보내기 한 카카오톡 대화 선택</label>
+                        <div class="drop-zone" id="dropZone">
+                            <div class="drop-message">ZIP/TXT/CSV 파일 또는 폴더를 여기에 끌어다 놓으세요</div>
+                            <div class="drop-or">또는</div>
+                            <div class="file-btn-group">
+                                <label class="file-btn" id="zipBtn">파일(zip, txt, csv)</label>
+                                <input type="file" id="zipInput" accept=".zip,.txt,.csv">
+                                <label class="file-btn" id="folderBtn">폴더</label>
+                                <input type="file" id="folderInput" webkitdirectory multiple accept="*/*">
+                            </div>
+                        </div>
+                        <div class="capability-warning" id="capabilityWarning" role="status" hidden></div>
+                        <ul class="hint"><li><strong>iOS:</strong> ZIP 파일 선택</li><li><strong>Android:</strong> KakaoTalk &gt; Chats &gt; 대화폴더 진입 → <strong>폴더 안의 모든 파일 선택</strong> (우측 상단 메뉴 → 전체선택)</li><li><strong>Windows:</strong> 데스크톱 내보내기 TXT 파일 선택</li><li><strong>macOS:</strong> 데스크톱 내보내기 CSV 파일 선택</li><li><strong>사진이 비어 보이면:</strong> 카카오톡 원본 대화에서 사진을 열어 기기에 내려받은 뒤 다시 내보내세요.</li></ul>
+                        <div class="file-name" id="zipName"></div>
+
+                        <div class="progress-container" id="progressContainer">
+                            <div class="progress-bar">
+                                <div class="fill" id="progressFill"></div>
+                            </div>
+                            <div class="progress-text" id="progressText">준비 중...</div>
+                        </div>
+                    </div>
+
+                    <!-- 하단 버튼 그룹 -->
+                    <div class="setup-footer-btns">
+                        <button type="button" class="footer-link-btn" id="reportIssueFooterBtn">버그 제보</button>
+                    </div>
+                </div>
+            </div>
             <div class="scroll-markers" id="scrollMarkers"></div>
             <div class="chat-header">
                 <div class="chat-header-title">
@@ -328,6 +327,6 @@
     </div>
 
     <script src="assets/vendor/jszip-3.10.1.min.js"></script>
-    <script type="module" src="assets/scripts/app.js?v=2026-06-11-upload-version-check"></script>
+    <script type="module" src="assets/scripts/app.js?v=2026-06-14-setup-mode"></script>
 </body>
 </html>

@@ -124,7 +124,8 @@ async function fetchLatestAppVersion() {
 }
 
 function canAutoReloadForAppUpdate() {
-    return appState.messages.length === 0 && (!app || !app.classList.contains('active'));
+    return appState.messages.length === 0
+        && (!app || !app.classList.contains('active') || app.classList.contains('setup-mode'));
 }
 
 function getCacheBustReloadUrl(latestVersion) {
@@ -3199,12 +3200,13 @@ function updateProgress(percent, text) {
 
 // ========== 대화 뷰어 진입 ==========
 function enterChatViewer() {
-    if (app.classList.contains('active')) {
+    if (app.classList.contains('viewer-mode')) {
         return;
     }
 
     setupScreen.style.display = 'none';
-    app.classList.add('active');
+    app.classList.remove('setup-mode');
+    app.classList.add('active', 'viewer-mode');
     initApp();
     requestAnimationFrame(() => {
         window.scrollTo(0, 0);

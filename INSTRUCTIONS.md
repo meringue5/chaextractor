@@ -147,7 +147,7 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 브라우저 회귀 검증은 `harness/browser/`의 Playwright smoke를 선택 실행한다. 이 하네스는 정적 서버로 저장소 루트의 `index.html`을 열고, 앱 배포 파일을 빌드 없이 그대로 검증한다.
 
 ## HTML 컴포넌트
-- `#setupScreen` — 초기 화면
+- `#setupScreen` — 초기 화면. `#app.setup-mode`에서 `.chat-area` 안에 표시되며, 파일 처리 전에는 좌측 탐색 패널/우측 링크 패널/대화 헤더를 숨긴다.
   - `.guide-section` — 사용 가이드 (`assets/guide` 스크린샷 6장)
   - `#step1` — 파일 업로드 영역
     - `#zipBtn` / `#zipInput` — ZIP/TXT/CSV 파일 선택 (iOS/Windows/macOS)
@@ -155,9 +155,9 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
     - `#dropZone` — 드래그앤드롭 영역
     - `#zipName` — 파일 상태 메시지
     - `#progressContainer` > `#progressFill` + `.progress-text` — 진행률 바
-  - 파일 처리 완료 시 사용자 확인 없이 `#app` 메인 뷰어로 자동 전환
+  - 파일 처리 완료 시 사용자 확인 없이 `#app.viewer-mode` 메인 뷰어로 자동 전환
 - `.setup-footer-btns` — Google Form 버그 제보 버튼
-- `#app` — 메인 뷰어 (초기 hidden)
+- `#app` — 앱 컨테이너. 초기에는 `setup-mode`로 메인 대화 영역에 `#setupScreen`만 표시하고, 파일 처리 완료 후 `viewer-mode`로 좌측 탐색 패널/대화 헤더/대화 목록/우측 링크 패널을 표시한다.
   - `.sidebar` — 좌측 패널 (320px, 모바일: 86vw 슬라이드)
     - `.sidebar-header` — 제목 + 헤더 버튼들
       - `#leaderFilterBtn` — 사용자 필터 패널 토글 및 필터 활성화 (👑)
