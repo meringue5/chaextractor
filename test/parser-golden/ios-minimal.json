@@ -22,9 +22,29 @@
     },
     "attachmentRefCount": 4,
     "attachmentMappedCount": 2,
+    "rawMessageCount": 6,
     "leaderCountByDate": {
       "2026-01-27": 1
     },
+    "rawLeaderCountByDate": {
+      "2026-01-27": 2
+    },
+    "rawMessages": [
+      {
+        "index": 0,
+        "user": "채상욱 리더",
+        "message_type": "text",
+        "content": "안녕하세요",
+        "displayMessageId": "display-0"
+      },
+      {
+        "index": 1,
+        "user": "채상욱 리더",
+        "message_type": "text",
+        "content": "이어서 말합니다",
+        "displayMessageId": "display-0"
+      }
+    ],
     "messages": [
       {
         "index": 0,

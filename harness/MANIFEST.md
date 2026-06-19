@@ -73,7 +73,7 @@
 
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
-| 앱은 배포용 애플리케이션 서버 없이 실행 가능한 빌드 없는 정적 앱이다. 공식 서비스 제공 경로는 GitHub Pages이며, 로컬 개발/검증은 정적 서버로 `http://127.0.0.1:<port>/`에서 수행한다. `file://` 직접 실행은 공식 검증 경로로 보장하지 않는다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` ES module 앱 진입 로직, `assets/scripts/chat-core.js` UI 없는 대화 파싱 코어, `assets/scripts/chat-domain.js` ES module 저수준 도메인 헬퍼, `assets/version.json` 앱 버전 매니페스트, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타 이미지, `scripts/start-local-server.sh`/`.ps1` 로컬 정적 서버 실행 스크립트. | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
+| 앱은 배포용 애플리케이션 서버 없이 실행 가능한 빌드 없는 정적 앱이다. 공식 서비스 제공 경로는 GitHub Pages이며, 로컬 개발/검증은 정적 서버로 `http://127.0.0.1:<port>/`에서 수행한다. `file://` 직접 실행은 공식 검증 경로로 보장하지 않는다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` ES module 앱 진입 로직, `assets/scripts/chat-core.js` UI 없는 대화 파싱 코어, `assets/scripts/chat-domain.js` ES module 저수준 도메인 헬퍼, `assets/scripts/keyword-dictionary.js` 정적 키워드 사전, `assets/version.json` 앱 버전 매니페스트, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타 이미지, `scripts/start-local-server.sh`/`.ps1` 로컬 정적 서버 실행 스크립트. | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
 | 새 배포는 브라우저 캐시를 우회할 수 있어야 한다. | `meta[name="app-version"]`, CSS/JS query, `assets/version.json` 버전을 맞추고 앱 시작 시 같은 출처 version manifest를 cache-busting fetch로 확인한다 | Browser smoke |
 | 런타임 정적 자산은 소스와 배포본이 같은 파일이어야 한다. | 별도 빌드 산출물 없음 | doc drift checker와 파일 경로 존재 점검 |
 | 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 3.10.1 로컬 vendor, 폰트 CDN | doc drift checker로 일부 점검 |
@@ -83,6 +83,7 @@
 | 하네스가 앱 내부를 검증할 때는 버전 있는 테스트 API 계약을 사용한다. | `window.__CHAEXTRACTOR_ENABLE_TEST_API__`가 설정된 하네스 환경에서만 `window.__CHAEXTRACTOR_TEST__`를 노출한다. 현재 계약은 `contractVersion: 1`과 `parser`/`ui`/`runtime`/`diagnostics`/`state` 네임스페이스로 구성되며, 기존 평면 함수는 호환용이다. | Node VM 하네스와 doc drift checker |
 | 입력 계층은 ZIP/폴더별 파일 수집 결과를 내부 bundle 계약으로 정규화한 뒤 파싱/첨부 매핑/캐시 흐름에 넘긴다. | `buildZipInputBundle`, `buildFolderInputBundle`, `check_input_bundle.py`, 작은 iOS ZIP fixture | 입력 bundle 하네스 |
 | 첨부파일 런타임 원천과 캐시 payload를 분리한다. | `attachmentInventory`는 ZIP entryPath 또는 폴더 Blob URL을 파일명 기준으로 담는다. 캐시에는 메시지와 직렬화 가능한 ZIP entryPath만 저장하고 Blob URL/File 객체는 저장하지 않는다. | cache privacy, parser golden, browser smoke |
+| 파서는 화면 표시용 병합 메시지와 분석용 원본 발화 스트림을 분리한다. | `messages`/`messagesByDate`는 기존 UI 호환 병합 결과, `rawMessages`/`rawMessagesByDate`는 키워드/윈도우 분석용 원본 발화 단위 | parser golden과 Node UI smoke |
 
 ## 요구사항으로 정의된 것
 
@@ -90,9 +91,9 @@
 
 | 영역 | 요구사항 | 현재 검증 수준 |
 |---|---|---|
-| 입력 | ZIP/TXT/CSV 또는 폴더 입력으로 대화 로그와 첨부파일 파싱 | parser golden, Node UI smoke, browser smoke에서 Windows TXT 업로드 검증 |
+| 입력 | ZIP/TXT/CSV 또는 폴더 입력으로 대화 로그와 첨부파일 파싱, 여러 유효 대화 파일을 파일 내부 발화시각과 확인된 segment 순서로 병합 | parser golden, input bundle, Node UI smoke, browser smoke에서 Windows TXT 업로드 검증 |
 | 플랫폼 | iOS/Android/Windows/macOS 내보내기 지원 | Android 실제 ZIP/iOS 최소/Windows 최소/macOS CSV/Windows 첨부 미지원 fixture golden 검증 |
-| 파싱 | 날짜 그룹화, 시스템 메시지 제외, 연속 텍스트 병합 | parser golden 부분 검증 |
+| 파싱 | 날짜 그룹화, 시스템 메시지 제외, 표시용 연속 텍스트 병합, 분석용 원본 발화 보존 | parser golden 부분 검증 |
 | 메시지 타입 | text/photo/file/emoticon 분리 | parser golden 부분 검증 |
 | 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음, 누락 사진 복구 안내 | parser golden: iOS PDF/사진, Android hash/일반 파일, 누락 첨부/누락 사진 안내 검증 |
 | 검색 | 전체 메시지 대상, 날짜 목록/결과 반영 | Node UI smoke와 browser smoke에서 날짜 목록 필터 검증 |
@@ -113,6 +114,7 @@
 | 20줄 미만 대화 파일 거부 | `validateChatFile` | 짧은 실제 내보내기 거부 가능 | 요구사항으로 인정할지 결정 |
 | 캐시 키 전략 | 파일명/크기/mtime 중심 | 폴더/첨부 변경 감지 부족 가능 | 캐시 정책 표준화 |
 | 검색 결과 하이라이트 부재 | 검색은 `renderDateList`에만 연결 | `INSTRUCTIONS.md`와 불일치 | 구현 또는 요구사항 수정 |
+| 키워드 인사이트 UI | 정적 키워드 엔진과 DOM은 남아 있으나 데이터 기반 재설계 전까지 `#keywordInsight`를 화면에서 숨김 | 사용자에게 미완성 키워드 품질을 노출할 수 있음 | 대화 패턴 분석 후 재활성화 여부 결정 |
 | Windows/macOS 첨부파일 매핑 | 텍스트/CSV 파싱은 지원하나 첨부파일 패턴은 미확정. 현재 직접 매핑하지 않도록 fixture로 고정 | 데스크톱 사용자 기대 혼선 | 실제 샘플 확보 후 정식화 |
 
 ## 미결정 항목

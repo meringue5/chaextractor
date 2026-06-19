@@ -962,6 +962,7 @@
   * `python3 harness/scripts/check_doc_drift.py` 통과
   * `python3 harness/scripts/run_parser_golden.py` 통과
   * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과 (8 passed, 4 skipped)
   * `python3 harness/scripts/check_diagnostic_report.py` 통과
   * `python3 harness/scripts/check_modal_escape.py` 통과
   * `python3 harness/scripts/check_cache_date_sort.py` 통과
@@ -1391,6 +1392,117 @@
   * `python3 harness/scripts/check_input_bundle.py` 통과
   * `npm run test:browser` 통과 (8 passed, 4 skipped)
   * Browser 확인: 초기 `#app.setup-mode`에서 `#setupScreen`은 `.chat-area` 내부에 표시되고 좌/우 패널, 대화 헤더, 대화 목록은 숨겨짐
+
+## 2-1-83단계: 키워드 UI 비활성화와 iOS 분절 대화 병합 지원 (2026-06-19)
+* 분류:
+  * 요구사항 변경 및 파서 보강. 키워드 인사이트는 데이터 기반 재설계 전까지 화면에서 숨기고, ZIP/폴더 안 여러 유효 대화 파일은 날짜·시간과 파일 segment 순서로 병합하도록 공식화.
+* 변경:
+  * `#keywordInsight`를 CSS로 숨겨 키워드 엔진/DOM은 유지하되 화면 요소는 비활성화
+  * iOS `Talk_YYYY.M.D HH:mm-n.txt` 파일명을 지원 범위에 추가하고, `-n` segment를 같은 타임스탬프의 병합 tie-breaker로 사용
+  * input bundle 단계에서 유효 대화 파일을 안정 정렬하고, 카카오톡 패턴이 없는 `.txt` 노트/첨부는 대화 파일에서 제외하도록 split fixture로 고정
+  * `parseMergedChatFiles`가 문자열 배열뿐 아니라 `{ content, filename, entryPath }` chat source를 받아 source 파일 순서를 보존하도록 확장
+  * `ios-split` parser golden fixture와 input bundle split fixture 검증을 추가
+  * 하네스/README/작업 지침에 분절 대화 병합 규칙과 키워드 UI 비활성화 상태를 반영
+  * 앱 버전 값을 `2026-06-19-split-chat`로 갱신
+* 실제 샘플 확인:
+  * `tmp/Kakaotalk_Chat_[소통방]..._20260531_202022`의 유효 Talk 파일 2개는 각각 약 114,024줄/49,030줄
+  * 병합 결과 원본 발화 123,079개, 표시용 병합 메시지 78,752개, 날짜 313일
+  * 파일 경계는 `2026-02-27 08:23`에서 `-1` 마지막 발화 뒤 `-2` 첫 발화로 이어짐
+  * 필터 대상 원본 발화는 46,665개였고, 간단한 연속 발화 probe 기준 상위 후보는 2026-03-12 16:25~16:38, 2026-03-26 15:57~16:18, 2026-05-02 21:59~22:26 등
+* 검증:
+  * `node --check assets/scripts/chat-core.js` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_input_bundle.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과 (10000 messages, 25.9ms)
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `git diff --check` 통과
+  * `npm run test:browser` 통과 (8 passed, 4 skipped)
+
+## 2-1-84단계: Android 분절 가능성을 열어둔 공통 병합 규칙 (2026-06-19)
+* 분류:
+  * 요구사항/도메인 규칙 보강. 실제 확인된 iOS 분절 샘플 외에도 Android에서 여러 유효 대화 파일이 들어올 가능성을 공통 병합 경로로 수용.
+* 변경:
+  * `parseMergedChatFiles`가 각 대화 파일을 먼저 파싱해 파일별 첫/마지막 발화시각을 계산하고, 그 순서를 우선해 원본 발화 스트림을 병합하도록 변경
+  * iOS `Talk_...-n.txt` segment와 Android `KakaoTalkChats-1.txt`/`KakaoTalkChats_1.txt` suffix는 같은 타임스탬프 또는 같은 시작시각의 보조 정렬 기준으로 유지
+  * Android 플랫폼 감지가 `KakaoTalkChats.txt`뿐 아니라 숫자 suffix 후보도 인식하도록 확장
+  * `android-split` parser golden fixture를 추가해, 같은 `KakaoTalkChats.txt` 이름의 여러 유효 대화 파일이 입력순과 무관하게 파일 내부 발화시각으로 병합되는지 고정
+  * 하네스/README/작업 지침의 분절 병합 설명을 "파일 내부 발화시각 우선, 확인된 segment 보조"로 정정
+  * 앱 버전 값을 `2026-06-19-generic-split-chat`로 갱신
+* 검증:
+  * `node --check assets/scripts/chat-core.js` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/chat-domain.js` 통과
+  * `python3 harness/scripts/run_parser_golden.py test/parser-golden/android-split.json test/parser-golden/ios-split.json` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_input_bundle.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과 (10000 messages, 26.9ms)
+  * `git diff --check` 통과
+  * `npm run test:browser` 통과 (8 passed, 4 skipped)
+
+## 2-1-82단계: 정적 키워드 사전과 한국어 조사 정규화 적용 (2026-06-19)
+* 분류:
+  * 요구사항 보강. 키워드 인사이트가 단순 빈도 표면어 대신 한국어 조사/일반어 제거와 금융·부동산·커뮤니티 정적 사전을 반영하도록 개선.
+* 변경:
+  * `assets/scripts/keyword-dictionary.js`를 추가해 stopword, 조사 후보, alias, 금융·부동산 도메인 용어, 커뮤니티 용어, 2어절 표현 사전을 앱 로직과 분리
+  * `코스닥이`/`코스닥의`/`개인은` 같은 조사 결합형을 대표 키워드로 정규화
+  * `그냥`/`너무`/`다시` 같은 일반어를 키워드 후보에서 제거
+  * `코스닥 레버리지` 같은 지정 2어절 표현과 `타플배`/`코나성` 같은 커뮤니티 용어를 보존하고 가중치 반영
+  * Node VM 하네스의 `ui.keyword` 테스트 API와 browser smoke의 정적 자산 로드 확인에 키워드 사전 모듈을 추가
+  * 하네스/README/작업 지침에 정적 키워드 사전 기준과 사용자 데이터 경계를 반영
+  * 앱 버전 값을 `2026-06-19-keyword-dictionary`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/keyword-dictionary.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `git diff --check` 통과
+  * `npm run test:browser` 통과 (8 passed, 4 skipped)
+
+## 2-1-81단계: 키워드 인사이트 대화 영역 이동 (2026-06-19)
+* 분류:
+  * 요구사항 위치 정정. 선택 날짜에서 추출된 복기 정보인 키워드 인사이트를 내비게이션이 아니라 대화 뷰포트의 날짜 맥락에 귀속.
+* 변경:
+  * `#keywordInsight`를 좌측 사이드바에서 대화 헤더 아래, 메시지 목록 위로 이동
+  * 모바일에서는 대화 영역 안에서 1열로 접히도록 키워드 인사이트 레이아웃을 조정
+  * setup 모드에서는 키워드 인사이트도 대화 헤더/목록과 함께 숨김
+  * 하네스 요구사항과 작업 지침에서 키워드 인사이트 위치를 좌측 패널에서 대화 뷰포트로 정정
+  * 앱 버전 값을 `2026-06-19-keyword-chat-area`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `git diff --check` 통과
+  * `npm run test:browser` 통과 (8 passed, 4 skipped)
+
+## 2-1-80단계: 원본 발화 보존과 키워드 인사이트 추가 (2026-06-19)
+* 분류:
+  * 요구사항 보강. 향후 발화 윈도우 분석을 위해 원본 발화 스트림을 보존하고, LLM 이전 정적 복기용 키워드 인사이트를 추가.
+* 변경:
+  * 파서 결과에 `rawMessages`, `rawMessagesByDate`, `rawLeaderCountByDate`를 추가해 표시용 병합 메시지와 분석용 원본 발화를 분리
+  * 기존 `messages`/`messagesByDate`는 화면 호환을 위해 동일 사용자 연속 텍스트가 병합된 표시용 결과로 유지
+  * 병합 표시 메시지에 `rawMessageIds`, `segmentCount`, `rawStartIndex`, `rawEndIndex`를 연결
+  * 캐시 저장/복원과 테스트 API 스냅샷에 원본 발화 필드를 추가하고, 옛 캐시에는 병합 메시지를 원본처럼 쓰는 fallback을 둠
+  * 좌측 패널에 선택 날짜의 전체/필터 대상 키워드 인사이트를 추가하고, 키워드 클릭 시 검색 흐름에 연결
+  * 하네스/README/작업 지침에 원본 발화 보존과 키워드 인사이트 요구사항을 반영
+  * 앱 버전 값을 `2026-06-19-keyword-insight`로 갱신
+* 검증:
+  * `node --check assets/scripts/chat-core.js && node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
 
 ## 테스트 이력
 

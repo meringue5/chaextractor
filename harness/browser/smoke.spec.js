@@ -7,7 +7,7 @@ const windowsFixture = path.join(
   repoRoot,
   'test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt'
 );
-const expectedAppVersion = '2026-06-14-setup-mode';
+const expectedAppVersion = '2026-06-19-generic-split-chat';
 
 function watchLocalRuntime(page) {
   const failures = [];
@@ -49,6 +49,7 @@ test('static shell loads local assets, vendor script, and chat modules', async (
   await expect(page.locator('.sidebar')).not.toBeVisible();
   await expect(page.locator('.link-sidebar')).not.toBeVisible();
   await expect(page.locator('.chat-header')).not.toBeVisible();
+  await expect(page.locator('#keywordInsight')).not.toBeVisible();
   await expect(page.locator('#chatMessages')).not.toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await expect(page.locator('html')).toHaveAttribute('data-font', 'ridi');
@@ -63,6 +64,7 @@ test('static shell loads local assets, vendor script, and chat modules', async (
   expect(resourcePaths).toContain('/assets/scripts/app.js');
   expect(resourcePaths).toContain('/assets/scripts/chat-core.js');
   expect(resourcePaths).toContain('/assets/scripts/chat-domain.js');
+  expect(resourcePaths).toContain('/assets/scripts/keyword-dictionary.js');
   await expect(page.locator('img[src^="assets/guide/"]')).toHaveCount(6);
   await expect(page.locator('#heroImage')).toHaveCount(0);
   await expect(page.locator('#setupTipsBtn')).toHaveCount(0);
@@ -214,6 +216,12 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   await expect(page.locator('#chatMessages .message')).toHaveCount(5);
   await expect(page.locator('#chatMessages')).toContainText('안녕하세요');
   await expect(page.locator('#chatMessages')).toContainText('이어서 말합니다');
+  await expect(page.locator('#chatArea > #keywordInsight')).not.toBeVisible();
+  await page.locator('#searchInput').fill('말합니다');
+  await expect(page.locator('#searchInput')).toHaveValue('말합니다');
+  await expect(page.locator('.date-item')).toHaveCount(1);
+  await page.locator('#searchInput').fill('');
+  await expect(page.locator('.date-item')).toHaveCount(2);
   await expect(page.locator('#captureBtn')).toBeEnabled();
   await page.locator('#captureBtn').click();
   await expect(page.locator('#captureModal')).toHaveClass(/open/);

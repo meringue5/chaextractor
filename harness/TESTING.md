@@ -16,6 +16,7 @@ python3 harness/scripts/run_parser_golden.py
 
 - `android-sample`: `test/dataset/android/`의 실제 ZIP 샘플
 - `android-files`: `test/fixtures/android-files/`의 Android 일반 파일/PDF fixture
+- `android-split`: `test/fixtures/android-split/`의 합성 Android 분절 가능성 fixture
 - `ios-minimal`: `test/fixtures/ios-minimal/`의 최소 iOS fixture
 - `ios-zip-minimal`: `test/dataset/ios/ios-zip-minimal.zip`의 개인정보 없는 작은 iOS ZIP fixture
 - `ios-missing-photo-guidance`: 누락 사진의 사용자 복구 안내 렌더링 fixture
@@ -27,12 +28,15 @@ python3 harness/scripts/run_parser_golden.py
 검증 범위:
 
 - 메시지 수
+- 분석용 원본 발화 수
 - 날짜 수와 날짜 목록
 - 메시지 타입별 개수
 - 연속 텍스트 병합
+- 표시용 연속 텍스트 병합과 분석용 원본 발화 보존
 - 시스템 메시지 제외
 - Android hash 이미지와 연속 사진 줄
 - Android 일반 파일/PDF URL 인코딩/디코딩 매핑
+- Android 다중 유효 대화 파일의 파일 내부 발화시각 기준 병합
 - iOS 사진/PDF 타임스탬프 매핑
 - 누락 사진 자리의 원본 대화 다운로드/재내보내기 안내 렌더링
 - Windows 날짜 헤더, 오전/오후 메시지, 시스템 메시지 제외, 연속 텍스트 병합
@@ -63,7 +67,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; p
 
 `check_cache_date_sort.py`는 캐시 hit 복원 시 날짜 목록이 항상 최신순으로 정규화되는지 검사한다.
 
-`check_ui_smoke.py`는 Node VM에서 테스트 API 계약의 `parser`, `ui`, `ui.capture`, `ui.navigation`, `ui.modals` 네임스페이스를 통해 실제 앱 UI 함수를 호출해 fixture 로드, 날짜 선택, 검색 날짜 필터, 사용자 지정 필터, 갈무리 TXT 생성, 테마/폰트 설정, 설정 모달, 좌우 사이드바 열기/닫기와 모바일 상호 배제를 검사한다. Playwright 같은 실제 브라우저 smoke는 의존성을 도입할 때 이 명령 위에 확장한다.
+`check_ui_smoke.py`는 Node VM에서 테스트 API 계약의 `parser`, `ui`, `ui.keyword`, `ui.capture`, `ui.navigation`, `ui.modals` 네임스페이스를 통해 실제 앱 UI 함수를 호출해 fixture 로드, 날짜 선택, 검색 날짜 필터, 숨김 상태인 키워드 엔진의 정규화 probe, 사용자 지정 필터, 갈무리 TXT 생성, 테마/폰트 설정, 설정 모달, 좌우 사이드바 열기/닫기와 모바일 상호 배제를 검사한다. Playwright 같은 실제 브라우저 smoke는 의존성을 도입할 때 이 명령 위에 확장한다.
 
 `check_capability_notice.py`는 `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 지원 여부에 따라 안내 문구와 업로드 제한 상태가 올바른지 검사한다.
 
@@ -71,7 +75,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; p
 
 `check_diagnostic_report.py`는 JS 오류/처리 실패 진단 리포트가 생성되고, 원본 대화 파일명/첨부파일명이 리포트와 Google Form 사전입력 URL에 포함되지 않는지 검사한다.
 
-`check_input_bundle.py`는 작은 iOS ZIP/폴더 fixture를 앱 테스트 API의 `runtime.input` 계약으로 정리해 대화 파일 후보, 첨부파일 후보, 플랫폼 감지, 캐시 키, 첨부 File 참조 유무가 기대대로인지 검사한다.
+`check_input_bundle.py`는 작은 iOS ZIP/폴더 fixture를 앱 테스트 API의 `runtime.input` 계약으로 정리해 대화 파일 후보, 첨부파일 후보, 플랫폼 감지, 캐시 키, 첨부 File 참조 유무가 기대대로인지 검사한다. iOS split fixture에서는 `Talk_...-1.txt`/`Talk_...-2.txt`가 유효 대화 파일로 정렬되고, 카카오톡 패턴이 없는 `20260523_220229.txt` 같은 노트형 `.txt` 첨부는 대화 파일에서 제외되는지 확인한다. Android split 가능성은 parser golden의 합성 fixture로 파일 내부 발화시각 병합을 고정한다.
 
 `check_performance_smoke.py`는 합성 Android 로그 1만 메시지를 실제 앱 파서로 파싱하고 3초 예산 안에 메시지/날짜 수가 맞는지 검사한다.
 

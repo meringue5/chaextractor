@@ -1,0 +1,76 @@
+{
+  "id": "ios-split",
+  "description": "iOS 분절 대화 fixture: Talk export가 -1/-2로 나뉘고 같은 분 경계에서 이어지는 경우 파일명 segment 순서로 병합",
+  "platform": "ios",
+  "input": {
+    "texts": [
+      "test/fixtures/ios-split/Talk_2026.5.31 18:07-2.txt",
+      "test/fixtures/ios-split/Talk_2026.5.31 18:07-1.txt"
+    ]
+  },
+  "expected": {
+    "detectedPlatform": "ios",
+    "messageCount": 5,
+    "dateCount": 1,
+    "dates": ["2026-02-27"],
+    "typeCounts": {
+      "text": 5
+    },
+    "rawMessageCount": 8,
+    "leaderCountByDate": {
+      "2026-02-27": 3
+    },
+    "rawLeaderCountByDate": {
+      "2026-02-27": 6
+    },
+    "rawMessages": [
+      {
+        "index": 0,
+        "user": "채상욱 리더",
+        "content": "제3 계기는 여의도식 주식기술이 더 필요없음을 알아서인데"
+      },
+      {
+        "index": 3,
+        "user": "채상욱 리더",
+        "content": "트레이딩을 배울 이유가 없더라는거에요"
+      },
+      {
+        "index": 4,
+        "user": "용두역가이",
+        "content": "미래의 압구정현대같은 주식"
+      },
+      {
+        "index": 5,
+        "user": "채상욱 리더",
+        "content": "네"
+      }
+    ],
+    "messages": [
+      {
+        "index": 0,
+        "user": "채상욱 리더",
+        "content": "제3 계기는 여의도식 주식기술이 더 필요없음을 알아서인데"
+      },
+      {
+        "index": 1,
+        "user": "용두역가이",
+        "content": "예"
+      },
+      {
+        "index": 2,
+        "user": "채상욱 리더",
+        "contentContains": "트레이딩을 배울 이유가 없더라는거에요"
+      },
+      {
+        "index": 3,
+        "user": "용두역가이",
+        "content": "미래의 압구정현대같은 주식"
+      },
+      {
+        "index": 4,
+        "user": "채상욱 리더",
+        "contentContains": "네\n알짜 + 장기투자로 복리 극대화"
+      }
+    ]
+  }
+}

@@ -15,6 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 NODE_HELPER = REPO_ROOT / "harness" / "scripts" / "parse_with_index.mjs"
 IOS_ZIP = REPO_ROOT / "test" / "dataset" / "ios" / "ios-zip-minimal.zip"
 IOS_SOURCE_DIR = REPO_ROOT / "test" / "fixtures" / "ios-zip-minimal"
+IOS_SPLIT_DIR = REPO_ROOT / "test" / "fixtures" / "ios-split"
 
 
 def parse_with_index(payload: dict[str, Any]) -> dict[str, Any]:
@@ -55,6 +56,25 @@ def build_folder_entries() -> list[dict[str, Any]]:
         entry: dict[str, Any] = {
             "name": path.name,
             "entryPath": f"ios-zip-minimal/{path.name}",
+            "isDirectory": False,
+            "size": path.stat().st_size,
+            "lastModified": 1234,
+            "hasFile": True,
+        }
+        if path.suffix.lower() in {".txt", ".csv"}:
+            entry["content"] = path.read_text(encoding="utf-8-sig")
+        entries.append(entry)
+    return entries
+
+
+def build_split_folder_entries() -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    for path in sorted(IOS_SPLIT_DIR.iterdir(), reverse=True):
+        if not path.is_file():
+            continue
+        entry: dict[str, Any] = {
+            "name": path.name,
+            "entryPath": f"ios-split/{path.name}",
             "isDirectory": False,
             "size": path.stat().st_size,
             "lastModified": 1234,
@@ -107,6 +127,23 @@ def main() -> int:
     assert_common_ios_bundle(folder_bundle, "folder")
     assert folder_bundle["cacheKey"].startswith("Talk_2026.6.10 09_30-1.txt_count1_")
     assert all(item["hasFile"] for item in folder_bundle["attachmentFiles"])
+
+    split_bundle = parse_with_index({
+        "mode": "inputBundle",
+        "sourceType": "folder",
+        "sourceName": "ios-split",
+        "entries": build_split_folder_entries(),
+    })
+    assert split_bundle["sourceType"] == "folder"
+    assert split_bundle["detectedPlatform"] == "ios"
+    assert split_bundle["fileCount"] == 3
+    assert split_bundle["chatCandidateCount"] == 3
+    assert split_bundle["validChatFileCount"] == 2
+    assert [item["filename"] for item in split_bundle["chatFiles"]] == [
+        "Talk_2026.5.31 18:07-1.txt",
+        "Talk_2026.5.31 18:07-2.txt",
+    ]
+    assert "20260523_220229.txt" not in {item["filename"] for item in split_bundle["chatFiles"]}
 
     print("PASS input bundle")
     return 0

@@ -78,6 +78,23 @@ def load_input(case: dict[str, Any]) -> dict[str, Any]:
             "platform": case["platform"],
         }
 
+    if "texts" in input_spec:
+        chat_sources = []
+        for text_item in input_spec["texts"]:
+            text_path = (REPO_ROOT / text_item).resolve()
+            chat_sources.append({
+                "name": Path(text_item).name,
+                "filename": Path(text_item).name,
+                "entryPath": text_item,
+                "content": text_path.read_text(encoding="utf-8-sig"),
+            })
+
+        return {
+            "chatSources": chat_sources,
+            "attachments": input_spec.get("attachments", []),
+            "platform": case["platform"],
+        }
+
     raise AssertionError(f"{case['id']}: unsupported input spec")
 
 
@@ -126,11 +143,14 @@ def compare_case(case: dict[str, Any], actual: dict[str, Any]) -> list[str]:
         "attachmentRefCount",
         "attachmentMappedCount",
         "leaderCountByDate",
+        "rawMessageCount",
+        "rawLeaderCountByDate",
     ]:
         if key in expected:
             compare_value(case_id, key, expected[key], actual.get(key), errors)
 
     messages = actual.get("messages", [])
+    raw_messages = actual.get("rawMessages", [])
 
     for expected_message in expected.get("messages", []):
         index = expected_message["index"]
@@ -149,6 +169,18 @@ def compare_case(case: dict[str, Any], actual: dict[str, Any]) -> list[str]:
             errors.append(
                 f"{case_id}: no message matched "
                 f"{json.dumps(expected_message, ensure_ascii=False)}"
+            )
+
+    for expected_message in expected.get("rawMessages", []):
+        index = expected_message["index"]
+        if index >= len(raw_messages):
+            errors.append(f"{case_id}: raw message index {index} missing")
+            continue
+        if not message_matches(raw_messages[index], expected_message):
+            errors.append(
+                f"{case_id}: raw message {index} did not match "
+                f"{json.dumps(expected_message, ensure_ascii=False)}; "
+                f"got {json.dumps(raw_messages[index], ensure_ascii=False)}"
             )
 
     rendered = actual.get("rendered", {})

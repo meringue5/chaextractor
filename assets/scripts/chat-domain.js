@@ -120,7 +120,7 @@ export function detectPlatform(chatFilenames, attachFilenames) {
     for (const name of chatFilenames) {
         const base = name.split('/').pop();
         if (/Talk_.*\.txt$/i.test(base)) return 'ios';
-        if (/KakaoTalkChats\.txt$/i.test(base)) return 'android';
+        if (/^KakaoTalkChats(?:[-_]\d+)?\.txt$/i.test(base)) return 'android';
         // Windows: KakaoTalk_YYYYMMDD_HHMM_SS_nnn_*.txt
         if (/^KakaoTalk_\d{8}_\d{4}_\d{2}_\d+.*\.txt$/i.test(base)) return 'windows';
         // macOS: KakaoTalk_Chat_[room]_YYYY-MM-DD-HH-MM-SS.csv
@@ -218,13 +218,17 @@ export function parseMacOSDateTime(value) {
     const match = PATTERNS.DATETIME_MACOS_CSV.exec(String(value || '').trim());
     if (!match) return null;
 
-    const [, year, month, day, hour, minute] = match;
+    const [, year, month, day, hour, minute, second] = match;
     const dateStr = `${year}-${month}-${day}`;
     const timeStr = `${hour}:${minute}`;
+    const timeWithSeconds = second ? `${timeStr}:${second}` : timeStr;
     return {
         date: dateStr,
         time: timeStr,
-        datetime: `${dateStr} ${timeStr}`
+        timeWithSeconds,
+        timePrecision: second ? 'second' : 'minute',
+        datetime: `${dateStr} ${timeStr}`,
+        datetimeWithSeconds: `${dateStr} ${timeWithSeconds}`
     };
 }
 

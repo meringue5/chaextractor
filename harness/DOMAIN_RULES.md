@@ -22,12 +22,12 @@ macOS는 데스크톱 CSV 텍스트 로그 파싱을 공식 지원한다. macOS 
 
 | 플랫폼 | 파일명/형식 | 상태 |
 |---|---|---|
-| iOS | `Talk_YYYY.M.D HH_mm-n.txt` | 요구사항 |
-| Android | `KakaoTalkChats.txt` | 요구사항 |
+| iOS | `Talk_YYYY.M.D HH_mm-n.txt` 또는 `Talk_YYYY.M.D HH:mm-n.txt` | 요구사항 |
+| Android | `KakaoTalkChats.txt`; 분절 후보인 `KakaoTalkChats-1.txt`, `KakaoTalkChats_1.txt` | 요구사항 |
 | Windows | `KakaoTalk_YYYYMMDD_HHMM_SS_n_*.txt` | 요구사항 |
 | macOS | `KakaoTalk_Chat_[방 이름]_YYYY-MM-DD-HH-MM-SS.csv` 또는 `Date,User,Message` 헤더 CSV | 요구사항 |
 
-iOS 월/일은 한 자리일 때 0 패딩이 없고, 날짜와 시간 사이에 공백이 있다.
+iOS 월/일은 한 자리일 때 0 패딩이 없고, 날짜와 시간 사이에 공백이 있다. 파일명 끝의 `-n`은 같은 내보내기에서 대화가 분절된 segment 순서로 취급한다. ZIP/폴더 안에 유효한 대화 파일이 여러 개 있으면 파일별 첫/마지막 발화시각으로 병합하되, 같은 타임스탬프에서는 확인된 segment 순서를 보존한다. Android는 현재 공식 단일 파일명이 `KakaoTalkChats.txt`지만, 여러 유효 Android 대화 파일이 들어오는 경우에도 같은 공통 병합 규칙을 적용한다. 카카오톡 대화 패턴이 없는 `.txt` 첨부/노트 파일은 대화 파일로 취급하지 않는다.
 
 ## 첨부파일 규칙
 
@@ -158,7 +158,8 @@ YYYY-MM-DD HH:mm:ss,사용자,발언 내용
 - 메시지는 날짜별로 그룹화한다.
 - 날짜 목록은 최신 날짜부터 표시한다.
 - 시스템 메시지는 결과 메시지에 포함하지 않는다.
-- 동일 사용자 연속 텍스트만 병합한다.
+- 동일 사용자 연속 텍스트만 화면 표시용 메시지에서 병합한다.
+- 분석용 원본 발화 스트림은 병합 전 메시지 단위, 날짜, 시간, 사용자, 메시지 타입, 원문 내용을 보존한다.
 - 사진/파일/이모티콘은 텍스트와 별도 메시지 타입으로 유지한다.
 - 필터 대상 사용자 발언은 사용자명 exact match로 판정하며, 기본 대상은 `채상욱 리더`다.
 - URL 포함 여부는 메시지별로 안정적으로 계산한다.

@@ -10,7 +10,7 @@
 # 프로젝트 개요
 카카오톡 오픈채팅방 대화 내역 뷰어. 빌드 없는 정적 앱, 배포용 애플리케이션 서버 불필요, 클라이언트 사이드 처리.
 - 배포: https://meringue5.github.io/chaextractor/
-- 기술: HTML (`index.html`), CSS (`assets/styles/app.css`), ES module JS (`assets/scripts/app.js`, `assets/scripts/chat-core.js`, `assets/scripts/chat-domain.js`), 앱 버전 매니페스트 (`assets/version.json`), JSZip local vendor (`assets/vendor/jszip-3.10.1.min.js`), `assets/guide` 정적 이미지, `assets/og-image.png`, IndexedDB (캐시), 폰트 CDN
+- 기술: HTML (`index.html`), CSS (`assets/styles/app.css`), ES module JS (`assets/scripts/app.js`, `assets/scripts/chat-core.js`, `assets/scripts/chat-domain.js`, `assets/scripts/keyword-dictionary.js`), 앱 버전 매니페스트 (`assets/version.json`), JSZip local vendor (`assets/vendor/jszip-3.10.1.min.js`), `assets/guide` 정적 이미지, `assets/og-image.png`, IndexedDB (캐시), 폰트 CDN
 - 개발 검증: Python/Node VM 하네스 + 선택 실행 Playwright browser smoke (`npm run test:browser`)
 - 로컬 개발/검증: 정적 서버 (`scripts/start-local-server.sh`, `scripts/start-local-server.ps1`)로 `http://127.0.0.1:<port>/` 실행. `file://` 직접 실행은 공식 검증 경로로 보장하지 않는다.
 - 플랫폼: iOS / Android / Windows / macOS 카카오톡 내보내기 파일 지원
@@ -72,11 +72,11 @@
 
 세부 요구사항은 [harness/REQUIREMENTS.md](harness/REQUIREMENTS.md)를 우선한다.
 
-- ZIP/TXT/CSV 파일 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다.
+- ZIP/TXT/CSV 파일 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다. ZIP/폴더 안에 유효한 대화 파일이 여러 개 있으면 파일 내부 발화시각을 우선하고, 확인된 segment 순서를 보조 기준으로 병합한다.
 - iOS/Android/Windows/macOS 카카오톡 내보내기 파일을 공식 지원한다.
 - 날짜별 탐색, 검색, 통계, 기본값 `채상욱 리더`인 사용자 하이라이트/필터, 기본값 Light 테마, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
 - 날짜 선택과 대화 렌더링 이후 선택 날짜 또는 전체 대화를 LLM 요약에 붙여넣기 좋은 TXT로 정리하는 갈무리 복사/다운로드를 제공한다.
-- 시스템 메시지는 제외하고, 동일 사용자 연속 텍스트는 병합한다.
+- 시스템 메시지는 제외하고, 동일 사용자 연속 텍스트는 화면 표시용 메시지에서 병합하되 분석용 원본 발화 스트림은 보존한다.
 - 사진/파일/이모티콘은 텍스트와 별도 타입으로 유지한다.
 - 누락 첨부파일은 앱 중단 없이 복구 가능한 상태로 표시하며, 사진 파일 누락은 원본 대화에서 사진을 열어 내려받은 뒤 다시 내보내도록 안내한다.
 - 브라우저 호환, 성능, 접근성, 안정성, 개인정보 기준은 하네스의 비기능 요구사항과 매니페스트를 따른다.
@@ -85,8 +85,8 @@
 
 세부 도메인 규칙은 [harness/DOMAIN_RULES.md](harness/DOMAIN_RULES.md)를 우선한다.
 
-- iOS 대화 파일명: `Talk_YYYY.M.D HH_mm-n.txt`
-- Android 대화 파일명: `KakaoTalkChats.txt`
+- iOS 대화 파일명: `Talk_YYYY.M.D HH_mm-n.txt` 또는 `Talk_YYYY.M.D HH:mm-n.txt`. `-n`은 분절 export segment 순서다.
+- Android 대화 파일명: `KakaoTalkChats.txt` (`KakaoTalkChats-1.txt` 같은 숫자 suffix 후보도 Android로 감지)
 - macOS 대화 파일명: `KakaoTalk_Chat_[방 이름]_YYYY-MM-DD-HH-MM-SS.csv`
 - iOS 첨부파일: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
 - Android 이미지 첨부파일: `{64자리 hex}.(jpg|jpeg|png|gif|webp)`
@@ -140,14 +140,14 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 
 # 코드 구조: index.html + 정적 자산
 
-현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` classic script 로드 → `assets/scripts/app.js` ES module 로드 → `app.js`가 `assets/scripts/chat-core.js`와 `assets/scripts/chat-domain.js`를 import한다. 앱 CSS/JS에는 `meta[name="app-version"]`과 같은 버전 query를 붙이고, `assets/version.json`을 캐시 우회 쿼리로 확인해 새 배포 시 브라우저 자산 캐시를 갱신한다.
+현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` classic script 로드 → `assets/scripts/app.js` ES module 로드 → `app.js`가 `assets/scripts/chat-core.js`, `assets/scripts/chat-domain.js`, `assets/scripts/keyword-dictionary.js`를 import한다. 앱 CSS/JS에는 `meta[name="app-version"]`과 같은 버전 query를 붙이고, `assets/version.json`을 캐시 우회 쿼리로 확인해 새 배포 시 브라우저 자산 캐시를 갱신한다.
 
-빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 진입 로직은 ES module인 `assets/scripts/app.js`, UI 없는 대화 파싱 코어는 `assets/scripts/chat-core.js`, 저수준 대화 도메인 헬퍼는 ES module export를 제공하는 `assets/scripts/chat-domain.js`, 앱 버전 매니페스트는 `assets/version.json`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph 이미지는 `assets/og-image.png`에 둔다. 로컬 개발/검증은 `scripts/start-local-server.sh` 또는 `scripts/start-local-server.ps1`로 정적 서버를 띄워 `http://127.0.0.1:<port>/`에서 수행한다. 공식 서비스 제공 경로는 GitHub Pages다.
+빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 진입 로직은 ES module인 `assets/scripts/app.js`, UI 없는 대화 파싱 코어는 `assets/scripts/chat-core.js`, 저수준 대화 도메인 헬퍼는 ES module export를 제공하는 `assets/scripts/chat-domain.js`, 키워드 stopword/조사/도메인/커뮤니티 사전은 `assets/scripts/keyword-dictionary.js`, 앱 버전 매니페스트는 `assets/version.json`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph 이미지는 `assets/og-image.png`에 둔다. 로컬 개발/검증은 `scripts/start-local-server.sh` 또는 `scripts/start-local-server.ps1`로 정적 서버를 띄워 `http://127.0.0.1:<port>/`에서 수행한다. 공식 서비스 제공 경로는 GitHub Pages다.
 
 브라우저 회귀 검증은 `harness/browser/`의 Playwright smoke를 선택 실행한다. 이 하네스는 정적 서버로 저장소 루트의 `index.html`을 열고, 앱 배포 파일을 빌드 없이 그대로 검증한다.
 
 ## HTML 컴포넌트
-- `#setupScreen` — 초기 화면. `#app.setup-mode`에서 `.chat-area` 안에 표시되며, 파일 처리 전에는 좌측 탐색 패널/우측 링크 패널/대화 헤더를 숨긴다.
+- `#setupScreen` — 초기 화면. `#app.setup-mode`에서 `.chat-area` 안에 표시되며, 파일 처리 전에는 좌측 탐색 패널/우측 링크 패널/대화 헤더/대화 목록을 숨긴다.
   - `.guide-section` — 사용 가이드 (`assets/guide` 스크린샷 6장)
   - `#step1` — 파일 업로드 영역
     - `#zipBtn` / `#zipInput` — ZIP/TXT/CSV 파일 선택 (iOS/Windows/macOS)
@@ -180,6 +180,10 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
       - `#chatTitle` — 날짜/요일
       - `#chatInfo` — 메시지 수, 참여자, 필터 대상 발언 수, 사진 수
       - `#captureBtn` — 날짜 선택과 대화 렌더링 이후 활성화되는 갈무리 TXT 모달 열기
+    - `#keywordInsight` — 선택 날짜 키워드 인사이트 DOM. 데이터 기반 재설계 전까지 화면에서는 숨김
+      - `#keywordInsightMeta` — 원본 발화 수/상태
+      - `#keywordInsightAll` — 선택 날짜 전체 키워드
+      - `#keywordInsightLeader` — 필터 대상 사용자 키워드
     - `#chatMessages` — 메시지 목록
   - `.link-sidebar` — 우측 링크 패널 (데스크톱 상시 표시, 모바일: 86vw 슬라이드)
     - `.link-sidebar-header` — 링크 패널 제목
@@ -227,7 +231,7 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 
 파싱:
 - `parseKakaoChat(content)` — `assets/scripts/chat-core.js`의 대화 파싱 결과를 앱 상태에 반영
-- `parseMergedChatFiles(chatContents)` — `assets/scripts/chat-core.js`의 다중 대화 파일 병합 결과를 앱 상태에 반영
+- `parseMergedChatFiles(chatSources)` — `assets/scripts/chat-core.js`의 다중 대화 파일 병합 결과를 앱 상태에 반영. 파일별 첫/마지막 발화시각을 우선하고, 같은 타임스탬프에서는 확인된 segment 순서를 보존
 - `classifyContent(content)` — 메시지 유형 분류 (text/photo/emoticon/file, `assets/scripts/chat-domain.js`)
 - `detectPlatform(chatFilenames, attachFilenames)` — iOS/Android/Windows/macOS 감지 (`assets/scripts/chat-domain.js`)
 - `testPatternArray(line, patternArray)` — 정규식 배열 매칭 테스트
@@ -258,6 +262,7 @@ UI 렌더링:
 - `renderCalendar()` — 월별 캘린더
 - `renderDateList(searchQuery)` — 날짜 목록 (검색 필터 적용)
 - `renderChat(date)` — 선택된 날짜의 메시지 렌더링
+- `extractKeywordTokens()` / `analyzeKeywordMessages()` — 정적 키워드 사전 기반 조사 제거, stopword 제거, 2어절 후보와 도메인/커뮤니티 가중치 반영
 - `renderScrollMarkers(positions)` — 필터 대상 사용자 발언 마커 생성
 - `selectDate(date)` — 날짜 선택 + 캘린더 하이라이트 + 메시지 렌더링
 - `focusDateForMonth(year, month)` — 월 이동 시 가장 가까운 날짜 자동 선택
@@ -298,7 +303,7 @@ UI 렌더링:
 `window.__CHAEXTRACTOR_TEST__`는 `window.__CHAEXTRACTOR_ENABLE_TEST_API__`가 설정된 하네스 환경에서만 노출하는 테스트 전용 내부 계약이다. 현재 계약 버전은 `contractVersion: 1`이며, 하네스는 아래 네임스페이스 API를 우선 사용한다. 기존 평면 함수들은 호환용으로만 유지한다.
 
 - `parser` — `parseChat`, `parseMergedChatFiles`, `classifyContent`, `getSnapshot`
-- `ui` — `initApp`, `selectDate`, `renderChat`, `renderDateList`, `getSnapshot`, 사용자 필터/테마/폰트, `capture`, `navigation`, `modals`
+- `ui` — `initApp`, `selectDate`, `renderChat`, `renderDateList`, `getSnapshot`, 사용자 필터/테마/폰트, `keyword`, `capture`, `navigation`, `modals`
 - `runtime` — 브라우저 기능 제한, 첨부파일 런타임 상태, 캐시, 앱 버전 업데이트 확인
 - `runtime.input` — ZIP/폴더 입력 bundle 계약 스냅샷
 - `diagnostics` — 진단 입력/단계/오류 기록, 리포트/제보 URL 생성, 진단 스냅샷
@@ -320,12 +325,15 @@ UI 렌더링:
 `appState` 필드:
 - `messages` — 전체 파싱된 메시지 배열
 - `messagesByDate` — 날짜별 메시지 그룹 (YYYY-MM-DD → [])
+- `rawMessages` — 분석용 원본 발화 배열
+- `rawMessagesByDate` — 날짜별 분석용 원본 발화 그룹 (YYYY-MM-DD → [])
 - `attachmentFiles` — 파일명 → Blob URL (폴더 모드)
 - `attachmentEntries` — 파일명 → ZIP 엔트리 경로 (ZIP 모드)
 - `attachmentInventory` — 첨부파일 런타임 원천. ZIP은 `entryPath`, 폴더는 Blob URL을 담고 캐시에는 직렬화 가능한 ZIP entryPath만 저장
 - `zipInstance` — JSZip 인스턴스 (지연 로딩용)
 - `dates` — 날짜 배열 (내림차순)
 - `leaderCountByDate` — 날짜별 필터 대상 사용자 발언 수
+- `rawLeaderCountByDate` — 날짜별 필터 대상 사용자 원본 발화 수
 - `currentMonth` — 현재 캘린더 월
 - `selectedDate` — 선택된 날짜
 - `renderedChatDate` — 현재 대화창에 렌더 완료된 날짜

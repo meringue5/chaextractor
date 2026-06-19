@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>채상욱의 머니버스 대화 뷰어</title>
     <meta name="description" content="카카오톡 오픈채팅방 대화를 날짜별로 탐색하고 검색하는 뷰어">
-    <meta name="app-version" content="2026-06-14-setup-mode">
+    <meta name="app-version" content="2026-06-19-generic-split-chat">
     <!-- Open Graph (Facebook, 카카오톡 등) -->
     <meta property="og:title" content="채상욱의 머니버스 대화 뷰어">
     <meta property="og:description" content="카카오톡 오픈채팅방 대화를 날짜별로 탐색하고 검색하는 뷰어">
@@ -18,7 +18,7 @@
     <meta name="twitter:description" content="카카오톡 오픈채팅방 대화를 날짜별로 탐색하고 검색하는 뷰어">
     <meta name="twitter:image" content="https://meringue5.github.io/chaextractor/assets/og-image.png">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
-    <link rel="stylesheet" href="assets/styles/app.css?v=2026-06-14-setup-mode">
+    <link rel="stylesheet" href="assets/styles/app.css?v=2026-06-19-generic-split-chat">
 </head>
 <body>
     <!-- 메인 앱 -->
@@ -61,7 +61,7 @@
 
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <div class="chat-area">
+        <div class="chat-area" id="chatArea">
             <!-- 설정 화면 -->
             <div class="setup-screen" id="setupScreen">
                 <div class="setup-box">
@@ -152,6 +152,20 @@
                     <button class="link-sidebar-toggle" id="linkSidebarToggle" aria-label="링크 패널 열기">&lt;</button>
                 </div>
             </div>
+            <section class="keyword-insight" id="keywordInsight" aria-label="키워드 인사이트">
+                <div class="keyword-insight-header">
+                    <h3>키워드</h3>
+                    <span id="keywordInsightMeta">날짜 선택</span>
+                </div>
+                <div class="keyword-group">
+                    <div class="keyword-group-title">전체</div>
+                    <div class="keyword-list" id="keywordInsightAll"></div>
+                </div>
+                <div class="keyword-group">
+                    <div class="keyword-group-title">필터</div>
+                    <div class="keyword-list" id="keywordInsightLeader"></div>
+                </div>
+            </section>
             <div class="chat-messages" id="chatMessages">
                 <div class="empty-state">
                     <div class="icon">💬</div>
@@ -327,6 +341,6 @@
     </div>
 
     <script src="assets/vendor/jszip-3.10.1.min.js"></script>
-    <script type="module" src="assets/scripts/app.js?v=2026-06-14-setup-mode"></script>
+    <script type="module" src="assets/scripts/app.js?v=2026-06-19-generic-split-chat"></script>
 </body>
 </html>

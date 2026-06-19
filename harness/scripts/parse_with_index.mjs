@@ -7,8 +7,10 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 const appScriptPath = path.join(repoRoot, 'assets/scripts/app.js');
 const chatDomainScriptPath = path.join(repoRoot, 'assets/scripts/chat-domain.js');
 const chatCoreScriptPath = path.join(repoRoot, 'assets/scripts/chat-core.js');
+const keywordDictionaryScriptPath = path.join(repoRoot, 'assets/scripts/keyword-dictionary.js');
 const chatDomain = await import(pathToFileURL(chatDomainScriptPath));
 const chatCore = await import(pathToFileURL(chatCoreScriptPath));
+const keywordDictionary = await import(pathToFileURL(keywordDictionaryScriptPath));
 const appScript = fs.readFileSync(appScriptPath, 'utf8')
   .replace(
     /import\s+\{[\s\S]*?\}\s+from\s+['"]\.\/chat-domain\.js['"];\n/,
@@ -25,12 +27,16 @@ const appScript = fs.readFileSync(appScriptPath, 'utf8')
   } = __CHAEXTRACTOR_IMPORTS__.chatDomain;\n`
   )
   .replace(
-    /import\s+\{[\s\S]*?\}\s+from\s+['"]\.\/chat-core\.js['"];\n\n/,
+    /import\s+\{[\s\S]*?\}\s+from\s+['"]\.\/chat-core\.js['"];\n/,
     `const {
     parseKakaoChat: parseKakaoChatCore,
     parseMergedChatFiles: parseMergedChatFilesCore,
     sortDatesDescending
-  } = __CHAEXTRACTOR_IMPORTS__.chatCore;\n\n`
+  } = __CHAEXTRACTOR_IMPORTS__.chatCore;\n`
+  )
+  .replace(
+    /import\s+\{\s*KEYWORD_DICTIONARY\s*\}\s+from\s+['"]\.\/keyword-dictionary\.js['"];\n\n/,
+    `const { KEYWORD_DICTIONARY } = __CHAEXTRACTOR_IMPORTS__.keywordDictionary;\n\n`
   );
 const input = JSON.parse(fs.readFileSync(0, 'utf8'));
 
@@ -241,7 +247,7 @@ const windowObject = {
 const fakeIndexedDB = createFakeIndexedDB();
 
 const context = {
-  __CHAEXTRACTOR_IMPORTS__: { chatDomain, chatCore },
+  __CHAEXTRACTOR_IMPORTS__: { chatDomain, chatCore, keywordDictionary },
   console: {
     log() {},
     warn() {},
@@ -395,6 +401,9 @@ if (input.mode === 'cacheDateSort') {
 
 if (input.mode === 'uiSmoke') {
   const api = windowObject.__CHAEXTRACTOR_TEST__;
+  const keywordProbeText = input.keywordProbe
+    || '코스닥이 코스닥의 그냥 너무 다시 개인은 코스닥 레버리지 타플배 코나성';
+  const keywordProbeTokens = api.ui.keyword.extractTokens(keywordProbeText);
   const parseResult = api.parser.parseChat(input.content, {
     platform: input.platform,
     attachments: input.attachments || [],
@@ -450,6 +459,7 @@ if (input.mode === 'uiSmoke') {
   const afterMobilePanelsClose = api.ui.getSnapshot();
 
   process.stdout.write(JSON.stringify({
+    keywordProbeTokens,
     parseResult,
     afterInit,
     beforeSelectCaptureAttempt,
@@ -563,11 +573,20 @@ if (input.mode === 'performanceSmoke') {
   process.exit(0);
 }
 
-let result = windowObject.__CHAEXTRACTOR_TEST__.parser.parseChat(input.content, {
-  platform: input.platform,
-  attachments: input.attachments || [],
-  mapAttachments: true
-});
+let result;
+if (input.chatSources) {
+  result = windowObject.__CHAEXTRACTOR_TEST__.parser.parseMergedChatFiles(input.chatSources, {
+    platform: input.platform,
+    attachments: input.attachments || [],
+    mapAttachments: true
+  });
+} else {
+  result = windowObject.__CHAEXTRACTOR_TEST__.parser.parseChat(input.content, {
+    platform: input.platform,
+    attachments: input.attachments || [],
+    mapAttachments: true
+  });
+}
 
 if (input.renderDate) {
   result = {

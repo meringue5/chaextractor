@@ -14,6 +14,7 @@ import {
     parseMergedChatFiles as parseMergedChatFilesCore,
     sortDatesDescending
 } from './chat-core.js';
+import { KEYWORD_DICTIONARY } from './keyword-dictionary.js';
 
 // ========== 상태 관리 ==========
 const DEFAULT_LEADER_FILTER_TARGET = '채상욱 리더';
@@ -21,12 +22,15 @@ const DEFAULT_LEADER_FILTER_TARGET = '채상욱 리더';
 const appState = {
     messages: [],
     messagesByDate: {},
+    rawMessages: [],
+    rawMessagesByDate: {},
     attachmentFiles: {},  // legacy mirror: filename -> Blob URL
     attachmentEntries: {}, // legacy mirror: filename -> ZIP entry path
     attachmentInventory: createEmptyAttachmentInventory(),
     zipInstance: null,     // ZIP 객체 참조 (지연 로딩용)
     dates: [],
     leaderCountByDate: {},  // 날짜별 필터 대상 사용자 메시지 수
+    rawLeaderCountByDate: {},  // 날짜별 필터 대상 사용자 원본 발화 수
     currentMonth: new Date(),
     selectedDate: null,
     renderedChatDate: null,
@@ -56,6 +60,24 @@ const APP_UPDATE_QUERY_PARAM = 'appVersion';
 const THEME_1995_WINDOW_ANIMATION_MS = 240;
 const THEME_1995_GHOST_SIZE = 12;
 const THEME_1995_GHOST_FRAME_COUNT = 9;
+const KEYWORD_INSIGHT_LIMIT = 12;
+const KEYWORD_STOPWORDS = new Set((KEYWORD_DICTIONARY.stopwords || []).flatMap(term => [
+    term,
+    String(term).toLowerCase()
+]));
+const KEYWORD_PARTICLES = [...(KEYWORD_DICTIONARY.particles || [])].sort((a, b) => b.length - a.length);
+const KEYWORD_ALIASES = new Map((KEYWORD_DICTIONARY.aliases || []).flatMap(([from, to]) => [
+    [from, to],
+    [String(from).toLowerCase(), to]
+]));
+const KEYWORD_DOMAIN_TERMS = new Set(KEYWORD_DICTIONARY.domainTerms || []);
+const KEYWORD_COMMUNITY_TERMS = new Set(KEYWORD_DICTIONARY.communityTerms || []);
+const KEYWORD_PHRASES = new Set(KEYWORD_DICTIONARY.phrases || []);
+const KEYWORD_PROTECTED_TERMS = new Set([
+    ...KEYWORD_DOMAIN_TERMS,
+    ...KEYWORD_COMMUNITY_TERMS,
+    ...KEYWORD_PHRASES
+]);
 
 // ========== IndexedDB 캐시 설정 ==========
 const DB_CONFIG = {
@@ -1996,9 +2018,13 @@ function setLeaderFilterPanelOpen(open) {
 
 function recalculateLeaderCountByDate() {
     const nextCounts = {};
+    const nextRawCounts = {};
 
     Object.keys(appState.messagesByDate).forEach(date => {
         nextCounts[date] = 0;
+    });
+    Object.keys(appState.rawMessagesByDate).forEach(date => {
+        nextRawCounts[date] = 0;
     });
 
     appState.messages.forEach(msg => {
@@ -2009,13 +2035,23 @@ function recalculateLeaderCountByDate() {
             nextCounts[msg.date]++;
         }
     });
+    appState.rawMessages.forEach(msg => {
+        if (!nextRawCounts[msg.date]) {
+            nextRawCounts[msg.date] = 0;
+        }
+        if (isLeader(msg.user)) {
+            nextRawCounts[msg.date]++;
+        }
+    });
 
     appState.leaderCountByDate = nextCounts;
+    appState.rawLeaderCountByDate = nextRawCounts;
 }
 
 function refreshLeaderFilterViews() {
     recalculateLeaderCountByDate();
     updateLeaderFilterUI();
+    renderKeywordInsight();
 
     const searchInput = document.getElementById('searchInput');
     renderDateList(searchInput ? searchInput.value.toLowerCase() : '');
@@ -2303,10 +2339,12 @@ async function buildInputBundleFromEntries(sourceType, sourceName, entries, opti
                 size: entry.size,
                 lastModified: entry.lastModified,
                 entryPath: entry.entryPath || entry.name,
-                file: entry.file || null
+                file: entry.file || null,
+                candidateIndex: chatFiles.length
             });
         }
     }
+    chatFiles.sort(compareInputChatFiles);
 
     const detectedPlatform = detectPlatform(
         chatCandidateEntries.map(entry => entry.name),
@@ -2347,6 +2385,37 @@ async function buildInputBundleFromEntries(sourceType, sourceName, entries, opti
             chatCandidates: chatCandidateDiagnostics
         }
     };
+}
+
+function getInputChatFileSortKey(file, fallbackIndex = 0) {
+    const filename = String(file?.filename || file?.name || file?.entryPath || '').split('/').pop();
+    const sourceIndex = Number.isFinite(file?.candidateIndex) ? file.candidateIndex : fallbackIndex;
+    const iosSegmentMatch = /^Talk_(\d{4})\.(\d{1,2})\.(\d{1,2})\s+(\d{1,2})[:_](\d{2})-(\d+)\.txt$/i.exec(filename);
+    if (iosSegmentMatch) {
+        const [, year, month, day, hour, minute, segment] = iosSegmentMatch;
+        return [Number(year), Number(month), Number(day), Number(hour), Number(minute), Number(segment)];
+    }
+    const androidSegmentMatch = /^KakaoTalkChats[-_](\d+)\.txt$/i.exec(filename);
+    if (androidSegmentMatch) {
+        return [Number.MAX_SAFE_INTEGER - 1, Number(androidSegmentMatch[1])];
+    }
+    return [Number.MAX_SAFE_INTEGER, sourceIndex];
+}
+
+function compareInputSortKey(left, right) {
+    const length = Math.max(left.length, right.length);
+    for (let index = 0; index < length; index++) {
+        const leftValue = left[index] ?? 0;
+        const rightValue = right[index] ?? 0;
+        if (leftValue !== rightValue) return leftValue - rightValue;
+    }
+    return 0;
+}
+
+function compareInputChatFiles(left, right) {
+    const sortDiff = compareInputSortKey(getInputChatFileSortKey(left), getInputChatFileSortKey(right));
+    if (sortDiff !== 0) return sortDiff;
+    return String(left.filename || left.name || '').localeCompare(String(right.filename || right.name || ''), 'ko');
 }
 
 async function buildZipInputBundle(file, zip, cacheKey) {
@@ -2591,8 +2660,7 @@ async function processZipFile(file) {
     if (inputBundle.chatFiles.length === 1) {
         parseKakaoChat(inputBundle.chatFiles[0].content);
     } else {
-        const contents = inputBundle.chatFiles.map(f => f.content);
-        parseMergedChatFiles(contents);
+        parseMergedChatFiles(inputBundle.chatFiles);
         console.log(`⏱️ ${inputBundle.chatFiles.length}개 파일 병합 완료, 총 ${appState.messages.length}개 메시지`);
     }
 
@@ -2614,7 +2682,10 @@ async function processZipFile(file) {
     await setCache(cacheKey, {
         messages: appState.messages,
         messagesByDate: appState.messagesByDate,
+        rawMessages: appState.rawMessages,
+        rawMessagesByDate: appState.rawMessagesByDate,
         leaderCountByDate: appState.leaderCountByDate,
+        rawLeaderCountByDate: appState.rawLeaderCountByDate,
         dates: appState.dates,
         detectedPlatform: appState.detectedPlatform,
         attachmentInventory: serializeAttachmentInventoryForCache()
@@ -2736,8 +2807,7 @@ async function processFolderFiles(files) {
     if (inputBundle.chatFiles.length === 1) {
         parseKakaoChat(inputBundle.chatFiles[0].content);
     } else {
-        const contents = inputBundle.chatFiles.map(f => f.content);
-        parseMergedChatFiles(contents);
+        parseMergedChatFiles(inputBundle.chatFiles);
         console.log(`⏱️ ${inputBundle.chatFiles.length}개 파일 병합 완료, 총 ${appState.messages.length}개 메시지`);
     }
 
@@ -2759,7 +2829,10 @@ async function processFolderFiles(files) {
     await setCache(cacheKey, {
         messages: appState.messages,
         messagesByDate: appState.messagesByDate,
+        rawMessages: appState.rawMessages,
+        rawMessagesByDate: appState.rawMessagesByDate,
         leaderCountByDate: appState.leaderCountByDate,
+        rawLeaderCountByDate: appState.rawLeaderCountByDate,
         dates: appState.dates,
         detectedPlatform: appState.detectedPlatform
     });
@@ -2891,7 +2964,10 @@ function validateChatFile(content) {
 function applyParsedChatResult(result) {
     appState.messages = result.messages || [];
     appState.messagesByDate = result.messagesByDate || {};
+    appState.rawMessages = result.rawMessages || appState.messages;
+    appState.rawMessagesByDate = result.rawMessagesByDate || appState.messagesByDate;
     appState.leaderCountByDate = result.leaderCountByDate || {};
+    appState.rawLeaderCountByDate = result.rawLeaderCountByDate || {};
     appState.dates = result.dates || sortDatesDescending(Object.keys(appState.messagesByDate));
 
     if (result.detectedPlatform) {
@@ -2905,8 +2981,8 @@ function parseKakaoChat(content) {
 }
 
 // ========== 여러 대화 파일 병합 ==========
-function parseMergedChatFiles(chatContents) {
-    applyParsedChatResult(parseMergedChatFilesCore(chatContents, { isLeader }));
+function parseMergedChatFiles(chatSources) {
+    applyParsedChatResult(parseMergedChatFilesCore(chatSources, { isLeader }));
 }
 
 function decodeAttachmentName(filename) {
@@ -3000,6 +3076,9 @@ function generateCacheKey(fileName, fileSize, lastModified) {
 function restoreCachedChatData(cachedData) {
     appState.messages = cachedData.messages || [];
     appState.messagesByDate = cachedData.messagesByDate || {};
+    appState.rawMessages = cachedData.rawMessages || appState.messages;
+    appState.rawMessagesByDate = cachedData.rawMessagesByDate || appState.messagesByDate;
+    appState.rawLeaderCountByDate = cachedData.rawLeaderCountByDate || {};
     appState.detectedPlatform = cachedData.detectedPlatform || appState.detectedPlatform;
 
     const cachedDates = Array.isArray(cachedData.dates) && cachedData.dates.length > 0
@@ -3187,6 +3266,204 @@ function findClosestAttachment(list, targetDt, type, toleranceMinutes) {
     return bestMatch;
 }
 
+// ========== 키워드 인사이트 ==========
+function resolveKeywordAlias(token) {
+    return KEYWORD_ALIASES.get(token) || KEYWORD_ALIASES.get(String(token).toLowerCase()) || '';
+}
+
+function isKeywordStopword(token) {
+    return KEYWORD_STOPWORDS.has(token) || KEYWORD_STOPWORDS.has(String(token).toLowerCase());
+}
+
+function isProtectedKeyword(token) {
+    return KEYWORD_PROTECTED_TERMS.has(token) || KEYWORD_PROTECTED_TERMS.has(resolveKeywordAlias(token));
+}
+
+function stripKeywordParticle(token) {
+    if (!/[\u3131-\u318e\uac00-\ud7a3]/u.test(token) || isProtectedKeyword(token)) {
+        return token;
+    }
+
+    for (const particle of KEYWORD_PARTICLES) {
+        if (!token.endsWith(particle)) continue;
+
+        const base = token.slice(0, -particle.length);
+        if (base.length < 2) continue;
+        if (particle.length === 1 && token.length <= 2) continue;
+        if (isKeywordStopword(base)) return '';
+        if (isProtectedKeyword(base) || resolveKeywordAlias(base) || base.length >= 2) {
+            return base;
+        }
+    }
+
+    return token;
+}
+
+function normalizeKeywordToken(token) {
+    const cleaned = String(token || '')
+        .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}+#.-]+$/gu, '')
+        .trim();
+    if (!cleaned) return '';
+
+    if (/^\d+$/.test(cleaned)) return '';
+    if (/^[ㅋㅎ]+$/.test(cleaned)) return '';
+
+    let normalized = resolveKeywordAlias(cleaned) || cleaned;
+    if (isKeywordStopword(normalized)) return '';
+
+    normalized = stripKeywordParticle(normalized);
+    if (!normalized) return '';
+    normalized = resolveKeywordAlias(normalized) || normalized;
+
+    if (normalized.length < 2) return '';
+    if (isKeywordStopword(normalized)) return '';
+
+    return /^[a-z0-9.+#-]+$/i.test(normalized) ? normalized.toUpperCase() : normalized;
+}
+
+function extractKeywordTokens(text) {
+    const normalized = String(text || '')
+        .replace(PATTERNS.URL, ' ')
+        .replace(/\[[^\]]+\]/g, ' ')
+        .replace(/[^\p{L}\p{N}.+#-]+/gu, ' ');
+    const matches = normalized.match(/[\p{L}][\p{L}\p{N}.+#-]*/gu) || [];
+    const tokens = matches
+        .map(normalizeKeywordToken)
+        .filter(Boolean);
+    const phraseTokens = [];
+
+    for (let index = 0; index < tokens.length - 1; index++) {
+        const phrase = `${tokens[index]} ${tokens[index + 1]}`;
+        if (KEYWORD_PHRASES.has(phrase)) {
+            phraseTokens.push(phrase);
+        }
+    }
+
+    return [...tokens, ...phraseTokens];
+}
+
+function getKeywordWeight(keyword) {
+    if (KEYWORD_PHRASES.has(keyword)) return 7;
+    if (KEYWORD_COMMUNITY_TERMS.has(keyword)) return 6;
+    if (KEYWORD_DOMAIN_TERMS.has(keyword)) return 4;
+    return 1;
+}
+
+function analyzeKeywordMessages(messages, options = {}) {
+    const limit = options.limit || KEYWORD_INSIGHT_LIMIT;
+    const stats = new Map();
+
+    for (const msg of messages || []) {
+        if (!msg || msg.message_type !== 'text') continue;
+        const tokens = extractKeywordTokens(msg.content);
+        const uniqueInMessage = new Set();
+
+        for (const keyword of tokens) {
+            const entry = stats.get(keyword) || {
+                keyword,
+                count: 0,
+                messageCount: 0,
+                score: 0
+            };
+            entry.count++;
+            entry.score += getKeywordWeight(keyword);
+            if (!uniqueInMessage.has(keyword)) {
+                entry.messageCount++;
+                uniqueInMessage.add(keyword);
+            }
+            stats.set(keyword, entry);
+        }
+    }
+
+    return [...stats.values()]
+        .sort((a, b) => {
+            const scoreA = a.messageCount * 2 + a.count + a.score;
+            const scoreB = b.messageCount * 2 + b.count + b.score;
+            if (scoreB !== scoreA) return scoreB - scoreA;
+            if (b.count !== a.count) return b.count - a.count;
+            return a.keyword.localeCompare(b.keyword, 'ko');
+        })
+        .slice(0, limit);
+}
+
+function getKeywordInsightForDate(date) {
+    const sourceMessages = appState.rawMessagesByDate[date] || appState.messagesByDate[date] || [];
+    const leaderMessages = sourceMessages.filter(msg => isLeader(msg.user));
+    return {
+        all: analyzeKeywordMessages(sourceMessages),
+        leader: analyzeKeywordMessages(leaderMessages)
+    };
+}
+
+function applyKeywordSearch(keyword) {
+    const searchInputEl = document.getElementById('searchInput');
+    if (!searchInputEl) return;
+    searchInputEl.value = keyword;
+    renderDateList(keyword.toLowerCase());
+    if (appState.selectedDate) {
+        scrollToDateInList(appState.selectedDate);
+    }
+}
+
+function renderKeywordList(container, keywords, options = {}) {
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!keywords.length) {
+        const empty = document.createElement('span');
+        empty.className = 'keyword-empty';
+        empty.textContent = options.emptyText || '키워드 없음';
+        container.appendChild(empty);
+        return;
+    }
+
+    keywords.forEach(item => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = options.leader ? 'keyword-chip leader' : 'keyword-chip';
+        button.dataset.keyword = item.keyword;
+        button.dataset.count = String(item.count);
+        button.dataset.messageCount = String(item.messageCount);
+        button.title = `${item.keyword} 검색`;
+        button.addEventListener('click', () => applyKeywordSearch(item.keyword));
+
+        const label = document.createElement('span');
+        label.textContent = item.keyword;
+        const count = document.createElement('span');
+        count.className = 'keyword-count';
+        count.textContent = `${item.messageCount}/${item.count}`;
+
+        button.appendChild(label);
+        button.appendChild(count);
+        container.appendChild(button);
+    });
+}
+
+function renderKeywordInsight(date = appState.selectedDate) {
+    const meta = document.getElementById('keywordInsightMeta');
+    const allContainer = document.getElementById('keywordInsightAll');
+    const leaderContainer = document.getElementById('keywordInsightLeader');
+
+    if (!date || !appState.messagesByDate[date]) {
+        if (meta) meta.textContent = '날짜 선택';
+        renderKeywordList(allContainer, [], { emptyText: '날짜를 선택하세요' });
+        renderKeywordList(leaderContainer, [], { emptyText: '날짜를 선택하세요', leader: true });
+        return { all: [], leader: [] };
+    }
+
+    const insight = getKeywordInsightForDate(date);
+    const rawCount = (appState.rawMessagesByDate[date] || appState.messagesByDate[date] || []).length;
+    if (meta) {
+        meta.textContent = `${rawCount.toLocaleString()}개 발화`;
+    }
+    renderKeywordList(allContainer, insight.all);
+    renderKeywordList(leaderContainer, insight.leader, {
+        leader: true,
+        emptyText: `${appState.leaderFilterTarget} 발화 없음`
+    });
+    return insight;
+}
+
 // ========== 프로그레스 업데이트 ==========
 function updateProgress(percent, text) {
     progressFill.style.width = `${percent}%`;
@@ -3224,6 +3501,7 @@ function initApp() {
     document.getElementById('stats').textContent =
         `${appState.messages.length.toLocaleString()}개 메시지 · ${users.size}명 · ${appState.dates.length}일`;
     updateCaptureButtonState();
+    renderKeywordInsight(null);
 
     if (appState.dates.length > 0) {
         // 오늘 날짜와 가장 가까운 날짜로 달력 이동 (선택은 하지 않음)
@@ -3393,6 +3671,7 @@ function selectDate(date) {
     renderCalendar();
     renderDateList(document.getElementById('searchInput').value);
     renderChat(date);
+    renderKeywordInsight(date);
     closeSidebarIfMobile();
 
     // 날짜 목록에서 선택된 날짜로 스크롤
@@ -3808,6 +4087,9 @@ function buildParserTestSnapshot() {
         attachmentMappedCount: appState.messages.filter(msg => !!msg.attachment_path).length,
         leaderFilterTarget: appState.leaderFilterTarget,
         leaderCountByDate: { ...appState.leaderCountByDate },
+        rawLeaderCountByDate: { ...appState.rawLeaderCountByDate },
+        rawMessageCount: appState.rawMessages.length,
+        rawMessages: appState.rawMessages.map(msg => ({ ...msg })),
         messages: appState.messages.map(msg => ({ ...msg }))
     };
 }
@@ -3826,6 +4108,12 @@ function buildUiTestSnapshot() {
     const renderedMessages = Array.from(document.getElementById('chatMessages').children).filter(child =>
         hasClass(child, 'message')
     );
+    const keywordAll = Array.from(document.getElementById('keywordInsightAll').children)
+        .map(child => child.dataset ? child.dataset.keyword : '')
+        .filter(Boolean);
+    const keywordLeader = Array.from(document.getElementById('keywordInsightLeader').children)
+        .map(child => child.dataset ? child.dataset.keyword : '')
+        .filter(Boolean);
 
     return {
         stats: document.getElementById('stats').textContent,
@@ -3844,6 +4132,9 @@ function buildUiTestSnapshot() {
         captureModalOpen: isModalOpen('captureModal'),
         leaderFilterActive: appState.leaderFilterActive,
         leaderFilterTarget: appState.leaderFilterTarget,
+        keywordInsightMeta: document.getElementById('keywordInsightMeta').textContent,
+        keywordAll,
+        keywordLeader,
         leaderFilterPanelOpen: leaderFilterPanel ? !leaderFilterPanel.hidden : false,
         settingsModalOpen: isModalOpen('settingsModal'),
         sidebarOpen: sidebar.classList.contains('open'),
@@ -4021,6 +4312,10 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
             setLeaderFilterForTest,
             applyTheme,
             applyFont,
+            keyword: {
+                extractTokens: extractKeywordTokens,
+                analyzeMessages: analyzeKeywordMessages
+            },
             capture: {
                 openModal: openCaptureModal,
                 updateText: updateCaptureText,

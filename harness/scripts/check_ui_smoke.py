@@ -45,7 +45,14 @@ def main() -> int:
 
     payload = json.loads(result.stdout)
     failures: list[str] = []
+    keyword_probe_tokens = payload["keywordProbeTokens"]
 
+    fail_if("코스닥" not in keyword_probe_tokens, failures, "keyword normalization did not strip Korean particles")
+    fail_if("코스닥이" in keyword_probe_tokens or "코스닥의" in keyword_probe_tokens, failures, "keyword normalization kept particle-attached variants")
+    fail_if("그냥" in keyword_probe_tokens or "너무" in keyword_probe_tokens or "다시" in keyword_probe_tokens, failures, "keyword stopwords were not removed")
+    fail_if("개인" not in keyword_probe_tokens, failures, "keyword normalization did not keep particle-stripped domain token")
+    fail_if("코스닥 레버리지" not in keyword_probe_tokens, failures, "keyword phrase extraction did not keep domain phrase")
+    fail_if("타플배" not in keyword_probe_tokens or "코나성" not in keyword_probe_tokens, failures, "community keyword dictionary terms were not preserved")
     fail_if(payload["parseResult"]["messageCount"] != 8, failures, "fixture upload/parse did not produce 8 messages")
     fail_if(payload["afterInit"]["theme"] != "light", failures, "default theme was not light")
     fail_if(payload["afterInit"]["font"] != "ridi", failures, "default theme did not use RIDI font")
@@ -54,6 +61,7 @@ def main() -> int:
     fail_if(payload["afterInit"]["calendarCellCount"] < 35, failures, "calendar grid did not render")
     fail_if(payload["afterInit"]["selectedDate"] is not None, failures, "date was selected during app init")
     fail_if(payload["afterInit"]["renderedChatDate"] is not None, failures, "chat date was rendered during app init")
+    fail_if(payload["afterInit"]["keywordAll"], failures, "keyword insight was populated before date selection")
     fail_if(not payload["afterInit"]["captureButtonDisabled"], failures, "capture button was enabled before date selection")
     fail_if(payload["afterInit"]["captureReady"], failures, "capture was ready before date selection")
     fail_if(payload["beforeSelectCaptureAttempt"]["ok"], failures, "capture modal opened before date selection")
@@ -63,6 +71,9 @@ def main() -> int:
     fail_if(payload["afterSelect"]["renderedChatDate"] != "2026-03-01", failures, "selected date chat was not marked rendered")
     fail_if(payload["afterSelect"]["chatMessageCount"] != 5, failures, "chat view did not render selected date messages")
     fail_if("3월 1일" not in payload["afterSelect"]["chatTitle"], failures, "chat title did not reflect selected date")
+    fail_if("말합니다" not in payload["afterSelect"]["keywordAll"], failures, "keyword insight did not include selected date keywords")
+    fail_if("말합니다" not in payload["afterSelect"]["keywordLeader"], failures, "leader keyword insight did not use default leader target")
+    fail_if("발화" not in payload["afterSelect"]["keywordInsightMeta"], failures, "keyword insight did not report raw utterance count")
     fail_if(payload["afterSelect"]["captureButtonDisabled"], failures, "capture button stayed disabled after selected chat rendered")
     fail_if(not payload["afterSelect"]["captureReady"], failures, "capture was not ready after selected chat rendered")
     fail_if(not payload["afterCaptureModal"]["captureModalOpen"], failures, "capture modal did not open")
@@ -74,6 +85,7 @@ def main() -> int:
     fail_if(payload["afterSearch"]["dateListCount"] != 1, failures, "search did not filter date list")
     fail_if(not payload["afterLeaderFilter"]["leaderFilterActive"], failures, "leader filter did not activate")
     fail_if(payload["afterLeaderFilter"]["leaderFilterTarget"] != "테스터", failures, "custom leader filter target was not applied")
+    fail_if("링크" not in payload["afterLeaderFilter"]["keywordLeader"], failures, "leader keyword insight did not update for custom filter target")
     fail_if(payload["afterLeaderFilter"]["leaderMessageCount"] != 4, failures, "custom leader filter target did not mark matching messages")
     fail_if(payload["afterLeaderFilter"]["hiddenChatMessageCount"] != 1, failures, "custom leader filter did not hide non-matching messages")
     fail_if(not payload["afterFilteredCaptureModal"]["useLeaderFilter"], failures, "capture did not inherit active user filter")

@@ -1,0 +1,96 @@
+{
+  "id": "android-split",
+  "description": "Android 분절 가능성 fixture: 같은 KakaoTalkChats.txt 이름의 여러 유효 대화 파일이 들어오면 파일 내부 첫/마지막 발화시각으로 병합",
+  "platform": "android",
+  "input": {
+    "texts": [
+      "test/fixtures/android-split/part-2/KakaoTalkChats.txt",
+      "test/fixtures/android-split/part-1/KakaoTalkChats.txt"
+    ]
+  },
+  "expected": {
+    "detectedPlatform": "android",
+    "messageCount": 7,
+    "dateCount": 1,
+    "dates": ["2026-04-01"],
+    "typeCounts": {
+      "text": 7
+    },
+    "rawMessageCount": 7,
+    "leaderCountByDate": {
+      "2026-04-01": 4
+    },
+    "rawLeaderCountByDate": {
+      "2026-04-01": 4
+    },
+    "rawMessages": [
+      {
+        "index": 0,
+        "user": "채상욱 리더",
+        "content": "첫 파일 시작"
+      },
+      {
+        "index": 1,
+        "user": "테스터",
+        "content": "맞장구"
+      },
+      {
+        "index": 2,
+        "user": "채상욱 리더",
+        "content": "같은 분 안에서 이어지는 설명"
+      },
+      {
+        "index": 3,
+        "user": "테스터",
+        "content": "두번째 파일 같은 분"
+      },
+      {
+        "index": 4,
+        "user": "채상욱 리더",
+        "content": "두번째 파일 다음 분"
+      },
+      {
+        "index": 6,
+        "user": "채상욱 리더",
+        "content": "마무리"
+      }
+    ],
+    "messages": [
+      {
+        "index": 0,
+        "user": "채상욱 리더",
+        "content": "첫 파일 시작"
+      },
+      {
+        "index": 1,
+        "user": "테스터",
+        "content": "맞장구"
+      },
+      {
+        "index": 2,
+        "user": "채상욱 리더",
+        "content": "같은 분 안에서 이어지는 설명"
+      },
+      {
+        "index": 3,
+        "user": "테스터",
+        "content": "두번째 파일 같은 분"
+      },
+      {
+        "index": 4,
+        "user": "채상욱 리더",
+        "content": "두번째 파일 다음 분"
+      },
+      {
+        "index": 5,
+        "user": "다른사용자",
+        "content": "질문입니다"
+      },
+      {
+        "index": 6,
+        "user": "채상욱 리더",
+        "content": "마무리"
+      }
+    ]
+  }
+}
