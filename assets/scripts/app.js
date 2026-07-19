@@ -15,6 +15,15 @@ import {
     sortDatesDescending
 } from './chat-core.js';
 import { KEYWORD_DICTIONARY } from './keyword-dictionary.js';
+import {
+    analyzeLeaderWindows,
+    createEmptyLeaderWindowAnalysis,
+    getLeaderWindowKindMeta,
+    getLeaderWindowPrimaryScore,
+    getLeaderWindowStrengthMeta,
+    getLeaderWindowSummaryForDate,
+    getVisibleLeaderWindowsForDate
+} from './leader-window-analysis.js';
 
 // ========== 상태 관리 ==========
 const DEFAULT_LEADER_FILTER_TARGET = '채상욱 리더';
@@ -31,6 +40,7 @@ const appState = {
     dates: [],
     leaderCountByDate: {},  // 날짜별 필터 대상 사용자 메시지 수
     rawLeaderCountByDate: {},  // 날짜별 필터 대상 사용자 원본 발화 수
+    leaderWindowAnalysis: createEmptyLeaderWindowAnalysis(undefined, DEFAULT_LEADER_FILTER_TARGET),
     currentMonth: new Date(),
     selectedDate: null,
     renderedChatDate: null,
@@ -2048,10 +2058,18 @@ function recalculateLeaderCountByDate() {
     appState.rawLeaderCountByDate = nextRawCounts;
 }
 
+function recalculateLeaderWindowAnalysis() {
+    appState.leaderWindowAnalysis = analyzeLeaderWindows(appState.rawMessagesByDate || {}, {
+        targetSpeaker: appState.leaderFilterTarget
+    });
+}
+
 function refreshLeaderFilterViews() {
     recalculateLeaderCountByDate();
+    recalculateLeaderWindowAnalysis();
     updateLeaderFilterUI();
     renderKeywordInsight();
+    renderLeaderWindowInsight();
 
     const searchInput = document.getElementById('searchInput');
     renderDateList(searchInput ? searchInput.value.toLowerCase() : '');
@@ -2973,6 +2991,8 @@ function applyParsedChatResult(result) {
     if (result.detectedPlatform) {
         appState.detectedPlatform = result.detectedPlatform;
     }
+
+    recalculateLeaderWindowAnalysis();
 }
 
 // ========== 카카오톡 대화 파싱 ==========
@@ -3086,6 +3106,7 @@ function restoreCachedChatData(cachedData) {
         : Object.keys(appState.messagesByDate);
     appState.dates = sortDatesDescending(cachedDates);
     recalculateLeaderCountByDate();
+    recalculateLeaderWindowAnalysis();
 }
 
 // 캐시 조회
@@ -3464,6 +3485,134 @@ function renderKeywordInsight(date = appState.selectedDate) {
     return insight;
 }
 
+function formatPercent(value) {
+    return `${Math.round((Number(value) || 0) * 100)}%`;
+}
+
+function formatWindowMinutes(value) {
+    const number = Number(value) || 0;
+    if (number < 1) return '1분 미만';
+    return `${Math.round(number)}분`;
+}
+
+function getLeaderWindowDaySummary(date) {
+    return getLeaderWindowSummaryForDate(appState.leaderWindowAnalysis, date);
+}
+
+function getLeaderWindowCandidatesForDate(date, limit = undefined) {
+    return getVisibleLeaderWindowsForDate(appState.leaderWindowAnalysis, date, limit);
+}
+
+function getWindowScoreForDisplay(window) {
+    return formatPercent(getLeaderWindowPrimaryScore(window));
+}
+
+function getLeaderWindowScoreText(window) {
+    if (window.kindHint === 'dense_context_trigger' || window.kindHint === 'dense_switching') {
+        return `문맥 ${formatPercent(window.contextExpansionScore || getLeaderWindowPrimaryScore(window))}`;
+    }
+    return `의미 ${formatPercent(window.meaningPotentialScore || getLeaderWindowPrimaryScore(window))}`;
+}
+
+function getLeaderWindowStatsText(window) {
+    if (window.kindHint === 'dense_context_trigger' || window.kindHint === 'dense_switching') {
+        return `전환 ${formatPercent(window.speakerSwitchRate)} · 밀도 ${window.messageDensityPerMin}/분 · ${window.participants}명`;
+    }
+    return `경계 ${formatPercent(window.boundaryConfidenceScore)} · 순도 ${formatPercent(window.leaderMessageShare)} · ${window.leaderDensityPerMin}/분`;
+}
+
+function renderWindowCountBadge(container, className, label, count) {
+    if (!count) return;
+    const badge = document.createElement('span');
+    badge.className = `window-badge ${className}`;
+    badge.textContent = `${label} ${count}`;
+    container.appendChild(badge);
+}
+
+function scrollToLeaderWindow(windowId) {
+    const banners = Array.from(document.querySelectorAll('.leader-window-banner'));
+    const target = banners.find(banner => banner.dataset.windowId === windowId && banner.dataset.edge === 'start')
+        || banners.find(banner => banner.dataset.windowId === windowId);
+    if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function renderLeaderWindowInsight(date = appState.selectedDate) {
+    const section = document.getElementById('leaderWindowInsight');
+    if (!section) return [];
+
+    section.innerHTML = '';
+    const windows = date ? getLeaderWindowCandidatesForDate(date) : [];
+    if (!date || !windows.length) {
+        section.hidden = true;
+        return [];
+    }
+
+    section.hidden = false;
+    const header = document.createElement('div');
+    header.className = 'leader-window-insight-header';
+
+    const title = document.createElement('div');
+    title.className = 'leader-window-title';
+    const titleText = document.createElement('h3');
+    titleText.textContent = '대화 흐름';
+    const experiment = document.createElement('span');
+    experiment.className = 'leader-window-experiment';
+    experiment.textContent = '실험';
+    title.appendChild(titleText);
+    title.appendChild(experiment);
+
+    const summary = getLeaderWindowDaySummary(date);
+    const meta = document.createElement('div');
+    meta.className = 'leader-window-meta';
+    meta.textContent = summary
+        ? `후보 ${summary.candidateCount}개 · 의미 ${formatPercent(summary.maxMeaningPotentialScore || 0)} · 문맥 ${formatPercent(summary.maxContextExpansionScore || 0)}`
+        : `${windows.length}개 후보`;
+
+    header.appendChild(title);
+    header.appendChild(meta);
+    section.appendChild(header);
+
+    const list = document.createElement('div');
+    list.className = 'leader-window-list';
+
+    windows.forEach(window => {
+        const kind = getLeaderWindowKindMeta(window.kindHint);
+        const strength = getLeaderWindowStrengthMeta(window.strength);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `leader-window-card ${kind.className} strength-${strength.className}`;
+        button.dataset.windowId = window.id;
+        button.addEventListener('click', () => scrollToLeaderWindow(window.id));
+
+        const labelRow = document.createElement('div');
+        labelRow.className = 'leader-window-card-label';
+        const label = document.createElement('span');
+        label.textContent = kind.label;
+        const score = document.createElement('strong');
+        score.textContent = `${strength.label} · ${getLeaderWindowScoreText(window)}`;
+        labelRow.appendChild(label);
+        labelRow.appendChild(score);
+
+        const time = document.createElement('div');
+        time.className = 'leader-window-card-time';
+        time.textContent = `${window.startTime}-${window.endTime} · ${formatWindowMinutes(window.durationMin)}`;
+
+        const stats = document.createElement('div');
+        stats.className = 'leader-window-card-stats';
+        stats.textContent = getLeaderWindowStatsText(window);
+
+        button.appendChild(labelRow);
+        button.appendChild(time);
+        button.appendChild(stats);
+        list.appendChild(button);
+    });
+
+    section.appendChild(list);
+    return windows;
+}
+
 // ========== 프로그레스 업데이트 ==========
 function updateProgress(percent, text) {
     progressFill.style.width = `${percent}%`;
@@ -3502,6 +3651,7 @@ function initApp() {
         `${appState.messages.length.toLocaleString()}개 메시지 · ${users.size}명 · ${appState.dates.length}일`;
     updateCaptureButtonState();
     renderKeywordInsight(null);
+    renderLeaderWindowInsight(null);
 
     if (appState.dates.length > 0) {
         // 오늘 날짜와 가장 가까운 날짜로 달력 이동 (선택은 하지 않음)
@@ -3594,6 +3744,22 @@ function renderCalendar() {
 
         if (appState.messagesByDate[dateStr]) {
             el.classList.add('has-messages');
+            const summary = getLeaderWindowDaySummary(dateStr);
+            if (summary && summary.candidateCount > 0) {
+                el.classList.add('has-leader-window');
+                if (summary.semanticLongCount > 0) el.classList.add('has-semantic-long-window');
+                if (summary.semanticShortCount > 0) el.classList.add('has-semantic-short-window');
+                if (summary.semanticBalancedCount > 0) el.classList.add('has-semantic-balanced-window');
+                if (summary.semanticContextCount > 0) el.classList.add('has-semantic-context-window');
+                if (summary.denseContextCount > 0) el.classList.add('has-dense-context-window');
+                el.title = [
+                    summary.semanticLongCount ? `긴 설명 ${summary.semanticLongCount}` : '',
+                    summary.semanticShortCount ? `원칙 ${summary.semanticShortCount}` : '',
+                    summary.semanticBalancedCount ? `의미 ${summary.semanticBalancedCount}` : '',
+                    summary.semanticContextCount ? `문맥 ${summary.semanticContextCount}` : '',
+                    summary.denseContextCount ? `반응 ${summary.denseContextCount}` : ''
+                ].filter(Boolean).join(' · ');
+            }
             el.addEventListener('click', () => selectDate(dateStr));
         }
 
@@ -3643,13 +3809,38 @@ function renderDateList(searchQuery = '') {
         const leaderCount = appState.leaderCountByDate[date] || 0;
         const leaderRatio = Math.round((leaderCount / msgs.length) * 100);
 
-        el.innerHTML = `
-            <span class="date">${displayDate}</span>
-            <span>
-                <span class="leader-ratio">${leaderRatio}%</span>
-                <span class="count">${msgs.length}개</span>
-            </span>
-        `;
+        const main = document.createElement('span');
+        main.className = 'date-item-main';
+        const dateText = document.createElement('span');
+        dateText.className = 'date';
+        dateText.textContent = displayDate;
+        main.appendChild(dateText);
+
+        const summary = getLeaderWindowDaySummary(date);
+        if (summary && summary.candidateCount > 0) {
+            const badges = document.createElement('span');
+            badges.className = 'window-badges';
+            renderWindowCountBadge(badges, 'semantic-long', '긴설명', summary.semanticLongCount);
+            renderWindowCountBadge(badges, 'semantic-short', '원칙', summary.semanticShortCount);
+            renderWindowCountBadge(badges, 'semantic-balanced', '의미', summary.semanticBalancedCount);
+            renderWindowCountBadge(badges, 'semantic-context', '문맥', summary.semanticContextCount);
+            renderWindowCountBadge(badges, 'dense-context', '반응', summary.denseContextCount);
+            main.appendChild(badges);
+        }
+
+        const stats = document.createElement('span');
+        stats.className = 'date-item-stats';
+        const leader = document.createElement('span');
+        leader.className = 'leader-ratio';
+        leader.textContent = `${leaderRatio}%`;
+        const count = document.createElement('span');
+        count.className = 'count';
+        count.textContent = `${msgs.length}개`;
+        stats.appendChild(leader);
+        stats.appendChild(count);
+
+        el.appendChild(main);
+        el.appendChild(stats);
 
         el.addEventListener('click', () => selectDate(date));
         list.appendChild(el);
@@ -3672,6 +3863,7 @@ function selectDate(date) {
     renderDateList(document.getElementById('searchInput').value);
     renderChat(date);
     renderKeywordInsight(date);
+    renderLeaderWindowInsight(date);
     closeSidebarIfMobile();
 
     // 날짜 목록에서 선택된 날짜로 스크롤
@@ -3745,6 +3937,66 @@ function renderMissingPhotoAttachment(reason) {
     return `<div class="attachment missing-attachment">${renderMissingPhotoAttachmentContent(reason)}</div>`;
 }
 
+function findDisplayMessageIndexForRawSequence(messages, rawSequence, fallbackToEnd = false) {
+    if (!Number.isFinite(rawSequence)) return -1;
+
+    for (let index = 0; index < messages.length; index++) {
+        const message = messages[index];
+        const startIndex = Number.isFinite(message.rawStartIndex) ? message.rawStartIndex : index;
+        const endIndex = Number.isFinite(message.rawEndIndex) ? message.rawEndIndex : startIndex;
+        if (rawSequence >= startIndex && rawSequence <= endIndex) {
+            return index;
+        }
+    }
+
+    for (let index = 0; index < messages.length; index++) {
+        const message = messages[index];
+        const startIndex = Number.isFinite(message.rawStartIndex) ? message.rawStartIndex : index;
+        if (rawSequence < startIndex) {
+            return fallbackToEnd ? Math.max(0, index - 1) : index;
+        }
+    }
+
+    return messages.length ? messages.length - 1 : -1;
+}
+
+function addWindowToMap(map, index, window) {
+    if (index < 0) return;
+    if (!map.has(index)) map.set(index, []);
+    map.get(index).push(window);
+}
+
+function buildLeaderWindowDisplayMaps(messages, windows) {
+    const starts = new Map();
+    const ends = new Map();
+
+    windows.forEach(window => {
+        addWindowToMap(starts, findDisplayMessageIndexForRawSequence(messages, window.startRawIndex), window);
+        addWindowToMap(ends, findDisplayMessageIndexForRawSequence(messages, window.endRawIndex, true), window);
+    });
+
+    return { starts, ends };
+}
+
+function createLeaderWindowBanner(window, edge) {
+    const kind = getLeaderWindowKindMeta(window.kindHint);
+    const strength = getLeaderWindowStrengthMeta(window.strength);
+    const banner = document.createElement('div');
+    banner.className = `leader-window-banner ${kind.className} strength-${strength.className} ${edge}`;
+    banner.dataset.windowId = window.id;
+    banner.dataset.edge = edge;
+
+    const label = document.createElement('strong');
+    label.textContent = `${kind.label} ${strength.label} ${edge === 'start' ? '시작' : '종료'}`;
+
+    const meta = document.createElement('span');
+    meta.textContent = `${window.startTime}-${window.endTime} · ${formatWindowMinutes(window.durationMin)} · ${getLeaderWindowScoreText(window)} · ${getLeaderWindowStatsText(window)}`;
+
+    banner.appendChild(label);
+    banner.appendChild(meta);
+    return banner;
+}
+
 // ========== 대화 렌더링 ==========
 function renderChat(date) {
     const msgs = appState.messagesByDate[date];
@@ -3772,8 +4024,14 @@ function renderChat(date) {
     container.innerHTML = '';
 
     const leaderPositions = [];
+    const leaderWindows = getLeaderWindowCandidatesForDate(date);
+    const windowMaps = buildLeaderWindowDisplayMaps(msgs, leaderWindows);
 
     msgs.forEach((msg, index) => {
+        (windowMaps.starts.get(index) || []).forEach(window => {
+            container.appendChild(createLeaderWindowBanner(window, 'start'));
+        });
+
         const el = document.createElement('div');
         el.className = 'message';
         el.dataset.index = index;
@@ -3852,6 +4110,10 @@ function renderChat(date) {
         `;
 
         container.appendChild(el);
+
+        (windowMaps.ends.get(index) || []).forEach(window => {
+            container.appendChild(createLeaderWindowBanner(window, 'end'));
+        });
     });
 
     container.scrollTop = 0;
@@ -4097,10 +4359,14 @@ function buildParserTestSnapshot() {
 function buildRenderedChatTestSnapshot(date) {
     renderChat(date);
     const container = document.getElementById('chatMessages');
+    const renderedMessages = Array.from(container.children).filter(child =>
+        hasClass(child, 'message')
+    );
     return {
         date,
-        messageCount: container.children.length,
-        messagesHtml: Array.from(container.children).map(child => child.innerHTML)
+        messageCount: renderedMessages.length,
+        messagesHtml: renderedMessages.map(child => child.innerHTML),
+        bannerCount: Array.from(container.children).filter(child => hasClass(child, 'leader-window-banner')).length
     };
 }
 
@@ -4108,12 +4374,19 @@ function buildUiTestSnapshot() {
     const renderedMessages = Array.from(document.getElementById('chatMessages').children).filter(child =>
         hasClass(child, 'message')
     );
+    const leaderWindowBanners = Array.from(document.getElementById('chatMessages').children).filter(child =>
+        hasClass(child, 'leader-window-banner')
+    );
     const keywordAll = Array.from(document.getElementById('keywordInsightAll').children)
         .map(child => child.dataset ? child.dataset.keyword : '')
         .filter(Boolean);
     const keywordLeader = Array.from(document.getElementById('keywordInsightLeader').children)
         .map(child => child.dataset ? child.dataset.keyword : '')
         .filter(Boolean);
+    const selectedLeaderWindows = appState.selectedDate
+        ? getLeaderWindowCandidatesForDate(appState.selectedDate)
+        : [];
+    const leaderWindowInsight = document.getElementById('leaderWindowInsight');
 
     return {
         stats: document.getElementById('stats').textContent,
@@ -4122,7 +4395,11 @@ function buildUiTestSnapshot() {
         currentMonth: `${appState.currentMonth.getFullYear()}-${String(appState.currentMonth.getMonth() + 1).padStart(2, '0')}`,
         dateListCount: document.getElementById('dateList').children.length,
         calendarCellCount: document.getElementById('calendarGrid').children.length,
-        chatMessageCount: document.getElementById('chatMessages').children.length,
+        chatMessageCount: renderedMessages.length,
+        leaderWindowCandidateCount: selectedLeaderWindows.length,
+        leaderWindowBannerCount: leaderWindowBanners.length,
+        leaderWindowInsightHidden: leaderWindowInsight ? leaderWindowInsight.hidden : true,
+        leaderWindowKinds: selectedLeaderWindows.map(window => window.kindHint),
         leaderMessageCount: renderedMessages.filter(child => hasClass(child, 'leader')).length,
         hiddenChatMessageCount: renderedMessages.filter(child => child.style.display === 'none').length,
         chatTitle: document.getElementById('chatTitle').textContent,
@@ -4181,6 +4458,18 @@ function buildInputBundleTestSnapshot(bundle) {
             size: file.size,
             hasFile: !!file.file
         }))
+    };
+}
+
+function buildLeaderWindowTestSnapshot(date = appState.selectedDate) {
+    const summary = date ? getLeaderWindowDaySummary(date) : null;
+    const windows = date ? getLeaderWindowCandidatesForDate(date) : [];
+    return {
+        targetSpeaker: appState.leaderWindowAnalysis?.targetSpeaker || appState.leaderFilterTarget,
+        date,
+        summary,
+        candidateCount: windows.length,
+        windows: windows.map(window => ({ ...window }))
     };
 }
 
@@ -4253,6 +4542,7 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
         selectDate,
         renderDateList,
         setLeaderFilterForTest,
+        getLeaderWindowSnapshot: buildLeaderWindowTestSnapshot,
         applyTheme,
         applyFont,
         openSidebar,
@@ -4315,6 +4605,9 @@ if (window.__CHAEXTRACTOR_ENABLE_TEST_API__) {
             keyword: {
                 extractTokens: extractKeywordTokens,
                 analyzeMessages: analyzeKeywordMessages
+            },
+            leaderWindows: {
+                getSnapshot: buildLeaderWindowTestSnapshot
             },
             capture: {
                 openModal: openCaptureModal,

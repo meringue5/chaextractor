@@ -10,7 +10,7 @@
 # 프로젝트 개요
 카카오톡 오픈채팅방 대화 내역 뷰어. 빌드 없는 정적 앱, 배포용 애플리케이션 서버 불필요, 클라이언트 사이드 처리.
 - 배포: https://meringue5.github.io/chaextractor/
-- 기술: HTML (`index.html`), CSS (`assets/styles/app.css`), ES module JS (`assets/scripts/app.js`, `assets/scripts/chat-core.js`, `assets/scripts/chat-domain.js`, `assets/scripts/keyword-dictionary.js`), 앱 버전 매니페스트 (`assets/version.json`), JSZip local vendor (`assets/vendor/jszip-3.10.1.min.js`), `assets/guide` 정적 이미지, `assets/og-image.png`, IndexedDB (캐시), 폰트 CDN
+- 기술: HTML (`index.html`), CSS (`assets/styles/app.css`), ES module JS (`assets/scripts/app.js`, `assets/scripts/chat-core.js`, `assets/scripts/chat-domain.js`, `assets/scripts/keyword-dictionary.js`, `assets/scripts/leader-window-analysis.js`, `assets/scripts/leader-window-model.js`), 앱 버전 매니페스트 (`assets/version.json`), JSZip local vendor (`assets/vendor/jszip-3.10.1.min.js`), `assets/guide` 정적 이미지, `assets/og-image.png`, IndexedDB (캐시), 폰트 CDN
 - 개발 검증: Python/Node VM 하네스 + 선택 실행 Playwright browser smoke (`npm run test:browser`)
 - 로컬 개발/검증: 정적 서버 (`scripts/start-local-server.sh`, `scripts/start-local-server.ps1`)로 `http://127.0.0.1:<port>/` 실행. `file://` 직접 실행은 공식 검증 경로로 보장하지 않는다.
 - 플랫폼: iOS / Android / Windows / macOS 카카오톡 내보내기 파일 지원
@@ -75,6 +75,7 @@
 - ZIP/TXT/CSV 파일 또는 폴더 입력으로 대화 로그와 첨부파일을 파싱한다. ZIP/폴더 안에 유효한 대화 파일이 여러 개 있으면 파일 내부 발화시각을 우선하고, 확인된 segment 순서를 보조 기준으로 병합한다.
 - iOS/Android/Windows/macOS 카카오톡 내보내기 파일을 공식 지원한다.
 - 날짜별 탐색, 검색, 통계, 기본값 `채상욱 리더`인 사용자 하이라이트/필터, 기본값 Light 테마, 설정 유지, 오른쪽 링크 사이드바를 제공한다.
+- 분석용 원본 발화 스트림을 기준으로 필터 대상 사용자의 발화권 유지 후보와 방 전체 고밀도 전환 후보를 실험적으로 계산하고, 선택 날짜의 분석 패턴 후보를 대화 헤더 아래와 본문 배너, 캘린더/날짜 목록 배지로 표시한다.
 - 날짜 선택과 대화 렌더링 이후 선택 날짜 또는 전체 대화를 LLM 요약에 붙여넣기 좋은 TXT로 정리하는 갈무리 복사/다운로드를 제공한다.
 - 시스템 메시지는 제외하고, 동일 사용자 연속 텍스트는 화면 표시용 메시지에서 병합하되 분석용 원본 발화 스트림은 보존한다.
 - 사진/파일/이모티콘은 텍스트와 별도 타입으로 유지한다.
@@ -140,9 +141,9 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 
 # 코드 구조: index.html + 정적 자산
 
-현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` classic script 로드 → `assets/scripts/app.js` ES module 로드 → `app.js`가 `assets/scripts/chat-core.js`, `assets/scripts/chat-domain.js`, `assets/scripts/keyword-dictionary.js`를 import한다. 앱 CSS/JS에는 `meta[name="app-version"]`과 같은 버전 query를 붙이고, `assets/version.json`을 캐시 우회 쿼리로 확인해 새 배포 시 브라우저 자산 캐시를 갱신한다.
+현재 앱 진입점은 `index.html`이다. 구조: `<head>`에서 `assets/styles/app.css` 로드 → `<body>` (HTML) → `assets/vendor/jszip-3.10.1.min.js` classic script 로드 → `assets/scripts/app.js` ES module 로드 → `app.js`가 `assets/scripts/chat-core.js`, `assets/scripts/chat-domain.js`, `assets/scripts/keyword-dictionary.js`, `assets/scripts/leader-window-analysis.js`를 import하고, 리더 발화 윈도우 분석 모듈은 `assets/scripts/leader-window-model.js`의 점수식/파라미터를 사용한다. 앱 CSS/JS에는 `meta[name="app-version"]`과 같은 버전 query를 붙이고, `assets/version.json`을 캐시 우회 쿼리로 확인해 새 배포 시 브라우저 자산 캐시를 갱신한다.
 
-빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 진입 로직은 ES module인 `assets/scripts/app.js`, UI 없는 대화 파싱 코어는 `assets/scripts/chat-core.js`, 저수준 대화 도메인 헬퍼는 ES module export를 제공하는 `assets/scripts/chat-domain.js`, 키워드 stopword/조사/도메인/커뮤니티 사전은 `assets/scripts/keyword-dictionary.js`, 앱 버전 매니페스트는 `assets/version.json`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph 이미지는 `assets/og-image.png`에 둔다. 로컬 개발/검증은 `scripts/start-local-server.sh` 또는 `scripts/start-local-server.ps1`로 정적 서버를 띄워 `http://127.0.0.1:<port>/`에서 수행한다. 공식 서비스 제공 경로는 GitHub Pages다.
+빌드 산출물은 두지 않는다. 정적 자산은 소스 파일 그대로 GitHub Pages에 배포되며, 현재 앱 스타일은 `assets/styles/app.css`, 앱 진입 로직은 ES module인 `assets/scripts/app.js`, UI 없는 대화 파싱 코어는 `assets/scripts/chat-core.js`, 저수준 대화 도메인 헬퍼는 ES module export를 제공하는 `assets/scripts/chat-domain.js`, 키워드 stopword/조사/도메인/커뮤니티 사전은 `assets/scripts/keyword-dictionary.js`, 실험적 리더 발화 윈도우 검출/피처 계산은 `assets/scripts/leader-window-analysis.js`, 점수식/임계값 후보는 `assets/scripts/leader-window-model.js`, 앱 버전 매니페스트는 `assets/version.json`, JSZip은 `assets/vendor/jszip-3.10.1.min.js`, 가이드 스크린샷은 `assets/guide/*.png`, Open Graph 이미지는 `assets/og-image.png`에 둔다. 로컬 개발/검증은 `scripts/start-local-server.sh` 또는 `scripts/start-local-server.ps1`로 정적 서버를 띄워 `http://127.0.0.1:<port>/`에서 수행한다. 공식 서비스 제공 경로는 GitHub Pages다.
 
 브라우저 회귀 검증은 `harness/browser/`의 Playwright smoke를 선택 실행한다. 이 하네스는 정적 서버로 저장소 루트의 `index.html`을 열고, 앱 배포 파일을 빌드 없이 그대로 검증한다.
 
@@ -184,6 +185,7 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
       - `#keywordInsightMeta` — 원본 발화 수/상태
       - `#keywordInsightAll` — 선택 날짜 전체 키워드
       - `#keywordInsightLeader` — 필터 대상 사용자 키워드
+    - `#leaderWindowInsight` — 선택 날짜의 실험적 대화 흐름 후보 요약. `긴 설명 후보`/`원칙 발화 후보`/`의미 후보`/`문맥 확인`/`반응량 참고` 카드가 본문 배너 위치로 스크롤한다.
     - `#chatMessages` — 메시지 목록
   - `.link-sidebar` — 우측 링크 패널 (데스크톱 상시 표시, 모바일: 86vw 슬라이드)
     - `.link-sidebar-header` — 링크 패널 제목
@@ -208,6 +210,7 @@ GitHub Issue Form(개발자용 보조 채널) https://github.com/meringue5/chaex
 - 메시지: `.message`, `.message-bubble`, `.user-name`, `.content`, `.time`
 - 갈무리: `.capture-btn`, `.capture-modal-box`, `.capture-controls`, `.capture-filter-option`, `.capture-output-text`
 - 사용자 필터: `.leader-filter-panel`, `.leader-filter-controls`, `.message.leader` (황금색 그라데이션), `#leaderFilterBtn.active` (금색 배경)
+- 리더 발화 윈도우: `.leader-window-insight`, `.leader-window-card`, `.leader-window-banner`, `.window-badges`, `.window-badge`, `.day.has-leader-window`, `.day.has-semantic-long-window`, `.day.has-semantic-short-window`, `.day.has-semantic-balanced-window`, `.day.has-semantic-context-window`, `.day.has-dense-context-window`
 - 첨부파일: `.attachment`, `.attachment img`, `.file-link`, `.emoticon`, `.no-file`, `.missing-attachment`, `.missing-attachment-tooltip`, `.missing-attachment-help`, `.loading-placeholder`
 - 스크롤마커: `.scroll-markers`, `.scroll-marker`
 - 모달: `.modal`, `.modal.active`, `.modal-overlay`, `.modal-overlay.open`, `.modal-box`, `.modal-header`, `.modal-close-btn`

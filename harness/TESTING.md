@@ -57,6 +57,7 @@ python3 harness/scripts/check_capability_notice.py
 python3 harness/scripts/check_cache_privacy.py
 python3 harness/scripts/check_diagnostic_report.py
 python3 harness/scripts/check_input_bundle.py
+python3 harness/scripts/check_leader_window_insight.py
 python3 harness/scripts/check_performance_smoke.py
 PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; print(main.__name__)"
 ```
@@ -76,6 +77,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 -c "from tools.parse_kakao_chat import main; p
 `check_diagnostic_report.py`는 JS 오류/처리 실패 진단 리포트가 생성되고, 원본 대화 파일명/첨부파일명이 리포트와 Google Form 사전입력 URL에 포함되지 않는지 검사한다.
 
 `check_input_bundle.py`는 작은 iOS ZIP/폴더 fixture를 앱 테스트 API의 `runtime.input` 계약으로 정리해 대화 파일 후보, 첨부파일 후보, 플랫폼 감지, 캐시 키, 첨부 File 참조 유무가 기대대로인지 검사한다. iOS split fixture에서는 `Talk_...-1.txt`/`Talk_...-2.txt`가 유효 대화 파일로 정렬되고, 카카오톡 패턴이 없는 `20260523_220229.txt` 같은 노트형 `.txt` 첨부는 대화 파일에서 제외되는지 확인한다. Android split 가능성은 parser golden의 합성 fixture로 파일 내부 발화시각 병합을 고정한다.
+
+`check_leader_window_insight.py`는 합성 Windows 로그에서 필터 대상 사용자의 긴 발화 윈도우가 `타겟 안정` 후보로 잡히고, 대화 흐름 인사이트와 본문 시작/종료 배너가 렌더링되는지 검사한다.
 
 `check_performance_smoke.py`는 합성 Android 로그 1만 메시지를 실제 앱 파서로 파싱하고 3초 예산 안에 메시지/날짜 수가 맞는지 검사한다.
 

@@ -1504,6 +1504,94 @@
   * `python3 harness/scripts/run_parser_golden.py` 통과
   * `python3 harness/scripts/check_ui_smoke.py` 통과
 
+## 2-1-85단계: 실험적 리더 발화 윈도우 인사이트 추가 (2026-06-19)
+* 분류:
+  * 요구사항 보강. 분석용 원본 발화 스트림을 기준으로 필터 대상 사용자의 발화 윈도우 후보를 앱에서 실험적으로 표시.
+* 변경:
+  * `assets/scripts/leader-window-analysis.js`와 `assets/scripts/leader-window-model.js`를 추가해 윈도우 검출/피처 계산과 점수식/임계값 후보를 분리
+  * 선택 날짜의 `은사 후보`/`부흥 후보`/`혼합 후보`를 대화 헤더 아래 요약 카드로 표시하고, 카드 클릭 시 본문 배너 위치로 이동
+  * 본문 메시지 흐름 안에 후보 윈도우 시작/종료 배너를 추가
+  * 캘린더와 날짜 목록에 후보가 있는 날의 작은 마커/배지를 표시
+  * 사용자 필터 대상이 바뀌면 리더 발화 윈도우 분석도 같은 대상 기준으로 재계산
+  * Node VM 하네스와 Playwright browser smoke에 리더 윈도우 긍정 케이스를 추가
+  * 하네스/README/작업 지침/리서치 문서에 실험적 후보 표시 기준을 반영
+  * 앱 버전 값을 `2026-06-19-leader-window-insight`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/leader-window-analysis.js` 통과
+  * `node --check assets/scripts/leader-window-model.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `node --check harness/browser/smoke.spec.js` 통과
+  * `python3 harness/scripts/check_leader_window_insight.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_input_bundle.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과 (10000 messages, 39.8ms)
+  * `npm run test:browser` 통과 (9 passed, 5 skipped)
+  * `git diff --check` 통과
+
+## 2-1-86단계: 대화 흐름 후보를 분석 패턴 리뷰 모드로 전환 (2026-06-21)
+* 분류:
+  * 실험적 요구사항 조정. `은사/부흥/혼합` 명칭을 확정 판정처럼 쓰지 않고, EDA에서 나온 패턴 패밀리와 강도를 분리해 앱에서 검토 가능하게 표시.
+* 변경:
+  * 리더 발화 윈도우 모델을 `targetFloorScore`와 `denseSwitchingScore` 축으로 분리
+  * 후보 유형을 `타겟 안정`, `타겟 회복`, `타겟 저밀도`, `고전환`으로 중립화
+  * `타겟 저밀도`는 길이만으로 강한 후보가 되지 않도록 발화 수/분당 밀도/글자 밀도 guardrail을 둠
+  * 5분 버킷 기반 고밀도/고전환 구간을 별도 후보로 검출
+  * 카드/본문 배너/캘린더/날짜 목록 배지를 새 분석 패턴 기준으로 갱신
+  * 하네스/README/작업 지침/리서치 문서/브라우저 smoke 기대값을 새 후보 명칭에 맞춤
+  * 앱 버전 값을 `2026-06-21-pattern-review`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/leader-window-analysis.js` 통과
+  * `node --check assets/scripts/leader-window-model.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `node --check harness/browser/smoke.spec.js` 통과
+  * `python3 harness/scripts/check_leader_window_insight.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_input_bundle.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_cache_privacy.py` 통과
+  * `python3 harness/scripts/check_cache_date_sort.py` 통과
+  * `python3 harness/scripts/check_capability_notice.py` 통과
+  * `python3 harness/scripts/check_modal_escape.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과 (10000 messages, 58.6ms)
+  * `npm run test:browser` 통과 (9 passed, 5 skipped)
+  * `git diff --check` 통과
+
+## 2-1-87단계: 의미구간 후보 모델 v2 적용 (2026-07-05)
+* 분류:
+  * 요구사항 조정. 독립 의미구간 리서치 결과를 반영해 대화 흐름 후보를 확정 판정이 아니라 `의미 가능성`/`경계 신뢰도`/`문맥 확장` 축으로 표시.
+* 변경:
+  * 리더 발화 윈도우 검출을 단일 gap이 아니라 `16/20/30분` 다중 gap 후보로 확장
+  * 입력 데이터 내부 후보 분포에서 duration/발화 수/글자 수/밀도 분위수를 계산해 점수 보정에 사용
+  * 후보 유형을 `긴 설명 후보`, `원칙 발화 후보`, `의미 후보`, `문맥 확인`, `반응량 참고`로 변경
+  * 방 전체 고밀도 전환은 독립 의미구간 판정이 아니라 `반응량 참고` 신호로 표시
+  * 카드/본문 배너/캘린더/날짜 목록 배지와 리더 윈도우 하네스 기대값을 새 후보 기준으로 갱신
+  * 앱 버전 값을 `2026-07-05-semantic-window-v2`로 갱신
+* 검증:
+  * `node --check assets/scripts/app.js` 통과
+  * `node --check assets/scripts/leader-window-analysis.js` 통과
+  * `node --check assets/scripts/leader-window-model.js` 통과
+  * `node --check harness/browser/smoke.spec.js` 통과
+  * `node --check harness/scripts/parse_with_index.mjs` 통과
+  * `python3 harness/scripts/check_leader_window_insight.py` 통과
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_input_bundle.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `npm run test:browser` 통과 (9 passed, 5 skipped)
+  * `git diff --check` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

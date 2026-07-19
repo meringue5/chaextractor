@@ -7,7 +7,7 @@ const windowsFixture = path.join(
   repoRoot,
   'test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt'
 );
-const expectedAppVersion = '2026-06-19-generic-split-chat';
+const expectedAppVersion = '2026-07-05-semantic-window-v2';
 
 function watchLocalRuntime(page) {
   const failures = [];
@@ -39,6 +39,29 @@ async function uploadWindowsFixture(page) {
   await expect(page.locator('#setupScreen')).not.toBeVisible();
 }
 
+function buildLeaderWindowFixtureContent() {
+  const lines = [
+    '테스트방 님과 카카오톡 대화',
+    '저장한 날짜 : 2026년 3월 3일 오전 9:30',
+    '',
+    '',
+    '---------------',
+    '--------------- 2026년 3월 3일 화요일 ---------------'
+  ];
+  for (let minute = 0; minute < 25; minute += 1) {
+    if (minute === 8) {
+      lines.push('[참여자1] [오전 9:08] 네');
+      continue;
+    }
+    if (minute === 16) {
+      lines.push('[참여자2] [오전 9:16] 감사합니다');
+      continue;
+    }
+    lines.push(`[채상욱 리더] [오전 9:${String(minute).padStart(2, '0')}] 설명 발화 ${String(minute).padStart(2, '0')}입니다`);
+  }
+  return lines.join('\n');
+}
+
 test('static shell loads local assets, vendor script, and chat modules', async ({ page }) => {
   const failures = watchLocalRuntime(page);
 
@@ -50,6 +73,7 @@ test('static shell loads local assets, vendor script, and chat modules', async (
   await expect(page.locator('.link-sidebar')).not.toBeVisible();
   await expect(page.locator('.chat-header')).not.toBeVisible();
   await expect(page.locator('#keywordInsight')).not.toBeVisible();
+  await expect(page.locator('#leaderWindowInsight')).not.toBeVisible();
   await expect(page.locator('#chatMessages')).not.toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await expect(page.locator('html')).toHaveAttribute('data-font', 'ridi');
@@ -65,6 +89,8 @@ test('static shell loads local assets, vendor script, and chat modules', async (
   expect(resourcePaths).toContain('/assets/scripts/chat-core.js');
   expect(resourcePaths).toContain('/assets/scripts/chat-domain.js');
   expect(resourcePaths).toContain('/assets/scripts/keyword-dictionary.js');
+  expect(resourcePaths).toContain('/assets/scripts/leader-window-analysis.js');
+  expect(resourcePaths).toContain('/assets/scripts/leader-window-model.js');
   await expect(page.locator('img[src^="assets/guide/"]')).toHaveCount(6);
   await expect(page.locator('#heroImage')).toHaveCount(0);
   await expect(page.locator('#setupTipsBtn')).toHaveCount(0);
@@ -111,6 +137,30 @@ test('static shell loads local assets, vendor script, and chat modules', async (
   const versionResponse = await page.request.get('/assets/version.json?smoke=1');
   expect(versionResponse.ok()).toBe(true);
   expect(await versionResponse.json()).toMatchObject({ version: expectedAppVersion });
+  expect(failures).toEqual([]);
+});
+
+test('desktop smoke renders leader window insight candidates', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'leader window browser smoke runs in the desktop project');
+  const failures = watchLocalRuntime(page);
+
+  await openApp(page);
+  await page.setInputFiles('#zipInput', {
+    name: 'KakaoTalk_20260303_0930_00_123_windows.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(buildLeaderWindowFixtureContent(), 'utf8')
+  });
+  await expect(page.locator('#zipName')).toContainText('처리 완료', { timeout: 10_000 });
+  await expect(page.locator('#app')).toHaveClass(/viewer-mode/);
+
+  await page.locator('.date-item').filter({ hasText: '2026/03/03' }).click();
+
+  await expect(page.locator('#leaderWindowInsight')).toBeVisible();
+  await expect(page.locator('.leader-window-card.semantic-long')).toHaveCount(1);
+  await expect(page.locator('.leader-window-card.semantic-long')).toContainText('긴 설명 후보');
+  await expect(page.locator('.leader-window-banner.semantic-long.start')).toHaveCount(1);
+  await expect(page.locator('.leader-window-banner.semantic-long.end')).toHaveCount(1);
+  await expect(page.locator('.date-item .window-badge.semantic-long')).toHaveCount(1);
   expect(failures).toEqual([]);
 });
 

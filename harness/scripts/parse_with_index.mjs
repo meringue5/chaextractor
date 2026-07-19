@@ -8,9 +8,11 @@ const appScriptPath = path.join(repoRoot, 'assets/scripts/app.js');
 const chatDomainScriptPath = path.join(repoRoot, 'assets/scripts/chat-domain.js');
 const chatCoreScriptPath = path.join(repoRoot, 'assets/scripts/chat-core.js');
 const keywordDictionaryScriptPath = path.join(repoRoot, 'assets/scripts/keyword-dictionary.js');
+const leaderWindowAnalysisScriptPath = path.join(repoRoot, 'assets/scripts/leader-window-analysis.js');
 const chatDomain = await import(pathToFileURL(chatDomainScriptPath));
 const chatCore = await import(pathToFileURL(chatCoreScriptPath));
 const keywordDictionary = await import(pathToFileURL(keywordDictionaryScriptPath));
+const leaderWindowAnalysis = await import(pathToFileURL(leaderWindowAnalysisScriptPath));
 const appScript = fs.readFileSync(appScriptPath, 'utf8')
   .replace(
     /import\s+\{[\s\S]*?\}\s+from\s+['"]\.\/chat-domain\.js['"];\n/,
@@ -35,8 +37,20 @@ const appScript = fs.readFileSync(appScriptPath, 'utf8')
   } = __CHAEXTRACTOR_IMPORTS__.chatCore;\n`
   )
   .replace(
-    /import\s+\{\s*KEYWORD_DICTIONARY\s*\}\s+from\s+['"]\.\/keyword-dictionary\.js['"];\n\n/,
-    `const { KEYWORD_DICTIONARY } = __CHAEXTRACTOR_IMPORTS__.keywordDictionary;\n\n`
+    /import\s+\{\s*KEYWORD_DICTIONARY\s*\}\s+from\s+['"]\.\/keyword-dictionary\.js['"];\n/,
+    `const { KEYWORD_DICTIONARY } = __CHAEXTRACTOR_IMPORTS__.keywordDictionary;\n`
+  )
+  .replace(
+    /import\s+\{[\s\S]*?\}\s+from\s+['"]\.\/leader-window-analysis\.js['"];\n\n/,
+    `const {
+    analyzeLeaderWindows,
+    createEmptyLeaderWindowAnalysis,
+    getLeaderWindowKindMeta,
+    getLeaderWindowPrimaryScore,
+    getLeaderWindowStrengthMeta,
+    getLeaderWindowSummaryForDate,
+    getVisibleLeaderWindowsForDate
+  } = __CHAEXTRACTOR_IMPORTS__.leaderWindowAnalysis;\n\n`
   );
 const input = JSON.parse(fs.readFileSync(0, 'utf8'));
 
@@ -247,7 +261,7 @@ const windowObject = {
 const fakeIndexedDB = createFakeIndexedDB();
 
 const context = {
-  __CHAEXTRACTOR_IMPORTS__: { chatDomain, chatCore, keywordDictionary },
+  __CHAEXTRACTOR_IMPORTS__: { chatDomain, chatCore, keywordDictionary, leaderWindowAnalysis },
   console: {
     log() {},
     warn() {},
@@ -478,6 +492,26 @@ if (input.mode === 'uiSmoke') {
     afterMobileLinkSidebarOpen,
     afterMobileSidebarReopen,
     afterMobilePanelsClose
+  }, null, 2));
+  process.exit(0);
+}
+
+if (input.mode === 'leaderWindowInsight') {
+  const api = windowObject.__CHAEXTRACTOR_TEST__;
+  const parseResult = api.parser.parseChat(input.content, {
+    platform: input.platform || 'windows',
+    attachments: input.attachments || [],
+    mapAttachments: false
+  });
+
+  api.ui.initApp();
+  api.ui.selectDate(input.selectDate || parseResult.dates[0]);
+
+  process.stdout.write(JSON.stringify({
+    parseResult,
+    ui: api.ui.getSnapshot(),
+    leaderWindows: api.ui.leaderWindows.getSnapshot(input.selectDate || parseResult.dates[0]),
+    rendered: api.ui.renderChat(input.selectDate || parseResult.dates[0])
   }, null, 2));
   process.exit(0);
 }

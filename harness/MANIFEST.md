@@ -73,7 +73,7 @@
 
 | 표준 | 현재 상태 | 필요한 하네스 |
 |---|---|---|
-| 앱은 배포용 애플리케이션 서버 없이 실행 가능한 빌드 없는 정적 앱이다. 공식 서비스 제공 경로는 GitHub Pages이며, 로컬 개발/검증은 정적 서버로 `http://127.0.0.1:<port>/`에서 수행한다. `file://` 직접 실행은 공식 검증 경로로 보장하지 않는다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` ES module 앱 진입 로직, `assets/scripts/chat-core.js` UI 없는 대화 파싱 코어, `assets/scripts/chat-domain.js` ES module 저수준 도메인 헬퍼, `assets/scripts/keyword-dictionary.js` 정적 키워드 사전, `assets/version.json` 앱 버전 매니페스트, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타 이미지, `scripts/start-local-server.sh`/`.ps1` 로컬 정적 서버 실행 스크립트. | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
+| 앱은 배포용 애플리케이션 서버 없이 실행 가능한 빌드 없는 정적 앱이다. 공식 서비스 제공 경로는 GitHub Pages이며, 로컬 개발/검증은 정적 서버로 `http://127.0.0.1:<port>/`에서 수행한다. `file://` 직접 실행은 공식 검증 경로로 보장하지 않는다. | `index.html` 진입점, `assets/styles/app.css` 스타일시트, `assets/scripts/app.js` ES module 앱 진입 로직, `assets/scripts/chat-core.js` UI 없는 대화 파싱 코어, `assets/scripts/chat-domain.js` ES module 저수준 도메인 헬퍼, `assets/scripts/keyword-dictionary.js` 정적 키워드 사전, `assets/scripts/leader-window-analysis.js`/`assets/scripts/leader-window-model.js` 실험적 리더 발화 윈도우 분석 모듈, `assets/version.json` 앱 버전 매니페스트, `assets/vendor/jszip-3.10.1.min.js` JSZip vendor, `assets/guide/*.png` 가이드 이미지, `assets/og-image.png` 공개 메타 이미지, `scripts/start-local-server.sh`/`.ps1` 로컬 정적 서버 실행 스크립트. | GitHub Pages 직접 배포 경로와 문서 일치 점검 |
 | 새 배포는 브라우저 캐시를 우회할 수 있어야 한다. | `meta[name="app-version"]`, CSS/JS query, `assets/version.json` 버전을 맞추고 앱 시작 시 같은 출처 version manifest를 cache-busting fetch로 확인한다 | Browser smoke |
 | 런타임 정적 자산은 소스와 배포본이 같은 파일이어야 한다. | 별도 빌드 산출물 없음 | doc drift checker와 파일 경로 존재 점검 |
 | 브라우저 앱의 런타임 의존성은 명시되어야 한다. | JSZip 3.10.1 로컬 vendor, 폰트 CDN | doc drift checker로 일부 점검 |
@@ -98,6 +98,7 @@
 | 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음, 누락 사진 복구 안내 | parser golden: iOS PDF/사진, Android hash/일반 파일, 누락 첨부/누락 사진 안내 검증 |
 | 검색 | 전체 메시지 대상, 날짜 목록/결과 반영 | Node UI smoke와 browser smoke에서 날짜 목록 필터 검증 |
 | 통계 | 날짜별 메시지 수, 참여자, 필터 대상 사용자 발언 수, 사진 수 | parser golden이 타입/기본 대상 수 일부 검증 |
+| 리더 발화 윈도우 | 원본 발화 스트림 기준 필터 대상 사용자 윈도우 후보를 실험적으로 계산하고 대화 헤더 아래/본문 배너/캘린더/날짜 목록에 후보 표시 | Node UI smoke, leader window insight smoke |
 | UI | 오른쪽 링크 사이드바, 사용자 지정 필터, 갈무리 TXT, 설정, 테마/폰트 유지 | Node UI smoke와 browser smoke에서 주요 흐름 부분 검증 |
 | 접근성 | 키보드 주요 기능, 포커스, 대비 | 모달 Escape 닫기는 `check_modal_escape.py`로 검증 |
 | 기능 제한 | `File`/`Blob`/`IndexedDB`/`URL.createObjectURL` 미지원 안내 | capability notice 검증 |

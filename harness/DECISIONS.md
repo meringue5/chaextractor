@@ -17,6 +17,7 @@
 | 앱 JS는 `assets/scripts/app.js`로 분리한다. | 채택 | 파서/UI 로직 유지보수성 개선, 빌드 없는 정적 배포 유지 |
 | UI 없는 대화 파싱 코어는 `assets/scripts/chat-core.js`로 분리한다. | 채택 | `app.js`는 DOM/앱 상태 반영에 집중하고, 대화 파싱/병합은 결과 객체를 반환하는 단일 코어 경계로 둔다. 파일 세분화 자체가 목적이 아니라 플랫폼 규칙 변경 시 UI 결합을 줄이는 것이 목적 |
 | 저수준 대화 도메인 헬퍼는 `assets/scripts/chat-domain.js`로 분리하고 ES module export로 제공한다. | 채택 | 정규식, 플랫폼 감지, CSV/첨부파일/메시지 분류 계약을 DOM/UI 전역 상태에서 떼어내 다음 파서 분리의 기준점으로 삼음 |
+| 리더 발화 윈도우 분석은 `assets/scripts/leader-window-analysis.js`와 `assets/scripts/leader-window-model.js`로 분리한다. | 채택 | 원본 발화 스트림 기반 후보 검출과 점수식/파라미터를 앱 UI에서 분리해, 연구 결과에 따라 모델만 조정할 수 있게 둔다. 현재 후보 표시는 다중 gap 기반 `긴 설명 후보`/`원칙 발화 후보`/`의미 후보`/`문맥 확인`/`반응량 참고`이며, `의미 가능성`/`경계 신뢰도`/`문맥 확장` 점수 축을 함께 사용한다. 확정 판정이나 최종 기능명이 아니다. |
 | 앱 버전 매니페스트는 `assets/version.json`에 둔다. | 채택 | GitHub Pages 캐시 환경에서 새 배포 감지와 캐시 우회 새로고침 기준 제공 |
 | JSZip 3.10.1은 `assets/vendor/jszip-3.10.1.min.js` 로컬 vendor 파일로 둔다. | 채택 | CDN 버전 드리프트 없이 GitHub Pages 배포 파일과 저장소 소스가 동일하게 동작 |
 | Playwright browser smoke는 선택 실행 개발 하네스로 둔다. | 채택 | 실제 브라우저 자산 로드, 파일 업로드, 모바일 UI는 Node VM만으로 검증하기 어려움 |
