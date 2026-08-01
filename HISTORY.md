@@ -1592,6 +1592,17 @@
   * `npm run test:browser` 통과 (9 passed, 5 skipped)
   * `git diff --check` 통과
 
+## 2-1-88단계: 의미구간 실험 보존 문서 보강 (2026-08-02)
+* 분류:
+  * 연구 문서 보강. 의미구간 후보 모델 v2의 한계와 재활용 가능한 산출물을 별도 브랜치에서 이어갈 수 있게 기록.
+* 변경:
+  * `harness/research/leader-window-analysis.md`에 보존 브랜치, 기준 커밋, 실험 결과, 재사용 가능 요소, 보류할 요소, 재개 프로토콜 추가
+  * 자동 의미구간 판정보다 밀도 기반 탐색 UI가 유리했다는 사용자 검증 결과를 기록
+  * main/dev로 즉시 승격하지 않고 연구 브랜치 기준으로 보존한다는 판단을 명시
+* 검증:
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `git diff --check` 통과
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트
