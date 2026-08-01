@@ -29,6 +29,7 @@
 | 첨부파일 런타임 원천은 `attachmentInventory`로 둔다. | 채택 | ZIP은 캐시에 저장 가능한 entryPath, 폴더는 런타임 Blob URL/File 참조로 분리한다. 캐시 payload에는 Blob URL이나 File 객체를 저장하지 않는다 |
 | 대화 원문과 첨부파일은 클라이언트 로컬에서 처리한다. | 채택 | 개인정보 표준 |
 | iOS, Android, Windows, macOS는 공식 지원 플랫폼으로 유지한다. | 채택 | README/INSTRUCTIONS 약속, parser golden fixture |
+| Android는 한국어·영어 로케일 텍스트 내보내기를 지원한다. | 채택 | 실제 2026-07-01 제보 형식 확인, `android-english` 익명화 fixture/expected 추가 |
 | Windows는 데스크톱 텍스트 내보내기 파싱을 공식 지원한다. | 채택 | `windows-minimal` fixture/expected 추가 |
 | macOS는 데스크톱 CSV 텍스트 내보내기 파싱을 공식 지원한다. | 채택 | 실제 CSV 형식 확인 후 `macos-csv` fixture/expected 추가 |
 | `tools/parse_kakao_chat.py`는 보조 iOS CSV 파서로 취급한다. | 채택 | 브라우저 앱과 범위 분리 |

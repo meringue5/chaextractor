@@ -14,7 +14,8 @@ python3 harness/scripts/run_parser_golden.py
 
 현재 케이스:
 
-- `android-sample`: `test/dataset/android/`의 실제 ZIP 샘플
+- `android-sample`: `test/dataset/android/`의 한국어 로케일 실제 ZIP 샘플
+- `android-english`: 실제 제보 형식을 익명화한 영문 로케일 TXT fixture
 - `android-files`: `test/fixtures/android-files/`의 Android 일반 파일/PDF fixture
 - `ios-minimal`: `test/fixtures/ios-minimal/`의 최소 iOS fixture
 - `ios-zip-minimal`: `test/dataset/ios/ios-zip-minimal.zip`의 개인정보 없는 작은 iOS ZIP fixture

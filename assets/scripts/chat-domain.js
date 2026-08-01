@@ -1,6 +1,22 @@
 // ========== KakaoTalk chat domain helpers ==========
 
 export const DELETED_MESSAGE = '메시지가 삭제되었습니다.';
+export const DELETED_MESSAGE_ENGLISH = 'The message has been deleted.';
+
+const ENGLISH_MONTH_NUMBERS = {
+    january: '01',
+    february: '02',
+    march: '03',
+    april: '04',
+    may: '05',
+    june: '06',
+    july: '07',
+    august: '08',
+    september: '09',
+    october: '10',
+    november: '11',
+    december: '12'
+};
 
 // 여러 언어/버전을 지원하기 위한 패턴 배열
 export const PATTERNS = {
@@ -14,6 +30,10 @@ export const PATTERNS = {
     DATE_HEADER_ANDROID: [
         /^(\d{4})년 (\d{1,2})월 (\d{1,2})일 (오전|오후) \d{1,2}:\d{2}$/,
     ],
+    // English Android date separator: January 12, 2026 at 8:03 AM
+    DATE_HEADER_ANDROID_ENGLISH: [
+        /^(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2}), (\d{4}) at (\d{1,2}):(\d{2})\s+(AM|PM)$/i,
+    ],
     // iOS 메시지 패턴 (여러 변형 지원)
     MESSAGE_IOS: [
         // 24시간 형식: 2026. 1. 27. 21:37, 사용자 : 내용 (초 선택적)
@@ -26,6 +46,10 @@ export const PATTERNS = {
     MESSAGE_ANDROID: [
         /^(\d{4})년 (\d{1,2})월 (\d{1,2})일 (오전|오후) (\d{1,2}):(\d{2}), (.+?) : (.*)$/,
     ],
+    // English Android message: January 12, 2026 at 8:03 AM, User : Message
+    MESSAGE_ANDROID_ENGLISH: [
+        /^(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2}), (\d{4}) at (\d{1,2}):(\d{2})\s+(AM|PM), (.+?) : (.*)$/i,
+    ],
     // ENTER/LEAVE 통합 (성능 최적화) - 초 선택적
     ENTER_LEAVE: [
         // 24시간 형식
@@ -35,6 +59,9 @@ export const PATTERNS = {
     ],
     ENTER_LEAVE_ANDROID: [
         /^\d{4}년 \d{1,2}월 \d{1,2}일 (오전|오후) \d{1,2}:\d{2}, .+?님이 (?:들어왔습니다|나갔습니다)\.$/,
+    ],
+    ENTER_LEAVE_ANDROID_ENGLISH: [
+        /^(January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, \d{4} at \d{1,2}:\d{2}\s+(?:AM|PM), .+? (?:joined|left) this chatroom\.$/i,
     ],
     // Windows 날짜 구분선: --------------- 2025년 11월 9일 일요일 ---------------
     DATE_HEADER_WINDOWS: [
@@ -79,6 +106,62 @@ export function execPatternArray(line, patternArray) {
 export function containsUrl(text) {
     PATTERNS.URL.lastIndex = 0;
     return PATTERNS.URL.test(text);
+}
+
+function convert12HourTo24(hour, meridiem) {
+    let converted = parseInt(hour, 10);
+    const normalizedMeridiem = String(meridiem || '').toUpperCase();
+    if ((normalizedMeridiem === 'PM' || meridiem === '오후') && converted !== 12) converted += 12;
+    if ((normalizedMeridiem === 'AM' || meridiem === '오전') && converted === 12) converted = 0;
+    return converted.toString().padStart(2, '0');
+}
+
+export function parseAndroidMessageLine(line) {
+    let match = execPatternArray(line, PATTERNS.MESSAGE_ANDROID);
+    if (match) {
+        const [, year, month, day, meridiem, hour, minute, user, content] = match;
+        return {
+            year,
+            month: month.padStart(2, '0'),
+            day: day.padStart(2, '0'),
+            hour: convert12HourTo24(hour, meridiem),
+            minute,
+            user,
+            content
+        };
+    }
+
+    match = execPatternArray(line, PATTERNS.MESSAGE_ANDROID_ENGLISH);
+    if (!match) return null;
+
+    const [, monthName, day, year, hour, minute, meridiem, user, content] = match;
+    const month = ENGLISH_MONTH_NUMBERS[monthName.toLowerCase()];
+    if (!month) return null;
+
+    return {
+        year,
+        month,
+        day: day.padStart(2, '0'),
+        hour: convert12HourTo24(hour, meridiem),
+        minute,
+        user,
+        content
+    };
+}
+
+export function isAndroidDateHeaderLine(line) {
+    return testPatternArray(line, PATTERNS.DATE_HEADER_ANDROID) ||
+        testPatternArray(line, PATTERNS.DATE_HEADER_ANDROID_ENGLISH);
+}
+
+export function isAndroidEnterLeaveLine(line) {
+    return testPatternArray(line, PATTERNS.ENTER_LEAVE_ANDROID) ||
+        testPatternArray(line, PATTERNS.ENTER_LEAVE_ANDROID_ENGLISH);
+}
+
+export function isDeletedMessage(content) {
+    const stripped = String(content || '').trim();
+    return stripped === DELETED_MESSAGE || stripped === DELETED_MESSAGE_ENGLISH;
 }
 
 // 첨부파일 여부 확인 (iOS/Android 패턴 모두 지원)
@@ -230,7 +313,7 @@ export function parseMacOSDateTime(value) {
 
 export function isMacOSSystemMessage(content) {
     const stripped = String(content || '').trim();
-    return stripped === DELETED_MESSAGE ||
+    return isDeletedMessage(stripped) ||
         stripped === '관리자가 메시지를 가렸습니다.' ||
         /^.+?님이 (?:들어왔습니다|나갔습니다)\.$/.test(stripped);
 }
@@ -257,15 +340,15 @@ export function validateMacOSCsvFile(content) {
 export function classifyContent(content) {
     const stripped = content.trim();
 
-    if (stripped === '사진') {
+    if (stripped === '사진' || stripped === '<Photo Unread>') {
         return { type: 'photo', attachType: 'photo', attachRef: '' };
     } else if (/^사진 \d+장$/.test(stripped)) {
         // Windows: 사진 N장
         return { type: 'photo', attachType: 'photo', attachRef: '' };
-    } else if (stripped === '이모티콘') {
+    } else if (stripped === '이모티콘' || stripped === 'Emoticons') {
         return { type: 'emoticon', attachType: 'emoticon', attachRef: '' };
-    } else if (stripped.startsWith('파일: ')) {
-        const filename = stripped.slice(4).trim();
+    } else if (stripped.startsWith('파일: ') || stripped.startsWith('File: ')) {
+        const filename = stripped.slice(stripped.indexOf(':') + 1).trim();
         return { type: 'file', attachType: 'file', attachRef: filename };
     } else if (PATTERNS.ATTACHMENT_FILENAME_ANDROID.test(stripped)) {
         // Android: 내용이 직접 hash 파일명

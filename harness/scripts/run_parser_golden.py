@@ -130,6 +130,17 @@ def compare_case(case: dict[str, Any], actual: dict[str, Any]) -> list[str]:
         if key in expected:
             compare_value(case_id, key, expected[key], actual.get(key), errors)
 
+    if "validation" in expected:
+        actual_validation = actual.get("validation", {})
+        for key, value in expected["validation"].items():
+            compare_value(
+                case_id,
+                f"validation.{key}",
+                value,
+                actual_validation.get(key),
+                errors,
+            )
+
     messages = actual.get("messages", [])
 
     for expected_message in expected.get("messages", []):
@@ -189,6 +200,8 @@ def main() -> int:
         payload = load_input(case)
         if "renderDate" in case:
             payload["renderDate"] = case["renderDate"]
+        if "validation" in case.get("expected", {}):
+            payload["includeValidation"] = True
         actual = parse_with_index(payload)
         errors = compare_case(case, actual)
 

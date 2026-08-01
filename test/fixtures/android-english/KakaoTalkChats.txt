@@ -1,0 +1,22 @@
+KakaoTalk Chats with English Android fixture
+Date Saved : July 1, 2026 at 1:10 PM
+
+
+January 12, 2026 at 12:01 AM
+January 12, 2026 at 12:01 AM, 채상욱 리더 : 첫 메시지
+January 12, 2026 at 12:02 AM, 채상욱 리더 : 이어지는 메시지
+January 12, 2026 at 12:03 AM, 채상욱 리더 : <Photo Unread>
+January 12, 2026 at 12:04 AM, 테스터 : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png
+January 12, 2026 at 12:05 AM, 테스터 : Emoticons
+January 12, 2026 at 12:06 AM, 테스터 : File: report.pdf
+January 12, 2026 at 12:07 AM, 테스터 : link https://example.com
+The message has been deleted.
+January 12, 2026 at 12:08 AM, 새사용자 joined this chatroom.
+July 1, 2026 at 12:00 PM
+July 1, 2026 at 12:00 PM, 다른사람 : 정오 메시지
+July 1, 2026 at 12:00 AM, 제삼자 : 자정 메시지
+July 1, 2026 at 12:01 AM, 제삼자 left this chatroom.
+July 1, 2026 at 12:02 PM, 다른사람 : 여러 줄 메시지
+둘째 줄
+July 1, 2026 at 1:05 PM, 채상욱 리더 : 마지막 메시지

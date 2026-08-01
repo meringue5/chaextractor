@@ -18,6 +18,7 @@ const appScript = fs.readFileSync(appScriptPath, 'utf8')
     detectPlatform,
     isAttachmentFile,
     isMacOSCsvHeader,
+    parseAndroidMessageLine,
     parseAttachmentFilename,
     parseCsvRecords,
     testPatternArray,
@@ -573,6 +574,13 @@ if (input.renderDate) {
   result = {
     ...result,
     rendered: windowObject.__CHAEXTRACTOR_TEST__.ui.renderChat(input.renderDate)
+  };
+}
+
+if (input.includeValidation) {
+  result = {
+    ...result,
+    validation: windowObject.__CHAEXTRACTOR_TEST__.diagnostics.analyzeChatFileContent(input.content)
   };
 }
 

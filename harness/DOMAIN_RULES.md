@@ -53,15 +53,16 @@ iOS 월/일은 한 자리일 때 0 패딩이 없고, 날짜와 시간 사이에 
 - 날짜 구분선
 - 입장/퇴장 메시지
 - `메시지가 삭제되었습니다.`
+- 영문 Android의 `The message has been deleted.`
 - macOS CSV에서 `Date`/`User`가 비어 있는 `메시지가 삭제되었습니다.`, `관리자가 메시지를 가렸습니다.`
-- Android의 사용자 없는 시간 줄: `YYYY년 M월 D일 오전/오후 H:mm`
+- Android의 사용자 없는 시간 줄: `YYYY년 M월 D일 오전/오후 H:mm` 또는 `Month D, YYYY at H:mm AM/PM`
 
 플랫폼별 입장/퇴장 후보:
 
 | 플랫폼 | 예시 |
 |---|---|
 | iOS | `YYYY. M. D. HH:mm: 사용자님이 들어왔습니다.` |
-| Android | `YYYY년 M월 D일 오전/오후 H:mm, 사용자님이 들어왔습니다.` |
+| Android | `YYYY년 M월 D일 오전/오후 H:mm, 사용자님이 들어왔습니다.` 또는 `Month D, YYYY at H:mm AM/PM, User joined/left this chatroom.` |
 | Windows | `사용자님이 들어왔습니다.`, `사용자님이 나갔습니다.` |
 | macOS | CSV에서 `Date`/`User`가 빈 시스템 행 |
 
@@ -92,12 +93,19 @@ YYYY. M. D. HH:mm, 사용자 : 발언 내용
 YYYY년 M월 D일 오전/오후 H:mm, 사용자 : 발언 내용
 ```
 
+영문 로케일 패턴:
+
+```text
+Month D, YYYY at H:mm AM/PM, User : Message
+```
+
 지원해야 하는 내용:
 
 - 텍스트 메시지
 - `{64자리 hex}.jpg` 같은 이미지 파일명
 - `파일: {파일명}`. 파일명은 URL 인코딩될 수 있음
 - `이모티콘`
+- 영문 로케일의 `<Photo Unread>`, `Emoticons`, `File: {파일명}`
 - 연속 사진 줄. 첫 줄 이후에는 사용자/시간 없이 파일명만 나열될 수 있음
 
 연속 사진 예시:
@@ -171,7 +179,7 @@ YYYY-MM-DD HH:mm:ss,사용자,발언 내용
 | 플랫폼 | 필요한 fixture |
 |---|---|
 | iOS | 날짜 헤더, 텍스트, 사진, PDF, 누락 첨부파일, 연속 텍스트 병합 |
-| Android | `KakaoTalkChats.txt`, 64자리 hash 이미지, 연속 사진, URL 인코딩 일반 파일명 |
+| Android | `KakaoTalkChats.txt`, 한국어·영어 날짜/메시지, 영문 시스템 메시지, 64자리 hash 이미지, 연속 사진, URL 인코딩 일반 파일명 |
 | Windows | 데스크톱 txt, 날짜 헤더, 오전/오후 메시지, 시스템 메시지, 연속 텍스트 병합 |
 | macOS | 실제 확인 형식 기반 CSV 헤더, 24시간 timestamp, 삭제/관리자 숨김 시스템 행, CSV quoted multiline, 연속 텍스트 병합 |
 

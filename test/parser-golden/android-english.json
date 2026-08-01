@@ -1,0 +1,105 @@
+{
+  "id": "android-english",
+  "description": "영문 로케일 Android fixture: 영문 월명/AM·PM, 시스템 메시지 제외, 첨부 타입과 연속 텍스트 병합",
+  "platform": "android",
+  "input": {
+    "text": "test/fixtures/android-english/KakaoTalkChats.txt",
+    "attachments": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png",
+      "report.pdf"
+    ]
+  },
+  "expected": {
+    "detectedPlatform": "android",
+    "messageCount": 11,
+    "dateCount": 2,
+    "dates": ["2026-07-01", "2026-01-12"],
+    "typeCounts": {
+      "text": 6,
+      "photo": 3,
+      "emoticon": 1,
+      "file": 1
+    },
+    "attachmentRefCount": 5,
+    "attachmentMappedCount": 3,
+    "leaderCountByDate": {
+      "2026-01-12": 2,
+      "2026-07-01": 1
+    },
+    "validation": {
+      "valid": true,
+      "format": "android-txt",
+      "hasAndroidMessage": true
+    },
+    "messages": [
+      {
+        "index": 0,
+        "date": "2026-01-12",
+        "time": "00:01",
+        "user": "채상욱 리더",
+        "message_type": "text",
+        "content": "첫 메시지\n이어지는 메시지"
+      },
+      {
+        "index": 1,
+        "time": "00:03",
+        "message_type": "photo",
+        "content": "<Photo Unread>",
+        "attachment_ref": ""
+      },
+      {
+        "index": 2,
+        "message_type": "photo",
+        "attachment_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg",
+        "attachment_path": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg"
+      },
+      {
+        "index": 3,
+        "message_type": "photo",
+        "attachment_ref": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png",
+        "attachment_path": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png"
+      },
+      {
+        "index": 4,
+        "message_type": "emoticon",
+        "content": "Emoticons"
+      },
+      {
+        "index": 5,
+        "message_type": "file",
+        "attachment_ref": "report.pdf",
+        "attachment_path": "report.pdf"
+      },
+      {
+        "index": 6,
+        "message_type": "text",
+        "has_link": true
+      },
+      {
+        "index": 7,
+        "date": "2026-07-01",
+        "time": "12:00",
+        "content": "정오 메시지"
+      },
+      {
+        "index": 8,
+        "date": "2026-07-01",
+        "time": "00:00",
+        "content": "자정 메시지"
+      },
+      {
+        "index": 9,
+        "content": "여러 줄 메시지\n둘째 줄"
+      }
+    ],
+    "containsMessages": [
+      {
+        "date": "2026-07-01",
+        "time": "13:05",
+        "user": "채상욱 리더",
+        "content": "마지막 메시지"
+      }
+    ]
+  }
+}

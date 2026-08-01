@@ -1392,6 +1392,31 @@
   * `npm run test:browser` 통과 (8 passed, 4 skipped)
   * Browser 확인: 초기 `#app.setup-mode`에서 `#setupScreen`은 `.chat-area` 내부에 표시되고 좌/우 패널, 대화 헤더, 대화 목록은 숨겨짐
 
+## 2-1-80단계: Android 영문 로케일 내보내기 지원 (2026-08-02)
+* 분류:
+  * requirement 플랫폼 파서 보강. 기존 Android 공식 지원 범위에 영어 로케일 텍스트 형식을 추가.
+* 근거:
+  * 2026-07-01 버그 제보 2건에서 `KakaoTalkChats.txt` 파일명이 감지됐지만 `Month D, YYYY at H:mm AM/PM, User : Message` 형식을 인식하지 못해 유효성 검사에서 거부됨.
+  * 제보 원본에서는 형식만 확인하고, 저장소 fixture는 사용자명과 대화 내용을 익명화해 별도로 작성.
+* 변경:
+  * 영문 월명과 `AM/PM`을 `YYYY-MM-DD HH:mm`으로 정규화하는 Android 메시지 파서 추가
+  * 영문 날짜 구분선, 입장/퇴장, `The message has been deleted.` 시스템 메시지 제외
+  * `<Photo Unread>`, `Emoticons`, `File: {파일명}` 메시지 타입 분류 추가
+  * `android-english` fixture/expected에 실제 제보의 좁은 공백, `January`/`July`, 자정/정오, 연속 텍스트, hash 사진, 영문 시스템 메시지와 입력 유효성 검사를 고정
+  * README, INSTRUCTIONS, harness 요구사항/도메인 규칙/결정/테스트 문서와 앱 버전을 `2026-08-02-android-english`로 갱신
+* 검증:
+  * `node --check assets/scripts/chat-domain.js` 통과
+  * `node --check assets/scripts/chat-core.js` 통과
+  * `node --check assets/scripts/app.js` 통과
+  * `python3 harness/scripts/run_parser_golden.py` 통과
+  * `python3 harness/scripts/check_doc_drift.py` 통과
+  * `python3 harness/scripts/check_diagnostic_report.py` 통과
+  * `python3 harness/scripts/check_input_bundle.py` 통과
+  * `python3 harness/scripts/check_performance_smoke.py` 통과 (한국어 합성 10,000개 메시지 17.6ms)
+  * 영문 합성 100,000개 메시지 파싱 통과 (73.7ms)
+  * `python3 harness/scripts/check_ui_smoke.py` 통과
+  * `npm run test:browser` 통과 (9 passed, 5 skipped). 제보 형식 영문 Android TXT 실제 파일 입력·뷰어 전환 포함
+
 ## 테스트 이력
 
 ### 2026-02-05: 첨부파일 로드 성능 테스트

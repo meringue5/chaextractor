@@ -87,6 +87,7 @@
 
 - iOS 대화 파일명: `Talk_YYYY.M.D HH_mm-n.txt`
 - Android 대화 파일명: `KakaoTalkChats.txt`
+- Android 대화 형식: 한국어 `YYYY년 M월 D일 오전/오후 H:mm, 사용자 : 내용`과 영어 `Month D, YYYY at H:mm AM/PM, User : Message`
 - macOS 대화 파일명: `KakaoTalk_Chat_[방 이름]_YYYY-MM-DD-HH-MM-SS.csv`
 - iOS 첨부파일: `YYYYMMDD_HHMMSS(_n)?.(jpeg|jpg|png|webp|pdf)`
 - Android 이미지 첨부파일: `{64자리 hex}.(jpg|jpeg|png|gif|webp)`
@@ -339,14 +340,14 @@ UI 렌더링:
 
 ## 정규식 패턴 (PATTERNS 객체)
 - `DATE_HEADER` — iOS 날짜 구분선 (`YYYY년 M월 D일 d요일`)
-- `DATE_HEADER_ANDROID` — Android 날짜 줄 (`YYYY년 M월 D일 오전/오후 H:mm`, 사용자 없음)
+- `DATE_HEADER_ANDROID` / `DATE_HEADER_ANDROID_ENGLISH` — Android 한국어·영어 날짜 줄 (사용자 없음)
 - `DATE_HEADER_WINDOWS` — Windows 날짜 구분선
 - `DATETIME_MACOS_CSV` — macOS CSV `Date` 컬럼 (`YYYY-MM-DD HH:mm:ss`)
 - `MESSAGE_IOS` — iOS 메시지 (24시간 + 12시간 오전/오후 두 패턴)
-- `MESSAGE_ANDROID` — Android 메시지 (`YYYY년 M월 D일 오전/오후 H:mm, 사용자 : 내용`)
+- `MESSAGE_ANDROID` / `MESSAGE_ANDROID_ENGLISH` — Android 한국어·영어 메시지
 - `MESSAGE_WINDOWS` — Windows 메시지
 - `ENTER_LEAVE` — iOS 입장/퇴장 (24시간 + 12시간 두 패턴)
-- `ENTER_LEAVE_ANDROID` — Android 입장/퇴장
+- `ENTER_LEAVE_ANDROID` / `ENTER_LEAVE_ANDROID_ENGLISH` — Android 한국어·영어 입장/퇴장
 - `ENTER_LEAVE_WINDOWS` — Windows 입장/퇴장
 - `URL` — URL 감지
 - `ATTACHMENT_FILENAME_IOS` — iOS 첨부파일명 (`YYYYMMDD_HHMMSS[_n].ext`)

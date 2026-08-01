@@ -4,6 +4,7 @@ import {
     detectPlatform,
     isAttachmentFile,
     isMacOSCsvHeader,
+    parseAndroidMessageLine,
     parseAttachmentFilename,
     parseCsvRecords,
     testPatternArray,
@@ -49,7 +50,7 @@ const DEFAULT_THEME = 'light';
 const DEFAULT_FONT = 'ridi';
 const APP_STORAGE_VERSION_KEY = 'chaextractorAppVersion';
 const APP_VERSION = document.querySelector('meta[name="app-version"]')?.getAttribute('content')
-    || '2026-06-11-upload-version-check';
+    || '2026-08-02-android-english';
 const APP_VERSION_MANIFEST_URL = 'assets/version.json';
 const APP_UPDATE_RELOAD_TARGET_KEY = 'chaextractorUpdateReloadTarget';
 const APP_UPDATE_QUERY_PARAM = 'appVersion';
@@ -2825,7 +2826,7 @@ function analyzeChatFileContent(content) {
         if (testPatternArray(line, PATTERNS.MESSAGE_IOS)) {
             analysis.hasMessage = true;
         }
-        if (testPatternArray(line, PATTERNS.MESSAGE_ANDROID)) {
+        if (parseAndroidMessageLine(line)) {
             analysis.hasAndroidMessage = true;
         }
         if (testPatternArray(line, PATTERNS.MESSAGE_WINDOWS)) {

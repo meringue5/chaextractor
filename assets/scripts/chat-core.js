@@ -1,13 +1,16 @@
 import {
-    DELETED_MESSAGE,
     PATTERNS,
     classifyContent,
     containsUrl,
     execPatternArray,
+    isAndroidDateHeaderLine,
+    isAndroidEnterLeaveLine,
+    isDeletedMessage,
     isMacOSCsvContent,
     isMacOSCsvHeader,
     isMacOSSystemMessage,
     parseCsvRecords,
+    parseAndroidMessageLine,
     parseMacOSDateTime,
     testPatternArray
 } from './chat-domain.js';
@@ -141,6 +144,22 @@ export function parseKakaoChat(content, options = {}) {
         const firstChar = line[0];
         const stripped = line.trim();
 
+        if (isDeletedMessage(stripped)) {
+            continue;
+        }
+        if (!line.includes(' : ') &&
+            (line.includes('년 ') || line.includes(' at ')) &&
+            isAndroidDateHeaderLine(stripped)) {
+            continue;
+        }
+        if ((line.includes('님이 들어왔습니다.') ||
+            line.includes('님이 나갔습니다.') ||
+            line.includes(' joined this chatroom.') ||
+            line.includes(' left this chatroom.')) &&
+            isAndroidEnterLeaveLine(stripped)) {
+            continue;
+        }
+
         // Android 연속 사진: 파일명만 있는 줄 (사용자/시간 없음)
         // hash는 숫자로 시작할 수 있으므로 날짜/숫자 분기보다 먼저 처리한다.
         if (PATTERNS.ATTACHMENT_FILENAME_ANDROID.test(stripped) && lastMessage) {
@@ -160,6 +179,46 @@ export function parseKakaoChat(content, options = {}) {
             addMessageToState(state, msg);
             lastMessage = msg;
             continue;
+        }
+
+        // Android 한국어/영어 메시지는 전체 날짜를 포함하므로 현재 날짜 헤더와 무관하게 파싱한다.
+        if (line.includes(', ') && line.includes(' : ')) {
+            const androidMessage = parseAndroidMessageLine(line);
+            if (androidMessage) {
+                const { year, month, day, hour, minute, user, content: contentText } = androidMessage;
+                const dateStr = `${year}-${month}-${day}`;
+                const timeStr = `${hour}:${minute}`;
+                const datetimeStr = `${dateStr} ${timeStr}`;
+                const { type, attachType, attachRef } = classifyContent(contentText);
+                const hasLink = containsUrl(contentText);
+                const isAttachment = ['photo', 'file', 'emoticon'].includes(type);
+
+                if (!isAttachment && lastMessage &&
+                    lastMessage.user === user &&
+                    lastMessage.date === dateStr &&
+                    lastMessage.message_type === 'text') {
+                    lastMessage.content += '\n' + contentText;
+                    if (hasLink) lastMessage.has_link = true;
+                } else {
+                    const msg = {
+                        datetime: datetimeStr,
+                        date: dateStr,
+                        time: timeStr,
+                        user,
+                        message_type: type,
+                        content: contentText,
+                        has_attachment: !!attachType,
+                        attachment_type: attachType,
+                        attachment_ref: attachRef,
+                        attachment_path: '',
+                        has_link: hasLink
+                    };
+
+                    addMessageToState(state, msg);
+                    lastMessage = msg;
+                }
+                continue;
+            }
         }
 
         // Windows 날짜 구분선: --------------- 시작
@@ -232,20 +291,16 @@ export function parseKakaoChat(content, options = {}) {
                     currentDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
                     continue;
                 }
-                // Android 날짜 구분선: 시간만 있는 행 (사용자/내용 없음)
-                if (!line.includes(', ') && testPatternArray(line, PATTERNS.DATE_HEADER_ANDROID)) {
-                    continue;
-                }
             }
 
-            // 2. 시스템 메시지 (iOS/Android 패턴)
+            // 2. 시스템 메시지 (iOS 패턴)
             if (line.includes('님이 들어왔습니다.') || line.includes('님이 나갔습니다.')) {
-                if (testPatternArray(line, PATTERNS.ENTER_LEAVE) || testPatternArray(line, PATTERNS.ENTER_LEAVE_ANDROID)) {
+                if (testPatternArray(line, PATTERNS.ENTER_LEAVE)) {
                     continue;
                 }
             }
 
-            // 3. 일반 메시지 (iOS/Android 패턴)
+            // 3. 일반 메시지 (iOS 패턴)
             if (line.includes(', ') && line.includes(' : ')) {
                 // iOS 패턴 시도
                 let msgMatch = execPatternArray(line, PATTERNS.MESSAGE_IOS);
@@ -265,18 +320,6 @@ export function parseKakaoChat(content, options = {}) {
                     } else {
                         // 24시간 형식: year, month, day, hour, minute, second(선택적), user, content
                         [, year, month, day, hour, minute, , user, contentText] = msgMatch;
-                    }
-                } else {
-                    // Android 패턴 시도
-                    msgMatch = execPatternArray(line, PATTERNS.MESSAGE_ANDROID);
-                    if (msgMatch) {
-                        [, year, month, day, , hour, minute, user, contentText] = msgMatch;
-                        const ampm = msgMatch[4]; // 오전/오후
-                        // 24시간 형식으로 변환
-                        let h = parseInt(hour);
-                        if (ampm === '오후' && h !== 12) h += 12;
-                        if (ampm === '오전' && h === 12) h = 0;
-                        hour = h.toString().padStart(2, '0');
                     }
                 }
 
@@ -334,9 +377,6 @@ export function parseKakaoChat(content, options = {}) {
                     }
                 }
             }
-        } else if (firstChar === '메' && line === DELETED_MESSAGE) {
-            // 삭제 메시지 (문자열 정확 비교 - 정규식보다 10배 빠름)
-            continue;
         } else {
             // Windows 입장/퇴장 (타임스탬프 없음)
             if (line.includes('님이 들어왔습니다.') || line.includes('님이 나갔습니다.')) {

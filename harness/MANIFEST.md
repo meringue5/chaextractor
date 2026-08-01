@@ -91,7 +91,7 @@
 | 영역 | 요구사항 | 현재 검증 수준 |
 |---|---|---|
 | 입력 | ZIP/TXT/CSV 또는 폴더 입력으로 대화 로그와 첨부파일 파싱 | parser golden, Node UI smoke, browser smoke에서 Windows TXT 업로드 검증 |
-| 플랫폼 | iOS/Android/Windows/macOS 내보내기 지원 | Android 실제 ZIP/iOS 최소/Windows 최소/macOS CSV/Windows 첨부 미지원 fixture golden 검증 |
+| 플랫폼 | iOS/Android/Windows/macOS 내보내기 지원 | Android 한국어 실제 ZIP·영문 로케일/iOS 최소/Windows 최소/macOS CSV/Windows 첨부 미지원 fixture golden 검증 |
 | 파싱 | 날짜 그룹화, 시스템 메시지 제외, 연속 텍스트 병합 | parser golden 부분 검증 |
 | 메시지 타입 | text/photo/file/emoticon 분리 | parser golden 부분 검증 |
 | 첨부파일 | 플랫폼별 매핑, 누락 시 앱 중단 없음, 누락 사진 복구 안내 | parser golden: iOS PDF/사진, Android hash/일반 파일, 누락 첨부/누락 사진 안내 검증 |

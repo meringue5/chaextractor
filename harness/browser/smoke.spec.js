@@ -7,7 +7,11 @@ const windowsFixture = path.join(
   repoRoot,
   'test/fixtures/windows-minimal/KakaoTalk_20260301_2110_00_123_windows.txt'
 );
-const expectedAppVersion = '2026-06-14-setup-mode';
+const androidEnglishFixture = path.join(
+  repoRoot,
+  'test/fixtures/android-english/KakaoTalkChats.txt'
+);
+const expectedAppVersion = '2026-08-02-android-english';
 
 function watchLocalRuntime(page) {
   const failures = [];
@@ -459,6 +463,34 @@ test('desktop smoke uploads Windows TXT and exercises core UI', async ({ page },
   expect(pcThemeUi.userPrompt).not.toContain('>');
   await page.keyboard.press('Escape');
   await expect(page.locator('#settingsModal')).not.toHaveClass(/open/);
+
+  expect(failures).toEqual([]);
+});
+
+test('desktop smoke accepts English Android TXT from the reported format', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'desktop upload flow runs in the desktop project');
+  const failures = watchLocalRuntime(page);
+
+  await openApp(page);
+  await page.setInputFiles('#zipInput', androidEnglishFixture);
+
+  await expect(page.locator('#zipName')).toContainText('처리 완료', { timeout: 10_000 });
+  await expect(page.locator('#app')).toHaveClass(/viewer-mode/);
+  await expect(page.locator('#stats')).toContainText('11개 메시지');
+  await expect(page.locator('.date-item')).toHaveCount(2);
+
+  await page.locator('.date-item', { hasText: '2026/07/01' }).click();
+  await expect(page.locator('#chatMessages .message')).toHaveCount(4);
+  await expect(page.locator('#chatMessages')).toContainText('정오 메시지');
+  await expect(page.locator('#chatMessages')).toContainText('자정 메시지');
+  await expect(page.locator('#chatMessages')).not.toContainText('left this chatroom');
+
+  await page.locator('.date-item', { hasText: '2026/01/12' }).click();
+  await expect(page.locator('#chatMessages .message')).toHaveCount(7);
+  await expect(page.locator('#chatMessages')).toContainText('첫 메시지');
+  await expect(page.locator('#chatMessages')).toContainText('이어지는 메시지');
+  await expect(page.locator('#chatMessages')).not.toContainText('The message has been deleted.');
+  await expect(page.locator('#chatMessages')).not.toContainText('joined this chatroom');
 
   expect(failures).toEqual([]);
 });
